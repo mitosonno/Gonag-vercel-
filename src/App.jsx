@@ -1064,7 +1064,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
-                  var msg="Salam! Mənim toyum üçün bu masaları sən doldursan çox gözəl olardı 🙏\n\nGONAG.AZ-ı aç → \"Yönəlt kodu\" → "+longPressResult.code+" yaz\nYalnız sənə ayrılmış masaları görəcəksən.";
+                  var msg="🎊 Sizi məclisimizin masa sxeminə dəvət edirəm!\n\nAşağıdakı linkə basın — masanızı görəcək və adınızı əlavə edəcəksiniz:\n\n👉 https://gonag-vercel.vercel.app/invite/"+longPressResult.code+"\n\nTəşəkkür edirik! 🙏";
                   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
                 }} style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                   📱 WhatsApp
@@ -1105,13 +1105,12 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               <button onClick={function(){
                 var code="G"+Math.random().toString(36).substring(2,5).toUpperCase()+Math.random().toString(36).substring(2,4).toUpperCase();
                 var tblIds=Array.from(longPressSelected);
-                var tblData=tables.filter(function(t){return tblIds.includes(t.id);});
                 setLongPressResult({code:code,tblIds:tblIds});
                 try{
                   fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
                     method:"POST",
-                    headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json"},
-                    body:JSON.stringify({code:code,table_ids:tblIds,tables_snapshot:tblData,status:"active",created_at:new Date().toISOString()})
+                    headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
+                    body:JSON.stringify({code:code,event_id:currentEvId,table_ids:tblIds,status:"active"})
                   }).catch(function(){});
                 }catch(e){}
               }} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
@@ -1423,7 +1422,7 @@ function SchemaDrawer({ tables, activeTable, onTableClick, onMove, onDelete, onE
                   var tblIds=Array.from(shareSelected);
                   setShareResult({code:code,tblIds:tblIds});
                   try{
-                    fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
+                    fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/share_tasks",{
                       method:"POST",
                       headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json"},
                       body:JSON.stringify({code:code,table_ids:tblIds,status:"active",created_at:new Date().toISOString()})
