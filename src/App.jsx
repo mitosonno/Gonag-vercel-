@@ -1110,10 +1110,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
                     method:"POST",
                     headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
-                  fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
-                    method:"POST",
-                    headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
-                    body:JSON.stringify({code:code,event_id:"gonag_user_main",session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
+                    body:JSON.stringify({code:code,session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
                   }).catch(function(){});
                 }catch(e){}
               }} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
