@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import App from './gonag'
 import InvitePage from './InvitePage'
 
 function Root() {
