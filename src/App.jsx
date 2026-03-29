@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const RESTAURANTS = [
-  { id:0, name:"Gülüstan Sarayı", address:"Şəhriyar küç. 2, Bakı", halls:[{id:1,name:"Böyük Zal",cap:200,hasLayout:true},{id:2,name:"Kiçik Zal",cap:100}] },
+  { id:0, name:"Gülüstan Sarayı", address:"Şəhriyar küç. 2, Bakı", halls:[{id:1,name:"Böyük Zal",cap:200,hasLayout:true},{id:2,name:"Kiçik Zal",cap:160,hasLayout:true}] },
   { id:1, name:"Nərgiz Şadlıq Sarayı", address:"Nizami küç. 45, Bakı",halls:[{id:101,name:"Qızıl Zal",cap:300},{id:102,name:"Gümüş Zal",cap:150}] },
   { id:2, name:"Grand Palace", address:"İstiqlaliyyət küç. 12, Bakı",halls:[{id:201,name:"Böyük Zal",cap:400},{id:202,name:"VIP Zal",cap:80}] },
   { id:3, name:"Kristal Saray", address:"H.Cavid pr. 11, Bakı",halls:[{id:301,name:"Böyük Zal",cap:500},{id:302,name:"Kiçik Zal",cap:120}] },
@@ -235,6 +235,48 @@ const DEMO_HALL = {
     {id:28, xPct:43, yPct:78, seats:14, label:""},
     {id:29, xPct:56, yPct:80, seats:14, label:""},
     {id:30, xPct:88, yPct:78, seats:14, label:""},
+  ]
+};
+
+// ─────────────────────────────────────────────
+// Gülüstan Sarayı — Kiçik Zal
+// canvasH=380px (16 masa). S≈27px, totalSvgSize≈40px.
+// 4mm boşluq ≈ 15px → yPct fərqi ≥ (40+15)/380*100 ≈ 15%
+// Sol zona: xPct 9 və 22  (sağ kənar: 22+stulR≈28%)
+// Sağ zona: xPct 78 və 91 (sol kənar: 78-stulR≈72%)
+// Dance Floor: xPct:50, w:38% → sol kənar 31%, sağ kənar 69% — heç bir masaya toxunmur
+const DEMO_HALL_2 = {
+  id: "demo_2",
+  name: "Kiçik Zal",
+  venue_name: "Gülüstan Sarayı",
+  capacity: 160,
+  elements: [
+    { type:"brideGroom", xPct:50, yPct:5,  w:30, h:8,  label:"Bəy & Gəlin"  },
+    { type:"danceFloor", xPct:50, yPct:50, w:38, h:24, label:"Rəqs meydanı" },
+    { type:"stage",      xPct:8,  yPct:84, w:18, h:9,  label:"Musiqiçilər"  },
+    { type:"entrance",   xPct:50, yPct:93, w:22, h:7,  label:"Giriş"        },
+  ],
+  layout: [
+    // Sol sütun 1 (xPct=9)  — yPct: 16, 32, 55, 71  fərq=16
+    {id:1,  xPct:9,  yPct:16, seats:8, label:""},
+    {id:2,  xPct:9,  yPct:32, seats:8, label:""},
+    {id:3,  xPct:9,  yPct:55, seats:8, label:""},
+    {id:4,  xPct:9,  yPct:71, seats:8, label:""},
+    // Sol sütun 2 (xPct=22) — eyni yPct sıra
+    {id:5,  xPct:22, yPct:16, seats:8, label:""},
+    {id:6,  xPct:22, yPct:32, seats:8, label:""},
+    {id:7,  xPct:22, yPct:55, seats:8, label:""},
+    {id:8,  xPct:22, yPct:71, seats:8, label:""},
+    // Sağ sütun 1 (xPct=78)
+    {id:9,  xPct:78, yPct:16, seats:8, label:""},
+    {id:10, xPct:78, yPct:32, seats:8, label:""},
+    {id:11, xPct:78, yPct:55, seats:8, label:""},
+    {id:12, xPct:78, yPct:71, seats:8, label:""},
+    // Sağ sütun 2 (xPct=91)
+    {id:13, xPct:91, yPct:16, seats:8, label:""},
+    {id:14, xPct:91, yPct:32, seats:8, label:""},
+    {id:15, xPct:91, yPct:55, seats:8, label:""},
+    {id:16, xPct:91, yPct:71, seats:8, label:""},
   ]
 };
 
@@ -584,6 +626,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       if(editMode) return;
       if(e.touches.length===2){
         e.preventDefault();
+        // Zoom başladı — long press iptal et
+        if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null;}
         var a=e.touches[0], b=e.touches[1];
         pinchRef.current={
           active:true,
@@ -756,12 +800,20 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
 
   if(tables.length===0) return null;
   const n = tables.length;
-  // Stol ölçüsü: canvas sahəsinə və say-a görə avtomatik
   const W = containerRef.current?.offsetWidth||320;
-  const usableArea = (W - 56) * (canvasH * 0.82);
-  const cellArea = usableArea / n;
-  const autoS = Math.min(64, Math.max(16, Math.sqrt(cellArea) * 0.65));
-  const S = Math.round(autoS); // S sabit — zoom yalnız CSS transform
+  const hasHallElements = !!(hall && hall._hallElements && hall._hallElements.length > 0);
+  let S;
+  if(hasHallElements){
+    // Kiçik Zal: sabit kiçik ölçü. W~360px → S=28. Masa totalSvgSize=S*1.5≈42px.
+    // xPct fərqi 13% → 13/100*360=47px > 42px ✓ (sütunlar arası boşluq var)
+    // yPct fərqi 16% → 16/100*380=61px > 42+15=57px ✓ (4mm boşluq)
+    S = Math.round(Math.min(30, Math.max(18, W * 0.078)));
+  } else {
+    const usableArea = (W - 56) * (canvasH * 0.82);
+    const cellArea = usableArea / n;
+    const autoS = Math.min(64, Math.max(16, Math.sqrt(cellArea) * 0.65));
+    S = Math.round(autoS);
+  }
 
   return (
     <div style={{position:"relative",width:"100%"}}>
@@ -817,8 +869,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
             </button>
           )}
 
-            {/* SƏHNƏ — yuxarıda tam en boyunca, kiçik */}
-            {(()=>{const ep=elemPos.sehne; return (
+            {/* SƏHNƏ — yalnız _hallElements olmadıqda */}
+            {!hasHallElements&&(()=>{const ep=elemPos.sehne; return (
               <div
                 onTouchStart={e=>{if(!editMode)return;e.stopPropagation();drag.current={type:"elem",id:"sehne",sx:e.touches[0].clientX,sy:e.touches[0].clientY,ex:ep.x,ey:ep.y};}}
                 onTouchMove={e=>{
@@ -840,8 +892,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               </div>
             );})()}
 
-            {/* GİRİŞ — aşağıda mərkəzdə, kiçik */}
-            {(()=>{const ep=elemPos.giris; return (
+            {/* GİRİŞ — yalnız _hallElements olmadıqda */}
+            {!hasHallElements&&(()=>{const ep=elemPos.giris; return (
               <div
                 onTouchStart={e=>{if(!editMode)return;e.stopPropagation();drag.current={type:"elem",id:"giris"};}}
                 onTouchMove={e=>{
@@ -863,6 +915,30 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                 🚪 Giriş{editMode&&<span style={{marginLeft:4,fontSize:8,opacity:0.4}}>✥</span>}
               </div>
             );})()}
+
+            {/* Kiçik Zal elementləri */}
+            {hasHallElements&&hall._hallElements.map(function(el,idx){
+              var isDF=el.type==="danceFloor", isBG=el.type==="brideGroom",
+                  isStage=el.type==="stage", isEnt=el.type==="entrance";
+              return (
+                <div key={idx} style={{
+                  position:"absolute",
+                  left:el.xPct+"%", top:el.yPct+"%",
+                  width:el.w+"%", height:el.h+"%",
+                  transform:"translate(-50%,-50%)",
+                  background:isDF?"rgba(130,50,90,.15)":isBG?"rgba(201,168,76,.06)":isStage?"rgba(70,110,190,.07)":"rgba(70,190,110,.07)",
+                  border:isDF?"1.5px dashed rgba(200,100,150,.45)":isBG?"1px solid rgba(201,168,76,.3)":isStage?"1px solid rgba(100,140,220,.25)":"1px solid rgba(70,190,110,.3)",
+                  borderRadius:isDF?10:8,
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
+                  zIndex:2,pointerEvents:"none",userSelect:"none"
+                }}>
+                  <span style={{fontSize:isDF?16:11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
+                  <span style={{fontSize:8,fontWeight:700,letterSpacing:0.5,lineHeight:1,
+                    color:isDF?"rgba(220,130,165,.8)":isBG?"rgba(255,210,100,.8)":isStage?"rgba(130,175,240,.7)":"rgba(70,190,110,.7)"
+                  }}>{el.label}</span>
+                </div>
+              );
+            })}
 
             {/* Masalar */}
             {tables.map(t=>{
@@ -893,8 +969,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                       sx:e.touches[0].clientX,sy:e.touches[0].clientY,
                       offX:touchX-curX, offY:touchY-curY
                     };
-                    // Long press — 600ms
-                    if(!editMode){
+                    // Long press — yalnız 1 barmaq, zoom yoxdursa
+                    if(!editMode && e.touches.length===1 && zoomRef.current<=1.05){
                       longPressTimer.current=setTimeout(function(){
                         setLongPressSelected(function(prev){
                           var s=new Set(prev);
@@ -903,18 +979,22 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                         });
                         setShowLongPressPanel(true);
                         setLongPressResult(null);
-                        drag.current=null; // click-i iptal et
+                        drag.current=null;
                       },600);
                     }
                   }}
                   onTouchMove={e=>{
+                    // 2 barmaq — zoom, long press iptal et
+                    if(e.touches.length>=2){
+                      if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null;}
+                      return;
+                    }
                     const dr=drag.current;
                     if(!dr||dr.id!==t.id)return;
                     const dx=Math.abs(e.touches[0].clientX-dr.sx);
                     const dy=Math.abs(e.touches[0].clientY-dr.sy);
                     if(dx>6||dy>6){
                       dr.moved=true;
-                      // Hərəkət oldu — long press iptal
                       if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null;}
                     }
                     if(editMode && dr.moved){
@@ -951,7 +1031,10 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
 
                   {/* Masa nömrəsi — üstündə */}
                   <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                    fontSize:Math.max(8,S*0.18),fontWeight:700,color:"rgba(201,168,76,.9)",
+                    fontSize:hasHallElements?Math.max(11,S*0.38):Math.max(8,S*0.18),
+                    fontWeight:700,
+                    color:hasHallElements?"rgba(255,225,130,1)":"rgba(201,168,76,.9)",
+                    textShadow:hasHallElements?"0 1px 4px rgba(0,0,0,.9)":"none",
                     whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2}}>
                     {isExtra?"":t.id}
                   </div>
@@ -1024,10 +1107,14 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   {!editMode&&<div
                     id={t.id===tables[0]?.id?"schema-edit-pencil":undefined}
                     onClick={e=>{e.stopPropagation(); setFpPopupTbl(t); setFpPopup(p=>p===t.id?null:t.id);}}
-                    style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",
-                      background:"rgba(201,168,76,.9)",color:"#080604",fontSize:9,display:"flex",
+                    style={{position:"absolute",top:-6,right:-6,
+                      width:Math.max(16,20/zoom),height:Math.max(16,20/zoom),
+                      borderRadius:"50%",
+                      background:"rgba(201,168,76,.9)",color:"#080604",
+                      fontSize:Math.max(9,11/zoom),display:"flex",
                       alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
-                      boxShadow:"0 1px 4px rgba(0,0,0,.6)"}}>✏</div>}
+                      boxShadow:"0 1px 4px rgba(0,0,0,.6)",
+                      touchAction:"manipulation"}}>✏</div>}
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
                     <div className="finger" style={{position:"absolute",top:0,left:"50%",
                       fontSize:22,zIndex:20,pointerEvents:"none",lineHeight:1}}>👆</div>
@@ -1048,10 +1135,12 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
         </div>
       </div>
 
-      {/* LONG PRESS PANEL */}
+      {/* LONG PRESS PANEL — fixed overlay, overflow:hidden-dən təsirlənmir */}
       {showLongPressPanel&&longPressSelected.size>0&&(
-        <div style={{marginTop:8,background:"rgba(255,60,60,.08)",border:"1px solid rgba(255,60,60,.3)",
-          borderRadius:12,padding:"12px 14px"}}>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:300,
+          background:"rgba(8,6,4,.97)",borderTop:"1px solid rgba(255,60,60,.3)",
+          borderRadius:"16px 16px 0 0",padding:"16px 16px 32px",
+          boxShadow:"0 -4px 24px rgba(0,0,0,.6)"}}>
           {longPressResult?(
             <div>
               <div style={{fontSize:12,color:"#ff6666",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
@@ -2982,6 +3071,7 @@ export default function App(){
     setLayoutMode(mode);
     const h = hallObj || hall;
     const isGulistan = h._venueName==="Gülüstan Sarayı" && h.name==="Böyük Zal";
+    const isGulistan2 = h._venueName==="Gülüstan Sarayı" && h.name==="Kiçik Zal";
 
     if(mode==="ready" && isGulistan){
       const demoTables = DEMO_HALL.layout.map(t=>({
@@ -2990,6 +3080,13 @@ export default function App(){
       }));
       setTables(demoTables);
       if(DEMO_HALL.imageUrl) setHall(prev=>({...prev, planImageUrl:DEMO_HALL.imageUrl}));
+    } else if(mode==="ready" && isGulistan2){
+      const demoTables = DEMO_HALL_2.layout.map(t=>({
+        id:t.id, seats:t.seats, label:t.label||"", side:t.side||"",
+        guests:[], pos:{xPct:t.xPct, yPct:t.yPct}
+      }));
+      setTables(demoTables);
+      setHall(prev=>({...prev, _hallElements: DEMO_HALL_2.elements}));
     } else if(mode==="photo" && photoUrl){
       setHall(prev=>({...prev, photoUrl}));
       setTables([]);
@@ -4172,7 +4269,7 @@ function NotInvDrawerBody({ notInvTables, allGuests, onClose, onSendOne, onMarkS
 }
 
 function LayoutPickerModal({ hall, onConfirm, onClose }){
-  const isGulistan = hall && hall._venueName==="Gülüstan Sarayı" && hall.name==="Böyük Zal";
+  const isGulistan = hall && hall._venueName==="Gülüstan Sarayı" && (hall.name==="Böyük Zal"||hall.name==="Kiçik Zal");
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:200,display:"flex",alignItems:"flex-end"}}
       onClick={onClose}>
