@@ -2748,8 +2748,245 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
   );
 }
 
+// ═══ DƏVƏTNAMƏ PNG SİSTEMİ — 4 şablon ═══
+const DEVETNAME_SHABLONLAR = [
+  { id:"qizili", ad:"Qızılı Klassik", bg:"#0a0700", accent:"#c9a84c", text:"#f2e8d0", sub:"rgba(242,232,208,.6)", tableBg:"#0e0a04" },
+  { id:"romantik", ad:"Romantik", bg:"#1a0a12", accent:"#e87aad", text:"#f9c7d8", sub:"rgba(249,199,216,.65)", tableBg:"#0e0a04" },
+  { id:"goy", ad:"Göy Zümrüd", bg:"#020d1a", accent:"#7aade8", text:"#b5d4f4", sub:"rgba(181,212,244,.65)", tableBg:"#0e0a04" },
+  { id:"ag", ad:"Ağ Zərif", bg:"#faf8f2", accent:"#c9a84c", text:"#2a1f06", sub:"rgba(42,31,6,.65)", tableBg:"#fff8e8" }
+];
 
-function MasaDevetCard({ tbl, ev, hall }){
+function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
+  const W=800, H=1200;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext("2d");
+  const S=shablon;
+  const isLight=S.id==="ag";
+  ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
+  if(!isLight){
+    for(let i=0;i<50;i++){
+      ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.25+0.05})`;
+      ctx.beginPath(); ctx.arc(Math.random()*W, Math.random()*(H*0.35), Math.random()*1.5+0.3, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.strokeStyle=S.accent; ctx.lineWidth=2; ctx.strokeRect(20,20,W-40,H-40);
+  ctx.lineWidth=0.8; ctx.globalAlpha=0.35; ctx.strokeRect(30,30,W-60,H-60); ctx.globalAlpha=1;
+  [[42,42],[W-42,42],[42,H-42],[W-42,H-42]].forEach(([x,y])=>{ ctx.fillStyle=S.accent; ctx.font="20px serif"; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("✦",x,y); });
+  ctx.fillStyle=S.accent; ctx.font="bold 30px serif"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.fillText("✦  DƏVƏTNAMƏ  ✦", W/2, 106);
+  const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:obData&&obData.company?obData.company:"Məclis");
+  ctx.fillStyle=S.text; ctx.font="bold 54px serif"; ctx.fillText(evName, W/2, 180);
+  ctx.strokeStyle=S.accent; ctx.lineWidth=1; ctx.globalAlpha=0.4;
+  ctx.beginPath(); ctx.moveTo(100,196); ctx.lineTo(W-100,196); ctx.stroke(); ctx.globalAlpha=1;
+  ctx.fillStyle=S.sub; ctx.font="22px sans-serif";
+  if(guestName) ctx.fillText("Hörmətli "+guestName+",", W/2, 240);
+  else ctx.fillText("Hörmətli dostlar,", W/2, 240);
+  ctx.fillText("toy mərasiminə dəvət olunursunuz!", W/2, 270);
+  ctx.fillStyle=S.accent; ctx.font="bold 24px sans-serif";
+  if(obData&&obData.date) ctx.fillText("📅  "+obData.date, W/2, 316);
+  if(hallName) ctx.fillText("🏛️  "+hallName, W/2, 350);
+  ctx.strokeStyle=S.accent; ctx.lineWidth=0.8; ctx.globalAlpha=0.25;
+  ctx.beginPath(); ctx.moveTo(100,372); ctx.lineTo(W-100,372); ctx.stroke(); ctx.globalAlpha=1;
+  // 3D masa
+  const cx=W/2, cy=555, r=88;
+  const seats=tbl.seats||8, filled=(tbl.guests||[]).reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
+  for(let i=0;i<seats;i++){
+    const angle=(2*Math.PI/seats)*i-Math.PI/2;
+    const cr=r+24; const sx=cx+cr*Math.cos(angle), sy=cy+cr*Math.sin(angle);
+    ctx.fillStyle=i<Math.min(filled,seats)?"#4ade80":(isLight?"rgba(0,0,0,.15)":"rgba(255,255,255,.15)");
+    ctx.save(); ctx.translate(sx,sy); ctx.rotate(angle+Math.PI/2);
+    ctx.beginPath(); ctx.rect(-9,-6,18,12); ctx.fill(); ctx.restore();
+  }
+  ctx.beginPath(); ctx.ellipse(cx+8,cy+r+12,r*0.88,14,0,0,Math.PI*2);
+  ctx.fillStyle="rgba(0,0,0,.25)"; ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx,cy+10,r,16,0,0,Math.PI);
+  ctx.fillStyle=isLight?"#c9941a":"#7a5c10"; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle=S.tableBg; ctx.fill();
+  ctx.strokeStyle=S.accent; ctx.lineWidth=3; ctx.stroke();
+  ctx.fillStyle=S.accent; ctx.font="bold 56px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(String(tbl.id), cx, cy-4);
+  ctx.font="16px sans-serif"; ctx.fillStyle=isLight?"rgba(42,31,6,.45)":"rgba(255,255,255,.3)";
+  ctx.fillText(filled+"/"+seats, cx, cy+36); ctx.textBaseline="alphabetic";
+  // Masa məlumatı
+  ctx.fillStyle=S.accent; ctx.font="bold 22px sans-serif"; ctx.textAlign="center";
+  const masaLabel="MASA № "+tbl.id+(tbl.label&&tbl.label!=="__extra__"?" — "+tbl.label:"");
+  ctx.fillText(masaLabel, W/2, 688);
+  ctx.strokeStyle=S.accent; ctx.lineWidth=0.8; ctx.globalAlpha=0.25;
+  ctx.beginPath(); ctx.moveTo(100,702); ctx.lineTo(W-100,702); ctx.stroke(); ctx.globalAlpha=1;
+  ctx.fillStyle=S.text; ctx.font="bold 20px sans-serif";
+  ctx.fillText("Masadakı qonaqlar:", W/2, 738);
+  const guests=tbl.guests||[];
+  guests.slice(0,9).forEach((g,i)=>{
+    const icon=g.gender==="kishi"?"👨":g.gender==="qadin"?"👩":"👤";
+    ctx.fillStyle=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":S.sub;
+    ctx.font="18px sans-serif";
+    ctx.fillText(icon+"  "+g.name+(g.count>1?" ("+g.count+"n)":"")+(g.ushaqCount>0?" +"+g.ushaqCount+"u":""), W/2, 776+i*40);
+  });
+  if(guests.length>9){ ctx.fillStyle=S.sub; ctx.font="15px sans-serif"; ctx.fillText("+ "+(guests.length-9)+" nəfər daha...", W/2, 776+9*40); }
+  ctx.strokeStyle=S.accent; ctx.lineWidth=0.8; ctx.globalAlpha=0.35;
+  ctx.beginPath(); ctx.moveTo(100,H-68); ctx.lineTo(W-100,H-68); ctx.stroke(); ctx.globalAlpha=1;
+  ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  GONAG.AZ  ✦", W/2, H-34);
+}
+
+function DevetnamePNGPanel({ tbl, obData, hallName, onClose }){
+  const guests = (tbl.guests||[]);
+  const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [selIdx, setSelIdx] = useState(0); // preview üçün seçilmiş qonaq
+  const [sending, setSending] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
+  const canvasRef = useRef(null);
+  const previewGuest = guests[selIdx] || null;
+
+  useEffect(()=>{
+    if(canvasRef.current){
+      drawDevetnamePNG({
+        canvas: canvasRef.current,
+        shablon, tbl, obData, hallName,
+        guestName: previewGuest ? previewGuest.name : ""
+      });
+    }
+  },[shablon, selIdx, tbl, obData, hallName]);
+
+  // Bir qonaq üçün PNG blob yarat
+  function makeCanvas(gName){
+    const c = document.createElement("canvas");
+    drawDevetnamePNG({canvas:c, shablon, tbl, obData, hallName, guestName:gName});
+    return c;
+  }
+
+  // Seçilmiş qonağın PNG-ni endir
+  function downloadOne(g){
+    const c = makeCanvas(g.name);
+    const a = document.createElement("a");
+    a.download = "devetname-masa"+tbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+    a.href = c.toDataURL("image/png");
+    a.click();
+  }
+
+  // Bütün qonaqlar üçün biri-biri ardınca WhatsApp göndər
+  async function sendAllWA(){
+    const withPhone = guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7);
+    if(!withPhone.length){ alert("Nömrəsi olan qonaq yoxdur!"); return; }
+    setSending(true); setSentCount(0);
+    const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
+    const gList=guests.map(g=>"  • "+g.name+(g.count>1?" ("+g.count+"n)":"")).join("\n");
+    for(let i=0;i<withPhone.length;i++){
+      const g=withPhone[i];
+      const c=makeCanvas(g.name);
+      const a=document.createElement("a");
+      a.download="devetname-masa"+tbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+      a.href=c.toDataURL("image/png"); a.click();
+      const phone=(g.phone||"").replace(/\D/g,"");
+      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
+      await new Promise(r=>setTimeout(r,600));
+      window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+      setSentCount(i+1);
+    }
+    setSending(false);
+  }
+
+  // Tək qonaq üçün WhatsApp
+  function sendOneWA(g){
+    downloadOne(g);
+    const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
+    const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+    const phone=(g.phone||"").replace(/\D/g,"");
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
+    if(phone) setTimeout(()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank"),500);
+    else setTimeout(()=>window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"),500);
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.95)",display:"flex",flexDirection:"column",overflowY:"auto"}}>
+      {/* Header */}
+      <div style={{background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <span style={{fontSize:14,fontWeight:700,color:"#c9a84c"}}>🎊 Dəvətnamə — Masa {tbl.id} ({guests.length} qonaq)</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+      </div>
+
+      {/* Şablon seçimi */}
+      <div style={{padding:"10px 16px",background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+        <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:6}}>Şablon:</div>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+          {DEVETNAME_SHABLONLAR.map(s=>(
+            <button key={s.id} onClick={()=>setShablon(s)}
+              style={{padding:"5px 12px",borderRadius:20,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.12)"),background:shablon.id===s.id?"rgba(201,168,76,.1)":"transparent",color:shablon.id===s.id?s.accent:"rgba(255,255,255,.35)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+              {s.ad}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Qonaq siyahısı + preview */}
+      <div style={{display:"flex",flex:1,overflow:"hidden",minHeight:0}}>
+
+        {/* Sol — qonaq siyahısı */}
+        <div style={{width:"42%",borderRight:"1px solid rgba(201,168,76,.1)",overflowY:"auto",background:"#070502"}}>
+          <div style={{padding:"8px 10px",fontSize:10,color:"rgba(255,255,255,.3)"}}>Qonaqlar — preview üçün seç:</div>
+          {guests.map((g,i)=>{
+            const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"#c9a84c";
+            const hasPhone=!!(g.phone||"").replace(/\D/g,"");
+            return (
+              <div key={g.id||i} onClick={()=>setSelIdx(i)}
+                style={{padding:"10px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,.04)",background:selIdx===i?"rgba(201,168,76,.1)":"transparent",transition:"background .15s"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:sc+"22",border:"1px solid "+sc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:sc,flexShrink:0}}>
+                    {g.name[0]||"?"}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:600,color:"#f2e8d0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+                    <div style={{fontSize:10,color:hasPhone?"rgba(37,211,102,.6)":"rgba(255,80,80,.5)"}}>{hasPhone?"📱 "+g.phone:"nömrə yox"}</div>
+                  </div>
+                </div>
+                {/* Tək göndər düymələri */}
+                {selIdx===i&&(
+                  <div style={{display:"flex",gap:5,marginTop:8}}>
+                    <button onClick={e=>{e.stopPropagation();downloadOne(g);}}
+                      style={{flex:1,padding:"5px",borderRadius:7,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                      ⬇️ PNG
+                    </button>
+                    <button onClick={e=>{e.stopPropagation();sendOneWA(g);}}
+                      style={{flex:1,padding:"5px",borderRadius:7,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                      📱 WA
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sağ — canvas preview */}
+        <div style={{flex:1,overflowY:"auto",background:"#060402",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"12px 8px"}}>
+          <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
+        </div>
+      </div>
+
+      {/* Aşağı — Hamısını göndər */}
+      <div style={{padding:"10px 14px 32px",background:"#0a0700",borderTop:"1px solid rgba(201,168,76,.12)",flexShrink:0}}>
+        {sending?(
+          <div style={{textAlign:"center",padding:"12px"}}>
+            <div style={{fontSize:13,color:"#25d366",fontWeight:700,marginBottom:4}}>
+              📤 Göndərilir... {sentCount}/{guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length}
+            </div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.4)"}}>Hər qonaq üçün ayrı dəvətnamə...</div>
+          </div>
+        ):(
+          <button onClick={sendAllWA}
+            style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.25))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+            📱 Hamısına Göndər ({guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrə)
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+function MasaDevetCard({ tbl, ev, hall, setDevetPNGOpen }){
   const [shareOpen, setShareOpen] = useState(false);
   const gold = "#c9a84c";
   const evName = (ev&&ev.name)||"Toy";
@@ -2799,10 +3036,16 @@ function MasaDevetCard({ tbl, ev, hall }){
       </div>
       {/* Göndər düymələri */}
       {!shareOpen?(
-        <button onClick={()=>setShareOpen(true)}
-          style={{width:"100%",padding:"9px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.3),rgba(37,211,102,.15))",color:"#25d366",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-          📤 Dəvəti Göndər
-        </button>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setShareOpen(true)}
+            style={{flex:2,padding:"9px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.3),rgba(37,211,102,.15))",color:"#25d366",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            📤 Dəvət Göndər
+          </button>
+          <button onClick={()=>{ if(typeof setDevetPNGOpen==="function") setDevetPNGOpen({tbl}); }}
+            style={{flex:1,padding:"9px",borderRadius:10,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+            🎊 PNG
+          </button>
+        </div>
       ):(
         <div style={{display:"flex",flexDirection:"column",gap:6}}>
           <button onClick={shareWA} style={{padding:"9px",borderRadius:10,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:12,fontWeight:700,cursor:"pointer"}}>📱 WhatsApp</button>
@@ -2853,6 +3096,7 @@ export default function App(){
   const [realPhotoOpen, setRealPhotoOpen] = useState(false);
   const [hall, setHall] = useState(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
+  const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
   const [schemaTutStep, setSchemaTutStep] = useState(0); // 0=not shown, 1,2,3=steps, -1=done
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteTab, setInviteTab] = useState("metn");
@@ -3678,10 +3922,10 @@ ${savedEvsList||"Yoxdur"}`;
                 <div>
                   <div className={"bb "+(m.role==="agent"?"a":"u")}>{m.text}</div>
                   {m.masaCard&&(
-                    <MasaDevetCard tbl={m.masaCard} ev={m.ev} hall={m.hall}/>
+                    <MasaDevetCard tbl={m.masaCard} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   )}
                   {m.masaCards&&m.masaCards.map((t,ti)=>(
-                    <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall}/>
+                    <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   ))}
                   {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(
                     <div className="qw">{m.qrs.map((q,qi)=><button key={qi} className="qb" onClick={()=>send(q)}>{q}</button>)}</div>
@@ -3753,6 +3997,14 @@ ${savedEvsList||"Yoxdur"}`;
       </div>
 
       {/* MƏCLİSLƏRİM PANEL */}
+      {devetPNGOpen&&(
+        <DevetnamePNGPanel
+          tbl={devetPNGOpen.tbl}
+          obData={obData}
+          hallName={hall?hall._venueName+(hall.name?" — "+hall.name:""):""}
+          onClose={()=>setDevetPNGOpen(null)}
+        />
+      )}
       {meclisOpen&&(
         <MeclislerimPanel
           events={savedEvents}
