@@ -3430,12 +3430,22 @@ ${savedEvsList||"Yoxdur"}`;
         setSchemaOpen(true);
       }
 
-      // [OPEN_MECLIS:ID] — yadda saxlanmış məclisi aç
+      // [OPEN_MECLIS:ID_or_NAME] — yadda saxlanmış məclisi aç
       const meclisMatch = raw.match(/\[OPEN_MECLIS:([^\]]+)\]/);
       if(meclisMatch){
         const mId = meclisMatch[1].trim();
-        const found = savedEventsRef.current.find(e=>e.id===mId);
-        if(found){ loadEvent(found); }
+        const evs = savedEventsRef.current;
+        // Əvvəlcə ID ilə axtar, sonra ad ilə
+        let found = evs.find(e=>e.id===mId);
+        if(!found){
+          const mIdLow = mId.toLowerCase();
+          found = evs.find(e=>{
+            const nm = (e.couple||""+" "+(e.obData?.boy||"")+" "+(e.obData?.girl||"")+" "+(e.obData?.name||"")).toLowerCase();
+            return nm.includes(mIdLow) || mIdLow.split(" ").some(w=>w.length>2&&nm.includes(w));
+          });
+        }
+        if(found){ loadEvent(found); gulivaSpeak(found.couple||"Məclis yükləndi"); }
+        else { gulivaSpeak("Bu adda məclis tapılmadı."); }
       }
 
       // [ADD_GUEST:MasaID:Ad:Say] parse et
@@ -3478,24 +3488,43 @@ ${savedEvsList||"Yoxdur"}`;
   }
 
   function gulivaSpeak(text){
-    if(!window.speechSynthesis||!text) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang="az-AZ"; u.rate=1.05; u.pitch=1.1;
-    const vs=window.speechSynthesis.getVoices();
-    const v=vs.find(x=>x.lang.startsWith("az")||x.lang.startsWith("tr")||x.lang.startsWith("ru"));
-    if(v) u.voice=v;
-    setIsSpeaking(true);
-    u.onend=u.onerror=()=>{
-      setIsSpeaking(false);
-      // Danışandan sonra avtomatik dinləməyə qayıt
+    if(!text) return;
+    // Android Chrome-da speechSynthesis user gesture tələb edir
+    // Voices yüklənməyibsə — yenidən cəhd et
+    const doSpeak = ()=>{
+      if(!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang="az-AZ"; u.rate=1.0; u.pitch=1.1; u.volume=1;
+      const vs=window.speechSynthesis.getVoices();
+      // Əvvəlcə Azərbaycan, sonra Türk, sonra Rus, sonra default
+      const v=vs.find(x=>x.lang.startsWith("az"))
+        ||vs.find(x=>x.lang.startsWith("tr"))
+        ||vs.find(x=>x.lang.startsWith("ru"))
+        ||vs.find(x=>x.lang.startsWith("en")&&x.name.toLowerCase().includes("female"))
+        ||vs[0];
+      if(v) u.voice=v;
+      setIsSpeaking(true);
+      u.onend=()=>{
+        setIsSpeaking(false);
+        setTimeout(()=>{
+          if(voiceActiveRef.current && !isListening) startVoice();
+        },400);
+      };
+      u.onerror=()=>{ setIsSpeaking(false); };
+      window.speechSynthesis.speak(u);
+      // Android workaround — səs başlamırsa resume et
       setTimeout(()=>{
-        if(voiceActiveRef.current && !isListening){
-          startVoice();
-        }
-      },600);
+        if(window.speechSynthesis.paused) window.speechSynthesis.resume();
+      },100);
     };
-    window.speechSynthesis.speak(u);
+    const vs=window.speechSynthesis.getVoices();
+    if(vs.length>0){ doSpeak(); }
+    else{
+      window.speechSynthesis.onvoiceschanged=()=>{ doSpeak(); };
+      // 500ms gözlə, əgər voices gəlmədisə yenə cəhd et
+      setTimeout(doSpeak, 500);
+    }
   }
 
   function toggleVoice(){
