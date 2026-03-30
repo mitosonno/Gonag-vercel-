@@ -3297,8 +3297,8 @@ export default function App(){
     }
   }
 
-  const totG = glog.length;
-  const totP = glog.reduce((s,g)=>s+(g.count||1),0);
+  const totG = tables.reduce((s,t)=>s+(t.guests||[]).length, 0);
+  const totP = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
   const totCap = tables.reduce((s,t)=>s+t.seats,0);
   const pct = totCap>0 ? Math.round(totP/totCap*100) : 0;
   const hasS = hall && tables.length>0;
