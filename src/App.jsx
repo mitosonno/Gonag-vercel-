@@ -2829,14 +2829,152 @@ function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  GONAG.AZ  ✦", W/2, H-34);
 }
 
-function DevetnamePNGPanel({ tbl, obData, hallName, onClose }){
-  const guests = (tbl.guests||[]);
+function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose }){
+  const tables2use = allTables && allTables.length>0 ? allTables.filter(t=>(t.guests||[]).length>0) : (tbl?[tbl]:[]);
+  const [activeTblIdx, setActiveTblIdx] = useState(0);
+  const activeTbl = tables2use[activeTblIdx] || tbl;
+  const guests = (activeTbl&&activeTbl.guests)||[];
   const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
-  const [selIdx, setSelIdx] = useState(0); // preview üçün seçilmiş qonaq
+  const [selIdx, setSelIdx] = useState(0);
   const [sending, setSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
   const canvasRef = useRef(null);
   const previewGuest = guests[selIdx] || null;
+
+  useEffect(()=>{ setSelIdx(0); },[activeTblIdx]);
+
+  useEffect(()=>{
+    if(canvasRef.current && activeTbl){
+      drawDevetnamePNG({canvas:canvasRef.current, shablon, tbl:activeTbl, obData, hallName, guestName:previewGuest?previewGuest.name:""});
+    }
+  },[shablon, selIdx, activeTblIdx, obData, hallName]);
+
+  function makeCanvas(gName, t){
+    const c=document.createElement("canvas");
+    drawDevetnamePNG({canvas:c, shablon, tbl:t||activeTbl, obData, hallName, guestName:gName});
+    return c;
+  }
+  function downloadOne(g, t){
+    const c=makeCanvas(g.name, t);
+    const a=document.createElement("a");
+    a.download="devetname-masa"+(t||activeTbl).id+"-"+g.name.replace(/\s/g,"")+".png";
+    a.href=c.toDataURL("image/png"); a.click();
+  }
+  async function sendAllWA(){
+    const withPhone=guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7);
+    if(!withPhone.length){ alert("Nömrəsi olan qonaq yoxdur!"); return; }
+    setSending(true); setSentCount(0);
+    const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
+    const gList=guests.map(g=>"  • "+g.name+(g.count>1?" ("+g.count+"n)":"")).join("\n");
+    for(let i=0;i<withPhone.length;i++){
+      const g=withPhone[i];
+      const c=makeCanvas(g.name);
+      const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+      a.href=c.toDataURL("image/png"); a.click();
+      const phone=(g.phone||"").replace(/\D/g,"");
+      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
+      await new Promise(r=>setTimeout(r,600));
+      window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+      setSentCount(i+1);
+    }
+    setSending(false);
+  }
+  function sendOneWA(g){
+    downloadOne(g);
+    const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
+    const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+    const phone=(g.phone||"").replace(/\D/g,"");
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
+    if(phone) setTimeout(()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank"),500);
+    else setTimeout(()=>window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"),500);
+  }
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.97)",display:"flex",flexDirection:"column"}}>
+      {/* Header */}
+      <div style={{background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"11px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <span style={{fontSize:14,fontWeight:700,color:"#c9a84c"}}>🎊 Dəvətnamə PNG</span>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+      </div>
+
+      {/* Şablon seçimi */}
+      <div style={{padding:"8px 14px",background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+        <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+          {DEVETNAME_SHABLONLAR.map(s=>(
+            <button key={s.id} onClick={()=>setShablon(s)}
+              style={{padding:"5px 11px",borderRadius:18,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.12)"),background:shablon.id===s.id?"rgba(201,168,76,.1)":"transparent",color:shablon.id===s.id?s.accent:"rgba(255,255,255,.3)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+              {s.ad}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Masa seçimi */}
+      {tables2use.length>1&&(
+        <div style={{padding:"6px 14px",background:"rgba(201,168,76,.03)",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+          <div style={{display:"flex",gap:5,overflowX:"auto"}}>
+            {tables2use.map((t,i)=>(
+              <button key={t.id} onClick={()=>setActiveTblIdx(i)}
+                style={{padding:"4px 10px",borderRadius:14,border:"1px solid "+(activeTblIdx===i?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:activeTblIdx===i?"rgba(201,168,76,.15)":"transparent",color:activeTblIdx===i?"#c9a84c":"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                Masa {t.id} ({(t.guests||[]).length})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Ana hissə: qonaq siyahısı + preview */}
+      <div style={{display:"flex",flex:1,overflow:"hidden",minHeight:0}}>
+        {/* Sol — qonaq siyahısı */}
+        <div style={{width:"40%",borderRight:"1px solid rgba(201,168,76,.08)",overflowY:"auto",background:"#070502"}}>
+          <div style={{padding:"7px 10px",fontSize:9,color:"rgba(255,255,255,.25)"}}>Preview üçün seç:</div>
+          {guests.length===0&&<div style={{padding:"16px",fontSize:12,color:"rgba(255,255,255,.3)",textAlign:"center"}}>Qonaq yoxdur</div>}
+          {guests.map((g,i)=>{
+            const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"#c9a84c";
+            const hasPhone=!!(g.phone||"").replace(/\D/g,"");
+            return (
+              <div key={g.id||i} onClick={()=>setSelIdx(i)}
+                style={{padding:"9px 10px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,.04)",background:selIdx===i?"rgba(201,168,76,.1)":"transparent"}}>
+                <div style={{display:"flex",alignItems:"center",gap:7}}>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:sc+"22",border:"1px solid "+sc+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:sc,flexShrink:0}}>{g.name[0]||"?"}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:11,fontWeight:600,color:"#f2e8d0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+                    <div style={{fontSize:9,color:hasPhone?"rgba(37,211,102,.5)":"rgba(255,80,80,.4)"}}>{hasPhone?"📱":"yox"}</div>
+                  </div>
+                </div>
+                {selIdx===i&&(
+                  <div style={{display:"flex",gap:4,marginTop:7}}>
+                    <button onClick={e=>{e.stopPropagation();downloadOne(g);}} style={{flex:1,padding:"5px",borderRadius:6,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:9,fontWeight:700,cursor:"pointer"}}>⬇️ PNG</button>
+                    <button onClick={e=>{e.stopPropagation();sendOneWA(g);}} style={{flex:1,padding:"5px",borderRadius:6,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:9,fontWeight:700,cursor:"pointer"}}>📱 WA</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sağ — canvas preview */}
+        <div style={{flex:1,overflowY:"auto",background:"#060402",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"10px 6px"}}>
+          <canvas ref={canvasRef} style={{width:"100%",maxWidth:260,borderRadius:10,display:"block"}}/>
+        </div>
+      </div>
+
+      {/* Footer — hamısına göndər */}
+      <div style={{padding:"10px 14px 30px",background:"#0a0700",borderTop:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+        {sending?(
+          <div style={{textAlign:"center",padding:"10px"}}>
+            <div style={{fontSize:13,color:"#25d366",fontWeight:700}}>📤 {sentCount}/{guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} göndərilir...</div>
+          </div>
+        ):(
+          <button onClick={sendAllWA}
+            style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.25))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+            📱 Masa {activeTbl&&activeTbl.id}-in hamısına göndər ({guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrə)
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
   useEffect(()=>{
     if(canvasRef.current){
@@ -3961,14 +4099,12 @@ ${savedEvsList||"Yoxdur"}`;
             </button>}
             {tables.length>0&&<button className="qbn on" onClick={()=>{
               if(totG===0){
-                setMsgs(m=>[...m,{role:"agent",
-                  text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",
-                  qrs:["🗺️ Sxemi aç","Sonra"]}]);
+                setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]);
                 return;
               }
-              setMsgs(m=>[...m,{role:"agent",
-                text:"Dəvətnamələri necə göndərək? 📨",
-                qrs:["🪑 Masa-masa ayrıca","📨 Hamısına birdəfəlik"]}]);
+              // Birinci masanı PNG panelə aç
+              const firstTbl = tables.find(t=>(t.guests||[]).length>0)||tables[0];
+              setDevetPNGOpen({tbl: firstTbl});
             }}>
               📨 Dəvətnamə
             </button>}
@@ -4000,6 +4136,7 @@ ${savedEvsList||"Yoxdur"}`;
       {devetPNGOpen&&(
         <DevetnamePNGPanel
           tbl={devetPNGOpen.tbl}
+          allTables={tables}
           obData={obData}
           hallName={hall?hall._venueName+(hall.name?" — "+hall.name:""):""}
           onClose={()=>setDevetPNGOpen(null)}
