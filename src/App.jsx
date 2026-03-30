@@ -2256,27 +2256,34 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
     setSending(true); setSentCount(0);
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(g=>"  • "+g.name+(g.count>1?" ("+g.count+"n)":"")).join("\n");
-    const baseUrl = window.location.origin;
+    const baseUrl=window.location.origin;
     for(let i=0;i<withPhone.length;i++){
       const g=withPhone[i];
-      // PNG endir
-      const c=makeCanvas(g.name);
-      const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
-      a.href=c.toDataURL("image/png"); a.click();
-      // RSVP link yarat
-      const code = await createRsvp(g, activeTbl);
-      const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
+      const code=await createRsvp(g,activeTbl);
+      const rsvpLink=code?baseUrl+"/rsvp/"+code:baseUrl;
       const phone=(g.phone||"").replace(/\D/g,"");
       const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
-      await new Promise(r=>setTimeout(r,700));
-      window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+      const c=makeCanvas(g.name);
+      await new Promise(resolve=>{
+        c.toBlob(async(blob)=>{
+          if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
+            try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
+          } else {
+            const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+            a.href=c.toDataURL("image/png"); a.click();
+            await new Promise(r=>setTimeout(r,700));
+            if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+          }
+          resolve();
+        },"image/png");
+      });
       setSentCount(i+1);
+      if(i<withPhone.length-1) await new Promise(r=>setTimeout(r,1000));
     }
     setSending(false);
   }
 
   async function sendOneWA(g){
-    downloadOne(g);
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
     const phone=(g.phone||"").replace(/\D/g,"");
@@ -2284,8 +2291,26 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
     const baseUrl = window.location.origin;
     const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
-    if(phone) setTimeout(()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank"),600);
-    else setTimeout(()=>window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"),600);
+    // Web Share API ilə şəkil + mətn birlikdə göndər
+    const c = makeCanvas(g.name);
+    c.toBlob(async (blob)=>{
+      if(blob && navigator.canShare && navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
+        try{
+          await navigator.share({
+            files:[new File([blob],"devetname.png",{type:"image/png"})],
+            text: msg
+          });
+          return;
+        }catch(e){ /* istifadəçi ləğv etdi */ return; }
+      }
+      // Web Share dəstəklənmirsə — PNG endir + WhatsApp aç
+      const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+      a.href=c.toDataURL("image/png"); a.click();
+      setTimeout(()=>{
+        if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+      },600);
+    },"image/png");
   }
 
   return (
