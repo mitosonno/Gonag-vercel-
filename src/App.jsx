@@ -3365,7 +3365,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     setHist(nh);
 
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages",{
+      const res = await fetch("/api/chat",{
         method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:SYS+(evType?`\n\nAKTİV MƏCLİS NÖVÜ: ${evType==="toy"?"💍 Toy":evType==="nishan"?"💫 Nişan":evType==="adgunu"?"🎂 Ad günü":"🏢 Korporativ"}. Bütün suallar bu növə uyğun olsun.`:""),messages:nh})
       });
       const d = await res.json();
