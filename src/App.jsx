@@ -56,10 +56,12 @@ AKTİV ƏMRLƏR (cavabın SONUNA əlavə et):
 [OPEN_INVITE] — dəvətnamə panelini aç
 [OPEN_TABLE:ID] — tək masanı seç və aç
 [OPEN_MECLIS:ID_ya_ad] — yadda saxlanmış məclisi aç
-[ADD_GUEST:MasaID:Ad:Say] — qonaq əlavə et
+[ADD_GUEST_PANEL:MasaID] — qonaq əlavə etmə formasını aç (istifadəçi özü doldurur)
+[ADD_GUEST:MasaID:Ad:Say] — qonaq əlavə et (agent özü əlavə edir)
 [SHOW_STATS] — statistika göstər
 
 Misal: "masa sxemini göstər" → qısa cavab + [OPEN_SCHEMA]
+Misal: "Masa 5-ə qonaq əlavə et" → cavab + [OPEN_SCHEMA] + [ADD_GUEST_PANEL:5]
 Misal: "Leyla Mehdi məclisini aç" → cavab + [OPEN_MECLIS:Leyla]
 Misal: "Masa 5-ə Əli əlavə et 3 nəfər" → cavab + [ADD_GUEST:5:Əli:3]
 Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz müqayisəsi + büdcə hesabı`;
@@ -1421,7 +1423,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -1445,6 +1447,17 @@ function SchemaDrawer({ tables, activeTable, onTableClick, onMove, onDelete, onE
   useEffect(function(){
     if(activeTable){ setExpandedId(activeTable); setPopup(null); setEditLbl(false); }
   },[activeTable]);
+
+  // Agent tərəfindən masa seçildikcə slot formu avtomatik aç
+  useEffect(function(){
+    if(agentSlotTable){
+      setExpandedId(agentSlotTable);
+      setPopup(null);
+      setEditLbl(false);
+      setTimeout(()=>{ setSlotInput({slotIdx:0}); },300);
+      if(onAgentSlotClear) onAgentSlotClear();
+    }
+  },[agentSlotTable]);
 
   useEffect(function(){
     if(expandedId && guestPanelRef.current){
@@ -2863,6 +2876,7 @@ export default function App(){
   const [statsOpen, setStatsOpen] = useState(false);
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
+  const [agentSlotTable, setAgentSlotTable] = useState(null); // agent tərəfindən açılan slot
   const [restOpen, setRestOpen] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
@@ -3460,6 +3474,15 @@ ${savedEvsList||"Yoxdur"}`;
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
       if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&setStatsOpen(true); }
 
+      // [ADD_GUEST_PANEL:ID] — sxemi aç, masanı seç, slot formu aç
+      const addPanelMatch = raw.match(/\[ADD_GUEST_PANEL:(\d+)\]/);
+      if(addPanelMatch){
+        const tId = parseInt(addPanelMatch[1]);
+        setSchemaOpen(true);
+        setActiveTable(tId);
+        setAgentSlotTable(tId);
+      }
+
       // [OPEN_TABLE:ID] — tək masanı seç
       const tableMatch = raw.match(/\[OPEN_TABLE:(\d+)\]/);
       if(tableMatch){
@@ -3498,7 +3521,7 @@ ${savedEvsList||"Yoxdur"}`;
       }
 
       // Əmr etiketlərini cavabdan çıxar
-      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST:[^\]]+\]/g,"").trim();
+      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
 
       const {text,qrs,newEv,adds,focN,labels} = parseCmd(cleanRaw);
       let cur = tabRef.current;
@@ -3868,6 +3891,8 @@ ${savedEvsList||"Yoxdur"}`;
               <SchemaDrawer
                 tables={tables}
                 activeTable={activeTable}
+                agentSlotTable={agentSlotTable}
+                onAgentSlotClear={()=>setAgentSlotTable(null)}
                 hall={hall}
                 pct={pct}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
