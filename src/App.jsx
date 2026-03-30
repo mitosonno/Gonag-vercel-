@@ -16,11 +16,15 @@ Sən GONAG.AZ tətbiqinin daxilindəsən. Aşağıdakı əmrləri istifadə edə
 [OPEN_INVITE] — dəvətnamə panelini aç  
 [OPEN_REST] — restoran axtarışını aç
 [ADD_GUEST:MasaID:Ad Soyad:Say] — qonaq əlavə et (məs: [ADD_GUEST:3:Nigar Əliyeva:2])
+[OPEN_TABLE:MasaID] — tək masanı seç və aç (məs: [OPEN_TABLE:5])
+[OPEN_MECLIS:MeclisID] — yadda saxlanmış məclisi aç (məs: [OPEN_MECLIS:abc123])
 [SHOW_STATS] — statistika göstər
 
-Misal: İstifadəçi "masa sxemini göstər" deyəndə → cavab ver + [OPEN_SCHEMA] əlavə et.
-Misal: "Masa 5-ə Əli əlavə et 3 nəfər" → cavab ver + [ADD_GUEST:5:Əli:3] əlavə et.
-Misal: "Restoran axtar" → cavab ver + [OPEN_REST] əlavə et.`;
+Misal: "masa sxemini göstər" → cavab + [OPEN_SCHEMA]
+Misal: "Masa 5-i aç" → cavab + [OPEN_TABLE:5] + [OPEN_SCHEMA]
+Misal: "Restoran axtar" → cavab + [OPEN_REST]
+Misal: "Masa 3-ə Nigar əlavə et 2 nəfər" → cavab + [ADD_GUEST:3:Nigar:2]
+Misal: "Ziya məclisini aç" → yadda saxlanmış məclislər siyahısına bax, uyğun ID-ni tap → cavab + [OPEN_MECLIS:ID]`;
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
 
@@ -3383,13 +3387,20 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         }).join("\n")
       : "Hələ masa yoxdur";
     const evInfo = evRef.current;
+    const savedEvsList = savedEventsRef.current.map(e=>{
+      const nm = e.couple||(e.obData?.boy&&e.obData?.girl?e.obData.boy+" & "+e.obData.girl:e.obData?.name||"Məclis");
+      return `ID:${e.id} — ${nm} (${e.evType||"?"}, ${e.obData?.date||"tarixsiz"})`;
+    }).join("\n");
     const stateInfo = `\n\nCARİ VƏZİYYƏT:
 Məclis: ${evType==="toy"?"💍 Toy":evType==="nishan"?"💫 Nişan":evType==="adgunu"?"🎂 Ad günü":evType==="korporativ"?"🏢 Korporativ":"Seçilməyib"}
 ${evInfo?.obData?.boy?`Bəy: ${evInfo.obData.boy}, Gəlin: ${evInfo.obData.girl}`:""}
 ${evInfo?.obData?.date?`Tarix: ${evInfo.obData.date}`:""}
 ${hall?`Zal: ${hall._venueName||""} — ${hall.name||""}`:"Zal seçilməyib"}
 Masalar:
-${tablesSummary}`;
+${tablesSummary}
+
+YADDA SAXLANMIŞ MƏCLİSLƏR:
+${savedEvsList||"Yoxdur"}`;
 
     try {
       const res = await fetch("/api/chat",{
@@ -3409,6 +3420,22 @@ ${tablesSummary}`;
       if(raw.includes("[OPEN_INVITE]")){ /* dəvətnamə paneli */ }
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
       if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&setStatsOpen(true); }
+
+      // [OPEN_TABLE:ID] — tək masanı seç
+      const tableMatch = raw.match(/\[OPEN_TABLE:(\d+)\]/);
+      if(tableMatch){
+        const tId = parseInt(tableMatch[1]);
+        setActiveTable(tId);
+        setSchemaOpen(true);
+      }
+
+      // [OPEN_MECLIS:ID] — yadda saxlanmış məclisi aç
+      const meclisMatch = raw.match(/\[OPEN_MECLIS:([^\]]+)\]/);
+      if(meclisMatch){
+        const mId = meclisMatch[1].trim();
+        const found = savedEventsRef.current.find(e=>e.id===mId);
+        if(found){ loadEvent(found); }
+      }
 
       // [ADD_GUEST:MasaID:Ad:Say] parse et
       const addMatches = [...raw.matchAll(/\[ADD_GUEST:(\d+):([^:]+):(\d+)\]/g)];
