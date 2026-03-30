@@ -2784,6 +2784,7 @@ export default function App(){
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceRecogRef = useRef(null);
+  const voiceActiveRef = useRef(false);
   const [hist, setHist] = useState([]);
   const [ev, setEv] = useState({});
   const [evType, setEvType] = useState("");
@@ -3485,26 +3486,73 @@ ${savedEvsList||"Yoxdur"}`;
     const v=vs.find(x=>x.lang.startsWith("az")||x.lang.startsWith("tr")||x.lang.startsWith("ru"));
     if(v) u.voice=v;
     setIsSpeaking(true);
-    u.onend=u.onerror=()=>setIsSpeaking(false);
+    u.onend=u.onerror=()=>{
+      setIsSpeaking(false);
+      // Danışandan sonra avtomatik dinləməyə qayıt
+      setTimeout(()=>{
+        if(voiceActiveRef.current && !isListening){
+          startVoice();
+        }
+      },600);
+    };
     window.speechSynthesis.speak(u);
   }
 
   function toggleVoice(){
     if(isSpeaking){ window.speechSynthesis&&window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
     if(isListening){ stopVoice(); return; }
+    startVoice();
+  }
+
+  function startVoice(){
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
     if(!SR){ alert("Mikrofon bu brauzerdə işləmir. Chrome istifadə edin."); return; }
     const r=new SR();
-    r.lang="az-AZ"; r.interimResults=false; r.continuous=false;
+    r.lang="az-AZ"; r.interimResults=false; r.continuous=true;
     r.onstart=()=>setIsListening(true);
-    r.onresult=e=>{ const t=e.results[0][0].transcript; if(t) send(t); };
-    r.onerror=()=>setIsListening(false);
-    r.onend=()=>setIsListening(false);
+    r.onresult=e=>{
+      // Yalnız son nəticəni al
+      const result = e.results[e.results.length-1];
+      if(!result.isFinal) return;
+      const t=result[0].transcript.trim();
+      if(!t) return;
+      const lower=t.toLowerCase();
+      // "Guliya dur/dayans/stop" — dayandır
+      if(lower.includes("dur")||lower.includes("dayans")||lower.includes("stop")){
+        gulivaSpeak("Dayandım. Lazım olanda yenidən çağırın.");
+        stopVoice();
+        return;
+      }
+      // "Guliya" açar sözü təkrar aktivləşmə
+      if((lower==="guliya"||lower==="güliya")&&lower.length<10){
+        gulivaSpeak("Bəli, buyurun!");
+        return;
+      }
+      send(t);
+    };
+    r.onerror=e=>{
+      if(e.error==="not-allowed"){ gulivaSpeak("Mikrofon icazəsi lazımdır."); setIsListening(false); return; }
+      // Digər xətalarda yenidən başla
+      if(voiceActiveRef.current && e.error!=="aborted"){
+        setTimeout(()=>{ if(voiceActiveRef.current) startVoice(); },1000);
+      }
+    };
+    r.onend=()=>{
+      setIsListening(false);
+      // Guliya danışmırsa və aktiv rejim varsa — yenidən başla
+      if(voiceActiveRef.current){
+        setTimeout(()=>{
+          if(voiceActiveRef.current) startVoice();
+        },500);
+      }
+    };
     voiceRecogRef.current=r;
-    r.start();
+    voiceActiveRef.current=true;
+    try{ r.start(); }catch(e){}
   }
 
   function stopVoice(){
+    voiceActiveRef.current=false;
     setIsListening(false);
     if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
@@ -3556,11 +3604,13 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div className="ir">
             <button onClick={toggleVoice} style={{
-              width:38,height:38,borderRadius:10,border:"none",flexShrink:0,
-              background:isListening?"rgba(80,200,120,.25)":isSpeaking?"rgba(201,168,76,.25)":"rgba(255,255,255,.06)",
-              color:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(255,255,255,.4)",
-              fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-              transition:"all .2s"
+              width:40,height:40,borderRadius:"50%",border:"2px solid",flexShrink:0,
+              borderColor:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(201,168,76,.4)",
+              background:isListening?"rgba(80,200,120,.2)":isSpeaking?"rgba(201,168,76,.2)":"rgba(201,168,76,.08)",
+              color:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(201,168,76,.7)",
+              fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"all .2s",
+              boxShadow:isListening?"0 0 12px rgba(80,200,120,.5)":isSpeaking?"0 0 12px rgba(201,168,76,.4)":"none"
             }}>
               {isListening?"🔴":isSpeaking?"🔊":"🎙️"}
             </button>
