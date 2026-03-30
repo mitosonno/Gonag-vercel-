@@ -2768,6 +2768,9 @@ export default function App(){
   }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const voiceRecogRef = useRef(null);
   const [hist, setHist] = useState([]);
   const [ev, setEv] = useState({});
   const [evType, setEvType] = useState("");
@@ -3382,11 +3385,47 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(qrs.includes("🔍 Restoran axtar")) setRestOpen(true);
       setMsgs(m=>[...m,{role:"agent",text,qrs}]);
       setHist([...nh,{role:"assistant",content:raw}]);
+      // Guliya səslə cavab verir
+      const plainText = text.replace(/[🎊✅📅🗺️📸⬜💍💫🎂🏢🥂👇🔍]/g,"").replace(/\n/g," ").trim();
+      gulivaSpeak(plainText);
     } catch(e){
       setMsgs(m=>[...m,{role:"agent",text:"Xəta baş verdi. Yenidən cəhd edin.",qrs:[]}]);
     }
     setBusy(false);
     inpRef.current&&inpRef.current.focus();
+  }
+
+  function gulivaSpeak(text){
+    if(!window.speechSynthesis||!text) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang="az-AZ"; u.rate=1.05; u.pitch=1.1;
+    const vs=window.speechSynthesis.getVoices();
+    const v=vs.find(x=>x.lang.startsWith("az")||x.lang.startsWith("tr")||x.lang.startsWith("ru"));
+    if(v) u.voice=v;
+    setIsSpeaking(true);
+    u.onend=u.onerror=()=>setIsSpeaking(false);
+    window.speechSynthesis.speak(u);
+  }
+
+  function toggleVoice(){
+    if(isSpeaking){ window.speechSynthesis&&window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    if(isListening){ stopVoice(); return; }
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ alert("Mikrofon bu brauzerdə işləmir. Chrome istifadə edin."); return; }
+    const r=new SR();
+    r.lang="az-AZ"; r.interimResults=false; r.continuous=false;
+    r.onstart=()=>setIsListening(true);
+    r.onresult=e=>{ const t=e.results[0][0].transcript; if(t) send(t); };
+    r.onerror=()=>setIsListening(false);
+    r.onend=()=>setIsListening(false);
+    voiceRecogRef.current=r;
+    r.start();
+  }
+
+  function stopVoice(){
+    setIsListening(false);
+    if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
 
   const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'DM Sans',sans-serif;color:#f2e8d0;}\n.app{height:100vh;display:flex;flex-direction:column;background:#080604;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(201,168,76,.06);border-bottom:1px solid rgba(201,168,76,.12);flex-shrink:0;}\n.logo{font-family:'Playfair Display',serif;font-size:18px;color:#c9a84c;letter-spacing:3px;}\n.logo span{color:#f2e8d0;font-style:italic;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(201,168,76,.1);border-radius:20px;border:1px solid rgba(201,168,76,.2);}\n.dot{width:7px;height:7px;border-radius:50%;background:#50c878;animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(80,200,120,.4)}70%{box-shadow:0 0 0 7px rgba(80,200,120,0)}100%{box-shadow:0 0 0 0 rgba(80,200,120,0)}}\n.pn{font-size:11px;color:#e8cc78;font-weight:600;}\n.tbx{display:flex;gap:6px;}\n.tt{padding:6px 12px;border-radius:8px;border:1px solid rgba(201,168,76,.25);background:rgba(201,168,76,.08);color:#c9a84c;font-size:12px;cursor:pointer;}\n.tt:hover{background:rgba(201,168,76,.18);}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(201,168,76,.12);background:#080604;}\n.schema-panel{flex:1;overflow:hidden;background:#060402;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(201,168,76,.1);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(201,168,76,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);}\n.av.u{background:rgba(255,255,255,.06);}\n.bb{padding:9px 12px;border-radius:12px;font-size:12px;line-height:1.5;max-width:90%;white-space:pre-wrap;}\n.bb.a{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.12);color:#f2e8d0;}\n.bb.u{background:rgba(255,255,255,.07);color:#f2e8d0;margin-left:auto;}\n.qw{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}\n.qb{padding:6px 11px;border-radius:16px;border:1px solid rgba(201,168,76,.35);background:rgba(201,168,76,.08);color:#e8cc78;font-size:11px;cursor:pointer;}\n.qb:hover{background:rgba(201,168,76,.2);}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#c9a84c;animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:8px 12px;display:flex;gap:6px;border-top:1px solid rgba(201,168,76,.1);flex-shrink:0;}\n.inp{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:9px 12px;color:#f2e8d0;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;}\n.inp:focus{border-color:rgba(201,168,76,.5);}\n.sndb{padding:9px 14px;background:rgba(201,168,76,.2);border:1px solid rgba(201,168,76,.4);border-radius:10px;color:#c9a84c;font-size:15px;cursor:pointer;}\n.sndb:hover{background:rgba(201,168,76,.35);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;}\n.qbar{display:flex;gap:5px;padding:7px 12px;border-top:1px solid rgba(201,168,76,.08);flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:6px 11px;border-radius:16px;border:1px solid rgba(201,168,76,.2);background:transparent;color:#9a8060;font-size:11px;cursor:pointer;}\n.qbn:hover{border-color:rgba(201,168,76,.4);color:#c9a84c;}\n.qbn.on{border-color:rgba(201,168,76,.4);color:#c9a84c;background:rgba(201,168,76,.08);}\n.cnt{display:inline-block;margin-left:4px;background:rgba(201,168,76,.25);border-radius:10px;padding:0 5px;font-size:10px;}\n.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{background:#0f0a04;border:1px solid rgba(201,168,76,.2);border-radius:16px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(201,168,76,.12);}\n.rsi{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:8px 12px;color:#f2e8d0;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#9a8060;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:7px 14px;border-radius:8px;border:1px solid rgba(201,168,76,.2);background:rgba(201,168,76,.06);color:#c9a84c;font-size:12px;cursor:pointer;}\n.back-btn:hover{background:rgba(201,168,76,.15);}\n.pbar-bg{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#c9a84c,#e8cc78);border-radius:2px;transition:width .5s;}
@@ -3435,6 +3474,15 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
             <div ref={endRef}/>
           </div>
           <div className="ir">
+            <button onClick={toggleVoice} style={{
+              width:38,height:38,borderRadius:10,border:"none",flexShrink:0,
+              background:isListening?"rgba(80,200,120,.25)":isSpeaking?"rgba(201,168,76,.25)":"rgba(255,255,255,.06)",
+              color:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(255,255,255,.4)",
+              fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"all .2s"
+            }}>
+              {isListening?"🔴":isSpeaking?"🔊":"🎙️"}
+            </button>
             <input ref={inpRef} className="inp" placeholder="Yazın..." value={input}
               onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input);}}} disabled={busy}/>
             <button className="sndb" onClick={()=>send(input)} disabled={!input.trim()||busy}>➤</button>
