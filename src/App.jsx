@@ -211,7 +211,8 @@ async function sbSaveEvent(ev){
     hall_total: ev.hall?.totalGuests||ev.hallTotal||0,
     hall_seats: ev.hall?.seatsPerTable||ev.hallSeats||0,
     tables: tablesWithMeta,
-    status: ev.status||"natamam"
+    status: ev.status||"natamam",
+    card_number: ev.cardNumber||""
   };
   if(ev.dbId){
     const res = await sbFetch("events?id=eq."+ev.dbId, {
@@ -2202,7 +2203,7 @@ function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  GONAG.AZ  ✦", W/2, H-34);
 }
 
-function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose }){
+function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumber, setCardNumber }){
   const tables2use = allTables && allTables.length>0 ? allTables.filter(t=>(t.guests||[]).length>0) : (tbl?[tbl]:[]);
   const [activeTblIdx, setActiveTblIdx] = useState(0);
   const activeTbl = tables2use[activeTblIdx] || tbl;
@@ -2211,6 +2212,7 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose }){
   const [selIdx, setSelIdx] = useState(0);
   const [sending, setSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [cardSettingsOpen, setCardSettingsOpen] = useState(false);
   const canvasRef = useRef(null);
   const previewGuest = guests[selIdx] || null;
 
@@ -2233,33 +2235,57 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose }){
     a.download="devetname-masa"+(t||activeTbl).id+"-"+g.name.replace(/\s/g,"")+".png";
     a.href=c.toDataURL("image/png"); a.click();
   }
+  const SB_URL2="https://dpvoluttxelwnqcfnsbh.supabase.co";
+  const SB_KEY2="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368";
+
+  async function createRsvp(guest, tbl){
+    const code = Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    const sessionId = localStorage.getItem("gonag_session_id")||"gonag_user_main";
+    const res = await fetch(SB_URL2+"/rest/v1/rsvp",{
+      method:"POST",
+      headers:{apikey:SB_KEY2,Authorization:"Bearer "+SB_KEY2,"Content-Type":"application/json",Prefer:"return=representation"},
+      body:JSON.stringify({code, session_id:sessionId, table_id:tbl.id, guest_name:guest.name, guest_phone:guest.phone||""})
+    });
+    if(res.ok) return code;
+    return null;
+  }
+
   async function sendAllWA(){
     const withPhone=guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7);
     if(!withPhone.length){ alert("Nömrəsi olan qonaq yoxdur!"); return; }
     setSending(true); setSentCount(0);
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(g=>"  • "+g.name+(g.count>1?" ("+g.count+"n)":"")).join("\n");
+    const baseUrl = window.location.origin;
     for(let i=0;i<withPhone.length;i++){
       const g=withPhone[i];
+      // PNG endir
       const c=makeCanvas(g.name);
       const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
       a.href=c.toDataURL("image/png"); a.click();
+      // RSVP link yarat
+      const code = await createRsvp(g, activeTbl);
+      const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
       const phone=(g.phone||"").replace(/\D/g,"");
-      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
-      await new Promise(r=>setTimeout(r,600));
+      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+      await new Promise(r=>setTimeout(r,700));
       window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
       setSentCount(i+1);
     }
     setSending(false);
   }
-  function sendOneWA(g){
+
+  async function sendOneWA(g){
     downloadOne(g);
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
     const phone=(g.phone||"").replace(/\D/g,"");
-    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n✨ *GONAG.AZ*\n\n_(Dəvətnamə şəkli yuxarıda 👆)_";
-    if(phone) setTimeout(()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank"),500);
-    else setTimeout(()=>window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"),500);
+    const code = await createRsvp(g, activeTbl);
+    const baseUrl = window.location.origin;
+    const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+    if(phone) setTimeout(()=>window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank"),600);
+    else setTimeout(()=>window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"),600);
   }
 
   return (
@@ -2267,8 +2293,23 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose }){
       {/* Header */}
       <div style={{background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"11px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <span style={{fontSize:14,fontWeight:700,color:"#c9a84c"}}>🎊 Dəvətnamə PNG</span>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <button onClick={()=>setCardSettingsOpen&&setCardSettingsOpen(v=>!v)}
+            style={{padding:"5px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,cursor:"pointer"}}>
+            🎁 Kart
+          </button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+        </div>
       </div>
+      {/* Kart nömrəsi */}
+      {cardSettingsOpen&&(
+        <div style={{padding:"10px 16px",background:"rgba(201,168,76,.04)",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:6}}>🎁 Hədiyyə kart nömrəsi (qonaq linkdə görəcək):</div>
+          <input value={cardNumber||""} onChange={e=>setCardNumber&&setCardNumber(e.target.value)}
+            placeholder="Məs: 4169 7388 1234 5678"
+            style={{width:"100%",padding:"8px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
+        </div>
+      )}
 
       {/* Şablon seçimi */}
       <div style={{padding:"8px 14px",background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
@@ -2460,8 +2501,11 @@ export default function App(){
   const [hall, setHall] = useState(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
-  const [schemaTutStep, setSchemaTutStep] = useState(0); // 0=not shown, 1,2,3=steps, -1=done
+  const [schemaTutStep, setSchemaTutStep] = useState(0);
   const [devetData, setDevetData] = useState({metn:"", media:null});
+  const [cardNumber, setCardNumber] = useState("");
+  const [rsvpStats, setRsvpStats] = useState({});
+  const [cardSettingsOpen, setCardSettingsOpen] = useState(false);
   const [schemaDoneConfirm, setSchemaDoneConfirm] = useState(false);
   const [schemaChanged, setSchemaChanged] = useState(false);
   const [schemaUnsaved, setSchemaUnsaved] = useState(false);
@@ -2621,7 +2665,7 @@ export default function App(){
     }
 
     // Supabase-ə saxla
-    sbSaveEvent({...snap, dbId:existingDbId, sessionId}).then(returnedId=>{
+    sbSaveEvent({...snap, dbId:existingDbId, sessionId, cardNumber}).then(returnedId=>{
       if(returnedId){
         const finalId = returnedId;
         setSavedEvents(prev=>prev.map(e=>e.id===evId?{...e,dbId:finalId}:e));
@@ -2667,6 +2711,24 @@ export default function App(){
       setHist([]);
     }
   }
+
+  // RSVP cavablarını yüklə
+  useEffect(()=>{
+    if(!sessionId) return;
+    async function loadRsvp(){
+      try{
+        const rows = await sbFetch("rsvp?session_id=eq."+encodeURIComponent(sessionId)+"&select=guest_phone,status");
+        if(rows&&rows.length>0){
+          const stats = {};
+          rows.forEach(r=>{ if(r.guest_phone) stats[r.guest_phone]=r.status; });
+          setRsvpStats(stats);
+        }
+      }catch(e){}
+    }
+    loadRsvp();
+    const interval = setInterval(loadRsvp, 30000); // 30 saniyədə bir yenilə
+    return ()=>clearInterval(interval);
+  },[sessionId]);
 
   const totG = tables.reduce((s,t)=>s+(t.guests||[]).length, 0);
   const totP = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
@@ -3332,6 +3394,8 @@ ${savedEvsList||"Yoxdur"}`;
             {totG>0&&(()=>{
               const invCnt=tables.flatMap(t=>t.guests).filter(g=>g.invited).length;
               const notCnt=totG-invCnt;
+              const attending=Object.values(rsvpStats).filter(s=>s==="attending").length;
+              const notAttending=Object.values(rsvpStats).filter(s=>s==="not_attending").length;
               return (<>
                 <button className="qbn on" onClick={()=>setInvitedDrawerOpen(true)}
                   style={{borderColor:"rgba(80,200,120,.4)",color:"#50c878",background:"rgba(80,200,120,.08)"}}>
@@ -3341,6 +3405,12 @@ ${savedEvsList||"Yoxdur"}`;
                   style={{borderColor:"rgba(232,184,122,.4)",color:"#e8b87a",background:"rgba(232,184,122,.06)"}}>
                   ⏳ Göndərilməyən <span className="cnt" style={{background:"rgba(232,184,122,.25)"}}>{notCnt}</span>
                 </button>
+                {attending>0&&<button className="qbn on" style={{borderColor:"rgba(80,200,120,.4)",color:"#50c878",background:"rgba(80,200,120,.06)",cursor:"default"}}>
+                  ✅ Gəlirəm <span className="cnt" style={{background:"rgba(80,200,120,.3)"}}>{attending}</span>
+                </button>}
+                {notAttending>0&&<button className="qbn on" style={{borderColor:"rgba(255,80,80,.3)",color:"#ff8888",background:"rgba(255,80,80,.05)",cursor:"default"}}>
+                  ❌ Gəlmirəm <span className="cnt" style={{background:"rgba(255,80,80,.2)"}}>{notAttending}</span>
+                </button>}
               </>);
             })()}
             {totG>0&&<button className="qbn on" onClick={()=>setStatsOpen(true)}>
@@ -3360,6 +3430,8 @@ ${savedEvsList||"Yoxdur"}`;
           allTables={tables}
           obData={obData}
           hallName={hall?hall._venueName+(hall.name?" — "+hall.name:""):""}
+          cardNumber={cardNumber}
+          setCardNumber={setCardNumber}
           onClose={()=>setDevetPNGOpen(null)}
         />
       )}
