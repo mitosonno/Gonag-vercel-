@@ -8,10 +8,19 @@ const RESTAURANTS = [
   { id:4, name:"Şüvəlan Park", address:"Şüvəlan, Bakı",halls:[{id:401,name:"Açıq Zal",cap:600},{id:402,name:"Qapalı Zal",cap:200}] },
 ];
 
-const SYS = `Sən GONAG.AZ-ın AI köməkçisi Guliyasan. Azərbaycanca danış. Qısa cavablar ver.
-Əsas vəzifələrin: məclis növü, restoran, qonaq sayı, masa düzülüşü haqqında kömək et.
-Dəvətnamə göndərmə, nömrə əlavə etmə, Excel yükləmə haqqında söz açma — bu funksiyalar artıq interfeysdə var.
-Yalnız məclis planlaşdırması haqqında sual ver və köməkçi ol.`;
+const SYS = `Sən GONAG.AZ-ın AI köməkçisi Guliyasan. Azərbaycanca danış. Qısa, mehriban cavablar ver.
+
+Sən GONAG.AZ tətbiqinin daxilindəsən. Aşağıdakı əmrləri istifadə edə bilərsən — cavabın SONUNA əlavə et:
+
+[OPEN_SCHEMA] — masa sxemini aç
+[OPEN_INVITE] — dəvətnamə panelini aç  
+[OPEN_REST] — restoran axtarışını aç
+[ADD_GUEST:MasaID:Ad Soyad:Say] — qonaq əlavə et (məs: [ADD_GUEST:3:Nigar Əliyeva:2])
+[SHOW_STATS] — statistika göstər
+
+Misal: İstifadəçi "masa sxemini göstər" deyəndə → cavab ver + [OPEN_SCHEMA] əlavə et.
+Misal: "Masa 5-ə Əli əlavə et 3 nəfər" → cavab ver + [ADD_GUEST:5:Əli:3] əlavə et.
+Misal: "Restoran axtar" → cavab ver + [OPEN_REST] əlavə et.`;
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
 
@@ -3364,13 +3373,58 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     const nh = [...hist,{role:"user",content:txt}];
     setHist(nh);
 
+    // Cari state-i sistem prompt-a əlavə et
+    const curTables = tabRef.current;
+    const tablesSummary = curTables.length > 0
+      ? curTables.map(t=>{
+          const occ = (t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
+          const names = (t.guests||[]).map(g=>g.name).join(", ");
+          return `Masa ${t.id}: ${occ}/${t.seats||8} dolu${names?" — "+names:""}`;
+        }).join("\n")
+      : "Hələ masa yoxdur";
+    const evInfo = evRef.current;
+    const stateInfo = `\n\nCARİ VƏZİYYƏT:
+Məclis: ${evType==="toy"?"💍 Toy":evType==="nishan"?"💫 Nişan":evType==="adgunu"?"🎂 Ad günü":evType==="korporativ"?"🏢 Korporativ":"Seçilməyib"}
+${evInfo?.obData?.boy?`Bəy: ${evInfo.obData.boy}, Gəlin: ${evInfo.obData.girl}`:""}
+${evInfo?.obData?.date?`Tarix: ${evInfo.obData.date}`:""}
+${hall?`Zal: ${hall._venueName||""} — ${hall.name||""}`:"Zal seçilməyib"}
+Masalar:
+${tablesSummary}`;
+
     try {
       const res = await fetch("/api/chat",{
-        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:SYS+(evType?`\n\nAKTİV MƏCLİS NÖVÜ: ${evType==="toy"?"💍 Toy":evType==="nishan"?"💫 Nişan":evType==="adgunu"?"🎂 Ad günü":"🏢 Korporativ"}. Bütün suallar bu növə uyğun olsun.`:""),messages:nh})
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          system:SYS+stateInfo,
+          messages:nh
+        })
       });
       const d = await res.json();
       const raw = (d.content&&d.content[0]&&d.content[0].text)||"Xəta baş verdi.";
-      const {text,qrs,newEv,adds,focN,labels} = parseCmd(raw);
+
+      // Agent əmrlərini icra et
+      if(raw.includes("[OPEN_SCHEMA]")){ setSchemaOpen(true); }
+      if(raw.includes("[OPEN_INVITE]")){ /* dəvətnamə paneli */ }
+      if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
+      if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&setStatsOpen(true); }
+
+      // [ADD_GUEST:MasaID:Ad:Say] parse et
+      const addMatches = [...raw.matchAll(/\[ADD_GUEST:(\d+):([^:]+):(\d+)\]/g)];
+      if(addMatches.length>0){
+        addMatches.forEach(m=>{
+          const tblId=parseInt(m[1]), gName=m[2].trim(), gCount=parseInt(m[3])||1;
+          const newG={id:Date.now()+Math.random(),name:gName,count:gCount,phone:"",gender:"",invited:false,tableId:tblId};
+          const next=applyGuests([newG],tabRef.current);
+          setTables(next);
+        });
+      }
+
+      // Əmr etiketlərini cavabdan çıxar
+      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST:[^\]]+\]/g,"").trim();
+
+      const {text,qrs,newEv,adds,focN,labels} = parseCmd(cleanRaw);
       let cur = tabRef.current;
       if(newEv){ const merged={...evRef.current,...newEv}; setEv(merged); }
       if(adds.length>0){
