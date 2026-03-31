@@ -3430,34 +3430,10 @@ ${savedEvsList||"Yoxdur"}`;
                 setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]);
                 return;
               }
-              // Birinci masanı PNG panelə aç
-              const firstTbl = tables.find(t=>(t.guests||[]).length>0)||tables[0];
-              setDevetPNGOpen({tbl: firstTbl});
+              setNotInvitedDrawerOpen(true);
             }}>
               📨 Dəvətnamə
             </button>}
-            {totG>0&&(()=>{
-              const invCnt=tables.flatMap(t=>t.guests).filter(g=>g.invited).length;
-              const notCnt=totG-invCnt;
-              const attending=Object.values(rsvpStats).filter(s=>s==="attending").length;
-              const notAttending=Object.values(rsvpStats).filter(s=>s==="not_attending").length;
-              return (<>
-                <button className="qbn on" onClick={()=>setInvitedDrawerOpen(true)}
-                  style={{borderColor:"rgba(80,200,120,.4)",color:"#50c878",background:"rgba(80,200,120,.08)"}}>
-                  ✓ Göndərilən <span className="cnt" style={{background:"rgba(80,200,120,.3)"}}>{invCnt}</span>
-                </button>
-                <button className="qbn on" onClick={()=>setNotInvitedDrawerOpen(true)}
-                  style={{borderColor:"rgba(232,184,122,.4)",color:"#e8b87a",background:"rgba(232,184,122,.06)"}}>
-                  ⏳ Göndərilməyən <span className="cnt" style={{background:"rgba(232,184,122,.25)"}}>{notCnt}</span>
-                </button>
-                {attending>0&&<button className="qbn on" style={{borderColor:"rgba(80,200,120,.4)",color:"#50c878",background:"rgba(80,200,120,.06)",cursor:"default"}}>
-                  ✅ Gəlirəm <span className="cnt" style={{background:"rgba(80,200,120,.3)"}}>{attending}</span>
-                </button>}
-                {notAttending>0&&<button className="qbn on" style={{borderColor:"rgba(255,80,80,.3)",color:"#ff8888",background:"rgba(255,80,80,.05)",cursor:"default"}}>
-                  ❌ Gəlmirəm <span className="cnt" style={{background:"rgba(255,80,80,.2)"}}>{notAttending}</span>
-                </button>}
-              </>);
-            })()}
             {totG>0&&<button className="qbn on" onClick={()=>setStatsOpen(true)}>
               📊 Statistika
             </button>}
@@ -3833,7 +3809,7 @@ ${savedEvsList||"Yoxdur"}`;
       {/* GÖNDƏRILMƏYƏN QONAQLAR DRAWER */}
       {notInvitedDrawerOpen&&(
         <NotInvDrawerBody
-          notInvTables={tables.filter(t=>t.guests.length>0&&t.guests.some(g=>!g.invited))}
+          notInvTables={tables.filter(t=>t.guests.length>0)}
           allTables={tables}
           onClose={()=>setNotInvitedDrawerOpen(false)}
           onMarkSent={(ids)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true}:g)})));}}
