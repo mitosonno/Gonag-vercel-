@@ -192,23 +192,23 @@ export default function RsvpPage(){
         <div style={{fontSize:11,color:"rgba(201,168,76,.5)",letterSpacing:2,marginBottom:16,textAlign:"center"}}>İŞTİRAK TƏSDİQİ</div>
         {answered?(
           <div style={{textAlign:"center",padding:"12px"}}>
-            <div style={{fontSize:40,marginBottom:10}}>{answer==="attending"?"🎉":"😔"}</div>
-            <div style={{fontSize:18,fontWeight:700,color:answer==="attending"?"#50c878":"#ff8888"}}>
-              {answer==="attending"?"Gəlirəm — təsdiq edildi!":"Gəlmirəm — qeyd edildi"}
+            <div style={{fontSize:48,marginBottom:10}}>{answer==="attending"?"🎉":"😔"}</div>
+            <div style={{fontSize:16,fontWeight:700,color:answer==="attending"?"#50c878":"#ff8888"}}>
+              {answer==="attending"?"Təsdiq edildi!":"Qeyd edildi"}
             </div>
             <div style={{fontSize:12,color:"rgba(255,255,255,.3)",marginTop:8}}>Cavabınız məclis sahibinə çatdırıldı</div>
           </div>
         ):(
           <div style={{display:"flex",gap:10}}>
-            <button onClick={()=>respond("attending")} style={{flex:1,padding:"16px 8px",borderRadius:14,border:"none",
+            <button onClick={()=>respond("attending")} style={{flex:1,padding:"20px 8px",borderRadius:14,border:"none",
               background:"linear-gradient(135deg,rgba(80,200,120,.5),rgba(80,200,120,.25))",
-              color:"#50c878",fontSize:16,fontWeight:800,cursor:"pointer",transition:"all .2s"}}>
-              ✅ Gəlirəm
+              color:"#50c878",fontSize:32,cursor:"pointer",transition:"all .2s"}}>
+              ✅
             </button>
-            <button onClick={()=>respond("not_attending")} style={{flex:1,padding:"16px 8px",borderRadius:14,
+            <button onClick={()=>respond("not_attending")} style={{flex:1,padding:"20px 8px",borderRadius:14,
               border:"1px solid rgba(255,80,80,.3)",background:"rgba(255,80,80,.08)",
-              color:"#ff8888",fontSize:16,fontWeight:800,cursor:"pointer"}}>
-              ❌ Gəlmirəm
+              color:"#ff8888",fontSize:32,cursor:"pointer"}}>
+              ❌
             </button>
           </div>
         )}
