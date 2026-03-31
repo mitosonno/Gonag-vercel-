@@ -3970,6 +3970,8 @@ function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData
   const [previewTbl, setPreviewTbl] = useState(null);
   const [step, setStep] = useState("select");
   const [pulse, setPulse] = useState(true);
+  const [senderName, setSenderName] = useState("");
+  const [senderTitle, setSenderTitle] = useState("xanım"); // "xanım"|"müəllim"|"bəy"
   const canvasRef = useRef(null);
   const shablon0Ref = useRef(null);
   const shablon1Ref = useRef(null);
@@ -4020,7 +4022,7 @@ function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData
           body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:g.name,guest_phone:g.phone||""})
         });
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n✨ *GONAG.AZ*";
+        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
         await new Promise(resolve=>{
@@ -4153,13 +4155,36 @@ function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData
       {/* STEP 4: Təsdiq */}
       {step==="confirm"&&(
         <>
-          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 20px"}}>
-            <div style={{fontSize:52,marginBottom:16}}>📨</div>
-            <div style={{fontSize:17,fontWeight:700,color:"#f2e8d0",marginBottom:10,textAlign:"center"}}>{selTbls.size} masa üçün dəvətnamə göndərilsin?</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.35)",textAlign:"center",lineHeight:1.7,marginBottom:18}}>
-              {notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa · {shablon.ad} şablonu
+          <div style={{flex:1,overflowY:"auto",padding:"20px 16px"}}>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:44,marginBottom:10}}>📨</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#f2e8d0",marginBottom:6}}>{selTbls.size} masa üçün dəvətnamə göndərilsin?</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.3)",lineHeight:1.6}}>
+                {notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa · {shablon.ad}
+              </div>
             </div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
+
+            {/* Kimdən göndərilsin */}
+            <div style={{background:"rgba(201,168,76,.06)",border:"1px solid rgba(201,168,76,.15)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
+              <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10}}>✍️ Dəvətnamə kimdən göndərilsin?</div>
+              <input value={senderName} onChange={e=>setSenderName(e.target.value)}
+                placeholder="Adınızı yazın (məs: Aytən, Oğlan evi tərəf...)"
+                style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:9,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:8}}>Ünvan:</div>
+              <div style={{display:"flex",gap:8}}>
+                {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
+                  <button key={t} onClick={()=>setSenderTitle(t)}
+                    style={{flex:1,padding:"7px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?"#c9a84c":"rgba(255,255,255,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                    {e} {t}
+                  </button>
+                ))}
+              </div>
+              {senderName&&<div style={{marginTop:10,padding:"8px 12px",background:"rgba(255,255,255,.04)",borderRadius:8,fontSize:12,color:"rgba(255,255,255,.5)",fontStyle:"italic"}}>
+                "Hörmətlə, {senderName} {senderTitle}"
+              </div>}
+            </div>
+
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
               {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
                 <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"rgba(201,168,76,.1)",border:"1px solid rgba(201,168,76,.25)",color:"#c9a84c",fontSize:11}}>Masa {t.id}</div>
               ))}
