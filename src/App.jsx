@@ -1854,150 +1854,170 @@ function Bar({val,tot,color}){
   );
 }
 
-function StatsPanel({ tables, ev, onClose }){
-  const guests = tables.flatMap(t=>t.guests);
+function StatsPanel({ tables, ev, rsvpStats, onClose }){
+  const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
   const total = guests.reduce((s,g)=>s+(g.count||1),0);
   const seats = tables.reduce((s,t)=>s+t.seats,0);
   const kishi = guests.filter(g=>g.gender==="kishi").reduce((s,g)=>s+(g.count||1),0);
   const qadin = guests.filter(g=>g.gender==="qadin").reduce((s,g)=>s+(g.count||1),0);
-  const ushaq = guests.flatMap(g=>g.extras||[]).filter(x=>x.type==="usher").reduce((s,x)=>s+(x.count||1),0);
-  const neutral = total - kishi - qadin;
   const pct = seats>0 ? Math.round(total/seats*100) : 0;
+  const rs = rsvpStats||{};
 
-  const gelecek = guests.filter(g=>g.rsvp==="yes").reduce((s,g)=>s+(g.count||1),0);
-  const gelmir = guests.filter(g=>g.rsvp==="no").reduce((s,g)=>s+(g.count||1),0);
-  const cavabsiz = total - gelecek - gelmir;
+  // RSVP statuslar
+  const attending = guests.filter(g=>rs[g.phone]==="attending");
+  const notAttending = guests.filter(g=>rs[g.phone]==="not_attending");
+  const pending = guests.filter(g=>g.phone&&!rs[g.phone]);
+  const noPhone = guests.filter(g=>!g.phone);
 
-  const oglan = guests.filter(g=>g.side==="Oğlan evi").reduce((s,g)=>s+(g.count||1),0);
-  const qiz = guests.filter(g=>g.side==="Qız evi").reduce((s,g)=>s+(g.count||1),0);
-  const umumi = guests.filter(g=>!g.side||g.side==="Ümumi").reduce((s,g)=>s+(g.count||1),0);
+  const [expand, setExpand] = useState(null); // "attending"|"not_attending"|"pending"
+  const [smsGuest, setSmsGuest] = useState(null);
+  const [smsText, setSmsText] = useState("");
 
-  const fullTables = tables.filter(t=>t.guests.reduce((s,g)=>s+(g.count||1),0)>=t.seats).length;
+  function openSms(g){
+    setSmsGuest(g);
+    setSmsText("Təəssüf ki gələ bilməyəcəyinizi bildirdiniz. Bizi sevindirsəydiniz çox xoş olardı. Hər halda ən xoş arzularımız sizinlədir! 🌹");
+  }
+
+  const gold="#c9a84c";
+  const statCard = (label,val,color,icon)=>(
+    <div style={{background:"rgba(255,255,255,.03)",border:"1px solid "+color+"33",borderRadius:12,padding:"12px",textAlign:"center"}}>
+      <div style={{fontSize:22}}>{icon}</div>
+      <div style={{fontSize:24,fontWeight:800,color,marginTop:4}}>{val}</div>
+      <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginTop:2}}>{label}</div>
+    </div>
+  );
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:120,background:"rgba(0,0,0,.55)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",overflowY:"auto"}}>
-      <div style={{maxWidth:480,margin:"0 auto",padding:"16px 14px 48px"}}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)"}} onClick={onClose}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#080604",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+        <div style={{display:"flex",justifyContent:"center",padding:"10px 0 6px",flexShrink:0}}>
+          <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+          <div style={{fontFamily:"'Playfair Display',serif",color:gold,fontSize:15}}>📊 Statistika</div>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:18,cursor:"pointer"}}>✕</button>
+        </div>
 
-        {/* Header */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <div>
-            <div style={{fontSize:22,fontWeight:800,color:"#fff",fontFamily:"'Playfair Display',serif",letterSpacing:.5}}>Statistika</div>
-            {ev&&ev.name&&<div style={{fontSize:12,color:"rgba(255,255,255,.45)",marginTop:2}}>{ev.name}{ev.date?" · "+ev.date:""}</div>}
+        <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
+          {/* Ümumi */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
+            {statCard("Qonaq",total,gold,"👥")}
+            {statCard("Doluluq",pct+"%","#50c878","📊")}
+            {statCard("Masa",tables.length,"#7aade8","🪑")}
           </div>
-          <button onClick={onClose} style={{width:36,height:36,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.12)",color:"#fff",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(8px)"}}>✕</button>
-        </div>
 
-        {/* KPI kartlar */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          {[
-            {ic:"👥",val:total,lbl:"Ümumi qonaq",color:"#c9a84c",bg:"rgba(201,168,76,.12)"},
-            {ic:"🪑",val:seats,lbl:"Cəmi yer",color:"#7aade8",bg:"rgba(122,173,232,.12)"},
-            {ic:"🗓️",val:tables.length,lbl:"Masa sayı",color:"#e87aad",bg:"rgba(232,122,173,.12)"},
-            {ic:"📊",val:pct+"%",lbl:"Dolulug",color:pct>85?"#e87a7a":pct>50?"#c9a84c":"#50c878",bg:pct>85?"rgba(232,122,122,.12)":pct>50?"rgba(201,168,76,.12)":"rgba(80,200,120,.12)"},
-          ].map(({ic,val,lbl,color,bg})=>(
-            <div key={lbl} style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:16,padding:"14px 16px",backdropFilter:"blur(10px)"}}>
-              <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:6,fontWeight:500}}>{ic} {lbl}</div>
-              <div style={{fontSize:28,fontWeight:800,color:color,lineHeight:1}}>{val}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* RSVP */}
-        <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:16,padding:"16px",marginBottom:12,backdropFilter:"blur(10px)"}}>
-          <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.35)",letterSpacing:1.5,marginBottom:14}}>RSVP — CAVABLAR</div>
-          <div style={{display:"flex",gap:8,marginBottom:14}}>
-            {[
-              {ic:"✅",val:gelecek,lbl:"Gələcək",c:"#50c878",bg:"rgba(80,200,120,.15)"},
-              {ic:"❌",val:gelmir,lbl:"Gəlmir",c:"#e87a7a",bg:"rgba(232,122,122,.15)"},
-              {ic:"⏳",val:cavabsiz,lbl:"Cavabsız",c:"rgba(255,255,255,.4)",bg:"rgba(255,255,255,.06)"},
-            ].map(({ic,val,lbl,c,bg})=>(
-              <div key={lbl} style={{flex:1,background:bg,border:"1px solid "+c+"33",borderRadius:12,padding:"10px 8px",textAlign:"center"}}>
-                <div style={{fontSize:18}}>{ic}</div>
-                <div style={{fontSize:22,fontWeight:800,color:c,lineHeight:1.1}}>{val}</div>
-                <div style={{fontSize:9,color:"rgba(255,255,255,.35)",marginTop:3}}>{lbl}</div>
-              </div>
-            ))}
+          {/* Cins */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
+            {statCard("Kişi",kishi,"#7aade8","👨")}
+            {statCard("Qadın",qadin,"#e87aad","👩")}
+            {statCard("Digər",total-kishi-qadin,"rgba(201,168,76,.7)","👤")}
           </div>
-          {total>0&&(
-            <div style={{height:8,background:"rgba(255,255,255,.08)",borderRadius:4,overflow:"hidden",display:"flex"}}>
-              <div style={{width:(gelecek/total*100)+"%",background:"linear-gradient(90deg,#50c878,#78e896)",borderRadius:4,transition:"width .5s"}}/>
-              <div style={{width:(gelmir/total*100)+"%",background:"linear-gradient(90deg,#e87a7a,#ff9a9a)",transition:"width .5s"}}/>
-              <div style={{flex:1,background:"rgba(255,255,255,.04)"}}/>
-            </div>
-          )}
-        </div>
 
-        {/* Cins */}
-        <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:16,padding:"16px",marginBottom:12,backdropFilter:"blur(10px)"}}>
-          <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.35)",letterSpacing:1.5,marginBottom:14}}>CİNS BÖLGÜSÜ</div>
-          {[
-            {ic:"👨",lbl:"Kişi",val:kishi,c:"#7aade8"},
-            {ic:"👩",lbl:"Qadın",val:qadin,c:"#e87aad"},
-            {ic:"👧",lbl:"Uşaq",val:ushaq,c:"#f5d060"},
-            {ic:"❓",lbl:"Bilinmir",val:neutral,c:"rgba(255,255,255,.3)"},
-          ].filter(x=>x.val>0||x.lbl==="Kişi"||x.lbl==="Qadın").map(({ic,lbl,val,c})=>(
-            <div key={lbl} style={{marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                <span style={{fontSize:12,color:"rgba(255,255,255,.7)",fontWeight:500}}>{ic} {lbl}</span>
-                <span style={{fontSize:13,fontWeight:700,color:c}}>{val}</span>
+          {/* RSVP Bölməsi */}
+          <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:12}}>
+            <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:12}}>📋 İştirak cavabları</div>
+
+            {/* Gəlirəm */}
+            <div onClick={()=>setExpand(expand==="attending"?null:"attending")}
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(80,200,120,.25)",background:"rgba(80,200,120,.06)",marginBottom:8,cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>✅</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#50c878"}}>Gəlirəm</span>
               </div>
-              <div style={{height:6,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
-                <div style={{height:"100%",width:total>0?(val/total*100)+"%":"0%",background:c,borderRadius:3,transition:"width .6s ease"}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{background:"rgba(80,200,120,.25)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#50c878"}}>{attending.length}</div>
+                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="attending"?"▲":"▼"}</span>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Tərəf bölgüsü */}
-        {(oglan>0||qiz>0)&&(
-          <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:16,padding:"16px",marginBottom:12,backdropFilter:"blur(10px)"}}>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.35)",letterSpacing:1.5,marginBottom:14}}>TƏRƏF BÖLGÜSÜ</div>
-            <div style={{display:"flex",gap:8}}>
-              {[
-                {lbl:"Oğlan evi",val:oglan,c:"#7aade8",bg:"rgba(122,173,232,.15)"},
-                {lbl:"Qız evi",val:qiz,c:"#e87aad",bg:"rgba(232,122,173,.15)"},
-                {lbl:"Ümumi",val:umumi,c:"#c9a84c",bg:"rgba(201,168,76,.12)"},
-              ].map(({lbl,val,c,bg})=>(
-                <div key={lbl} style={{flex:1,background:bg,border:"1px solid "+c+"33",borderRadius:12,padding:"10px 6px",textAlign:"center"}}>
-                  <div style={{fontSize:20,fontWeight:800,color:c}}>{val}</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,.4)",marginTop:2}}>{lbl}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Masa üzrə */}
-        <div style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:16,padding:"16px",backdropFilter:"blur(10px)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.35)",letterSpacing:1.5}}>MASA ÜZRƏ</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>{fullTables}/{tables.length} dolu</div>
-          </div>
-          {tables.map(t=>{
-            const tg = t.guests.reduce((s,g)=>s+(g.count||1),0);
-            const tw = t.seats>0 ? Math.round(tg/t.seats*100) : 0;
-            const tc = tw>=100?"#e87a7a":tw>=70?"#c9a84c":"#50c878";
-            return (
-              <div key={t.id} style={{marginBottom:10}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                  <span style={{fontSize:11,color:"rgba(255,255,255,.7)",fontWeight:500}}>
-                    #{t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""}
-                    {t.side&&<span style={{marginLeft:6,fontSize:9,color:t.side==="Oğlan evi"?"#7aade8":"#e87aad"}}>{t.side}</span>}
-                  </span>
-                  <span style={{fontSize:11,fontWeight:700,color:tc}}>{tg}/{t.seats}</span>
-                </div>
-                <div style={{height:5,background:"rgba(255,255,255,.07)",borderRadius:3,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:Math.min(tw,100)+"%",background:tc,borderRadius:3,transition:"width .4s"}}/>
-                </div>
+            {expand==="attending"&&(
+              <div style={{padding:"8px 12px",background:"rgba(80,200,120,.04)",borderRadius:8,marginBottom:8,border:"1px solid rgba(80,200,120,.12)"}}>
+                {attending.length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                attending.map((g,i)=>(
+                  <div key={i} style={{fontSize:12,color:"#f2e8d0",padding:"4px 0",borderBottom:i<attending.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
+                    ✓ {g.name}{g.count>1?` (${g.count}n)`:""}
+                  </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
+            )}
 
+            {/* Gəlmirəm */}
+            <div onClick={()=>setExpand(expand==="not_attending"?null:"not_attending")}
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(255,80,80,.2)",background:"rgba(255,80,80,.05)",marginBottom:8,cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>❌</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#ff8888"}}>Gəlmirəm</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{background:"rgba(255,80,80,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#ff8888"}}>{notAttending.length}</div>
+                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="not_attending"?"▲":"▼"}</span>
+              </div>
+            </div>
+            {expand==="not_attending"&&(
+              <div style={{padding:"8px 12px",background:"rgba(255,80,80,.03)",borderRadius:8,marginBottom:8,border:"1px solid rgba(255,80,80,.1)"}}>
+                {notAttending.length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                notAttending.map((g,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<notAttending.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
+                    <span style={{fontSize:12,color:"#f2e8d0"}}>✗ {g.name}{g.count>1?` (${g.count}n)`:""}</span>
+                    {g.phone&&(
+                      <button onClick={e=>{e.stopPropagation();openSms(g);}}
+                        style={{padding:"3px 8px",borderRadius:8,border:"1px solid rgba(37,211,102,.3)",background:"rgba(37,211,102,.08)",color:"#25d366",fontSize:10,cursor:"pointer"}}>
+                        SMS
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Gözləyirəm */}
+            <div onClick={()=>setExpand(expand==="pending"?null:"pending")}
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(201,168,76,.2)",background:"rgba(201,168,76,.04)",cursor:"pointer"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:20}}>⏳</span>
+                <span style={{fontSize:14,fontWeight:700,color:gold}}>Gözləyirəm</span>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{background:"rgba(201,168,76,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:gold}}>{pending.length+noPhone.length}</div>
+                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="pending"?"▲":"▼"}</span>
+              </div>
+            </div>
+            {expand==="pending"&&(
+              <div style={{padding:"8px 12px",background:"rgba(201,168,76,.03)",borderRadius:8,marginTop:4,border:"1px solid rgba(201,168,76,.1)"}}>
+                {[...pending,...noPhone].length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                [...pending,...noPhone].map((g,i)=>(
+                  <div key={i} style={{fontSize:12,color:"rgba(255,255,255,.5)",padding:"4px 0",borderBottom:i<pending.length+noPhone.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
+                    ⏳ {g.name}{g.count>1?` (${g.count}n)`:""}
+                    {!g.phone&&<span style={{fontSize:9,color:"rgba(255,80,80,.5)",marginLeft:6}}>nömrəsiz</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* SMS Pəncərəsi */}
+      {smsGuest&&(
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.7)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSmsGuest(null)}>
+          <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,color:gold,fontWeight:700,marginBottom:4}}>💌 {smsGuest.name}-ə tebrik</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:12}}>Gəlmirəm dedi — tebrik mesajı göndər</div>
+            <textarea value={smsText} onChange={e=>setSmsText(e.target.value)} rows={4}
+              style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none"}}/>
+            <button onClick={()=>{
+              const phone=(smsGuest.phone||"").replace(/\D/g,"");
+              if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(smsText),"_blank");
+              setSmsGuest(null);
+            }} style={{width:"100%",marginTop:10,padding:"13px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+              📱 WhatsApp-da göndər
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
   const [confirmId, setConfirmId] = useState(null);
@@ -3403,7 +3423,7 @@ ${savedEvsList||"Yoxdur"}`;
               setSchemaOpen(true);
               if(schemaTutStep===0) setSchemaTutStep(1);
             }}>
-              🗺️ Sxem <span className="cnt">{tables.length}</span>
+              🗺️ Zalın sxemi <span className="cnt">{tables.length}</span>
             </button>}
             {tables.length>0&&<button className="qbn on" onClick={()=>{
               if(totG===0){
@@ -3526,6 +3546,7 @@ ${savedEvsList||"Yoxdur"}`;
         <StatsPanel
           tables={tables}
           ev={ev}
+          rsvpStats={rsvpStats}
           onClose={()=>setStatsOpen(false)}
         />
       )}
@@ -3813,10 +3834,14 @@ ${savedEvsList||"Yoxdur"}`;
       {notInvitedDrawerOpen&&(
         <NotInvDrawerBody
           notInvTables={tables.filter(t=>t.guests.length>0&&t.guests.some(g=>!g.invited))}
+          allTables={tables}
           onClose={()=>setNotInvitedDrawerOpen(false)}
           onMarkSent={(ids)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true}:g)})));}}
           devetData={devetData}
           obData={obData}
+          hall={hall}
+          cardNumber={cardNumber}
+          setCardNumber={setCardNumber}
         />
       )}
     </div>
@@ -3963,264 +3988,202 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allGuests, onClose, onSendOne, onMarkSent, devetData, obData }){
-  const [selected, setSelected] = useState(new Set());
-  const [sending, setSending] = useState(false);
-  const [sentCount, setSentCount] = useState(0);
+function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData, devetPNGOpen, setDevetPNGOpen, allTables, cardNumber, setCardNumber, hall }){
+  const [selTbls, setSelTbls] = useState(new Set());
+  const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [previewTbl, setPreviewTbl] = useState(null);
+  const [step, setStep] = useState("select"); // "select" | "shablon" | "preview"
+  const canvasRef = useRef(null);
+  const obD = obData||{};
+  const hallName = hall?((hall._venueName||"")+(hall.name?" — "+hall.name:"")):"";
 
-  // Nömrəsi olan göndərilməmiş qonaqlar — göndərmək üçün
-  const withPhone = notInvTables.flatMap(function(t){
-    return t.guests.filter(function(g){ return !g.invited && (g.phone||"").replace(/\D/g,"").length>=7; }).map(function(g){ return g.id; });
-  });
-  // Masa seçimi üçün — o masanın bütün göndərilməmiş qonaqları (nömrəsiz də)
-  const allSel = withPhone.length>0 && withPhone.every(function(id){ return selected.has(id); });
-
-  function toggle(id){
-    setSelected(function(prev){
-      var s=new Set(prev); if(s.has(id)) s.delete(id); else s.add(id); return s;
-    });
-  }
-  function toggleAll(){ setSelected(allSel ? new Set() : new Set(withPhone)); }
-
-  function buildMsg(g, tbl){
-    var evName = (obData&&obData.boy&&obData.girl) ? (obData.boy+" & "+obData.girl)
-      : ((obData&&obData.name)||(obData&&obData.company)||"Məclis");
-    var evDate = (obData&&obData.date)||"";
-    var tblLabel = tbl&&tbl.label&&tbl.label!=="__extra__" ? tbl.label : "";
-    var tblSide = tbl&&tbl.side ? tbl.side : "";
-
-    // Masadakı bütün qonaqların adları
-    var allTblGuests = tbl ? tbl.guests : [];
-    var guestLines = allTblGuests.map(function(gg){
-      var prefix = "  • ";
-      var extra = "";
-      if(gg.ushaqCount>0) extra += " ("+gg.ushaqCount+" uşaq)";
-      if(gg.gender==="kishi") extra += " 👨";
-      else if(gg.gender==="qadin") extra += " 👩";
-      return prefix+gg.name+(gg.count>1?" ("+gg.count+"n)":"")+extra;
-    }).join("\n");
-
-    // Masa vizual sxemi — ASCII dairə
-    var masaVizual = "      ╔══════╗\n"
-      + "      ║  "+String(tbl.id)+(tbl.id<10?" ":"")+"  ║\n"
-      + "      ╚══════╝\n";
-
-    // Hall məlumatı
-    var hallInfo = "";
-    if(devetData&&devetData.hallName) hallInfo += "\n🏛️ "+devetData.hallName;
-    if(devetData&&devetData.hallAddr) hallInfo += "\n📍 "+devetData.hallAddr;
-    if(devetData&&devetData.hallMaps) hallInfo += "\n🗺️ Xəritə: "+devetData.hallMaps;
-
-    // Əsas dəvət mətni
-    var customMetn = (devetData&&devetData.metn)
-      ? devetData.metn.replace(/\[Ad\]/g,g.name).replace(/\[Masa\]/g,String(tbl.id)+(tblLabel?" — "+tblLabel:""))
-      : "";
-
-    var msg = "";
-    msg += "🎊 *Dəvətnamə*\n";
-    msg += "━━━━━━━━━━━━━━━━━━\n\n";
-    msg += "Hörmətli *"+g.name+"*,\n\n";
-
-    if(customMetn){
-      msg += customMetn+"\n\n";
-    } else {
-      msg += "*"+evName+"* mərasiminə dəvət olunursunuz!\n";
-      if(evDate) msg += "📅 Tarix: "+evDate+"\n";
-      msg += "\n";
+  useEffect(()=>{
+    if(step==="preview"&&previewTbl&&canvasRef.current){
+      const firstG = (previewTbl.guests||[])[0];
+      drawDevetnamePNG({canvas:canvasRef.current, shablon, tbl:previewTbl, obData:obD, hallName, guestName:firstG?firstG.name:""});
     }
+  },[step, previewTbl, shablon]);
 
-    msg += "━━━━━━━━━━━━━━━━━━\n";
-    msg += "🪑 *Masa məlumatı*\n\n";
-    msg += masaVizual+"\n";
-    msg += "🔢 Masa № *"+tbl.id+"*";
-    if(tblLabel) msg += " — "+tblLabel;
-    if(tblSide) msg += " ("+tblSide+")";
-    msg += "\n\n";
+  function toggleTbl(id){
+    setSelTbls(prev=>{ const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s; });
+  }
+  function selectAll(){ setSelTbls(new Set(notInvTables.map(t=>t.id))); }
+  function clearAll(){ setSelTbls(new Set()); }
 
-    if(guestLines){
-      msg += "👥 *Masadakı qonaqlar:*\n"+guestLines+"\n\n";
+  async function sendSelected(){
+    const toSend = notInvTables.filter(t=>selTbls.has(t.id));
+    const baseUrl = window.location.origin;
+    const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||obD.company||"Məclis");
+    for(const tbl of toSend){
+      for(const g of (tbl.guests||[])){
+        if(g.invited) continue;
+        const phone=(g.phone||"").replace(/\D/g,"");
+        if(!phone) continue;
+        const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+        // RSVP kod yarat
+        const code=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+        const sessionId=localStorage.getItem("gonag_session_id")||"gonag_user_main";
+        await fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/rsvp",{
+          method:"POST",
+          headers:{apikey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368",Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json",Prefer:"return=representation"},
+          body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:g.name,guest_phone:g.phone||""})
+        });
+        const rsvpLink=baseUrl+"/rsvp/"+code;
+        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+        // PNG yarat + Web Share
+        const c=document.createElement("canvas");
+        drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
+        await new Promise(resolve=>{
+          c.toBlob(async(blob)=>{
+            if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
+              try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
+            } else {
+              const a=document.createElement("a"); a.download="devetname-masa"+tbl.id+".png"; a.href=c.toDataURL("image/png"); a.click();
+              await new Promise(r=>setTimeout(r,500));
+              window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+            }
+            resolve();
+          },"image/png");
+        });
+        await new Promise(r=>setTimeout(r,1000));
+      }
     }
-
-    msg += "━━━━━━━━━━━━━━━━━━\n";
-    if(hallInfo) msg += hallInfo+"\n";
-    msg += "\n✨ *GONAG.AZ*";
-
-    return msg;
+    onMarkSent&&onMarkSent(notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests.map(g=>g.id)));
+    onClose();
   }
-
-  function sendOne(g, tbl){
-    var num=(g.phone||"").replace(/\D/g,"");
-    if(!num){ alert(g.name+" — nömrə yoxdur!"); return; }
-    window.open("https://wa.me/"+num+"?text="+encodeURIComponent(buildMsg(g,tbl)),"_blank");
-    if(onMarkSent) onMarkSent([g.id]);
-  }
-
-  function sendSelected(){
-    var toSend=[];
-    notInvTables.forEach(function(t){
-      t.guests.filter(function(g){ return !g.invited&&selected.has(g.id); }).forEach(function(g){ toSend.push({g:g,t:t}); });
-    });
-    if(toSend.length===0){ alert("Seçilmiş qonaq yoxdur!"); return; }
-    setSending(true);
-    toSend.forEach(function(item,i){
-      setTimeout(function(){
-        sendOne(item.g, item.t);
-        setSentCount(function(c){ return c+1; });
-        if(i===toSend.length-1) setTimeout(function(){ setSending(false); setSelected(new Set()); setSentCount(0); },600);
-      }, i*700);
-    });
-  }
-
-  const totalNotInv = notInvTables.flatMap(function(t){ return t.guests.filter(function(g){ return !g.invited; }); }).length;
 
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.78)",zIndex:150}} onClick={onClose}>
-      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#080604",
-        borderTop:"2px solid rgba(232,184,122,.4)",borderRadius:"20px 20px 0 0",
-        display:"flex",flexDirection:"column"}} onClick={function(e){e.stopPropagation();}}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.85)"}} onClick={onClose}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#080604",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
 
-        <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
-          <div style={{width:36,height:4,borderRadius:2,background:"rgba(232,184,122,.3)"}}/>
+        {/* Handle */}
+        <div style={{display:"flex",justifyContent:"center",padding:"10px 0 6px"}}>
+          <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
         </div>
 
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 16px 8px"}}>
-          <div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#e8b87a",fontWeight:700}}>⏳ Göndərilməyən</div>
-            <div style={{fontSize:11,color:"rgba(232,184,122,.5)",marginTop:1}}>{totalNotInv+" qonaq · "+notInvTables.length+" masa"}</div>
+        {/* Header */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 10px",borderBottom:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+          <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:15}}>
+            {step==="select"?"⏳ Göndərilməyən masalar":step==="shablon"?"✨ Şablon seç":"👁 Preview"}
           </div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:14,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:18,cursor:"pointer"}}>✕</button>
         </div>
 
-        <div style={{padding:"0 14px 8px"}}>
-          {devetData&&devetData.metn ? (
-            <div style={{background:"rgba(80,200,120,.08)",border:"1px solid rgba(80,200,120,.2)",borderRadius:9,padding:"6px 12px",display:"flex",alignItems:"center",gap:8}}>
-              <span>✅</span>
-              <span style={{fontSize:11,color:"#50c878",fontWeight:600}}>Dəvətnamə hazırdır</span>
-              {devetData.media&&<span style={{fontSize:9,color:"rgba(80,200,120,.5)",marginLeft:4}}>{"📎 "+devetData.media.name}</span>}
+        {/* STEP 1: Masa seçimi */}
+        {step==="select"&&(
+          <>
+            <div style={{padding:"10px 14px",borderBottom:"1px solid rgba(201,168,76,.08)",display:"flex",gap:8,flexShrink:0}}>
+              <button onClick={selectAll} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                ✓ Hamısını seç
+              </button>
+              <button onClick={clearAll} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer"}}>
+                Ləğv et
+              </button>
+              <span style={{marginLeft:"auto",fontSize:11,color:"rgba(201,168,76,.5)",alignSelf:"center"}}>
+                {selTbls.size} / {notInvTables.length} seçildi
+              </span>
             </div>
-          ) : (
-            <div style={{background:"rgba(232,184,122,.08)",border:"1px solid rgba(232,184,122,.2)",borderRadius:9,padding:"6px 12px",fontSize:10,color:"#e8b87a"}}>
-              ⚠️ Dəvətnamə hazırlanmayıb — standart mətn göndəriləcək
+
+            {/* Masalar grid — yumru SVG */}
+            <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap:12,justifyContent:"center"}}>
+                {notInvTables.map(t=>{
+                  const sel=selTbls.has(t.id);
+                  const occ=(t.guests||[]).reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
+                  return (
+                    <div key={t.id} onClick={()=>toggleTbl(t.id)}
+                      style={{position:"relative",cursor:"pointer",opacity:sel?1:0.6,transition:"all .2s"}}>
+                      <TableSVG table={t} size={72}/>
+                      {/* Quş işarəsi */}
+                      {sel&&(
+                        <div style={{position:"absolute",top:-4,right:-4,width:20,height:20,borderRadius:"50%",background:"#50c878",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",boxShadow:"0 0 6px rgba(80,200,120,.6)"}}>✓</div>
+                      )}
+                      {/* Ad və say */}
+                      <div style={{textAlign:"center",marginTop:4,fontSize:9,color:sel?"#c9a84c":"rgba(255,255,255,.3)",fontWeight:700}}>
+                        Masa {t.id}
+                      </div>
+                      <div style={{textAlign:"center",fontSize:8,color:"rgba(255,255,255,.25)"}}>
+                        {(t.guests||[]).length} qonaq
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </div>
 
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 14px 8px"}}>
-          <button onClick={toggleAll}
-            style={{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:8,
-              border:"1px solid rgba(232,184,122,.3)",
-              background:allSel?"rgba(232,184,122,.15)":"transparent",
-              color:"#e8b87a",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-            <span style={{width:16,height:16,borderRadius:4,border:"1.5px solid #e8b87a",
-              background:allSel?"#e8b87a":"transparent",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              fontSize:10,color:"#080604",fontWeight:800}}>
-              {allSel?"✓":""}
-            </span>
-            {"Hamısını seç ("+withPhone.length+")"}
-          </button>
-          {selected.size>0&&<span style={{fontSize:11,color:"rgba(232,184,122,.7)"}}>{"Seçildi: "+selected.size}</span>}
-        </div>
+            {/* Növbəti */}
+            <div style={{padding:"12px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.08)"}}>
+              <button onClick={()=>selTbls.size>0&&setStep("shablon")} disabled={selTbls.size===0}
+                style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:selTbls.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(255,255,255,.05)",color:selTbls.size>0?"#0a0700":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default"}}>
+                Dəvətnamə seç → ({selTbls.size} masa)
+              </button>
+            </div>
+          </>
+        )}
 
-        <div style={{flex:1,overflowY:"auto",padding:"0 14px 100px",WebkitOverflowScrolling:"touch"}}>
-          {notInvTables.map(function(t){
-            var sc=t.side==="Oğlan evi"?"#7aade8":t.side==="Qız evi"?"#e87aad":"#e8b87a";
-            var notG=t.guests.filter(function(g){ return !g.invited; });
-            var sentG=t.guests.filter(function(g){ return g.invited; });
-            var tblWithPhone=notG.filter(function(g){ return (g.phone||"").replace(/\D/g,"").length>=7; });
-            var tblAllSel=tblWithPhone.length>0&&tblWithPhone.every(function(g){ return selected.has(g.id); });
-
-            function toggleTable(){
-              setSelected(function(prev){
-                var s=new Set(prev);
-                if(tblAllSel){ tblWithPhone.forEach(function(g){ s.delete(g.id); }); }
-                else { tblWithPhone.forEach(function(g){ s.add(g.id); }); }
-                return s;
-              });
-            }
-
-            return (
-              <div key={t.id} style={{marginBottom:14,borderRadius:16,overflow:"hidden",border:"1px solid "+sc+"33",background:"rgba(255,255,255,.02)"}}>
-                <div onClick={toggleTable} style={{padding:"10px 14px",background:tblAllSel?sc+"22":sc+"11",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{width:34,height:34,borderRadius:10,
-                      background:tblAllSel?sc:sc+"22",
-                      border:"1.5px solid "+sc+"55",display:"flex",alignItems:"center",
-                      justifyContent:"center",fontSize:14,fontWeight:800,
-                      color:tblAllSel?"#080604":sc}}>
-                      {tblAllSel?"✓":t.id}
+        {/* STEP 2: Şablon seçimi */}
+        {step==="shablon"&&(
+          <>
+            <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:12}}>Dəvətnamə şablonunu seç:</div>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {DEVETNAME_SHABLONLAR.map(s=>(
+                  <div key={s.id} onClick={()=>{ setShablon(s); setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]); setStep("preview"); }}
+                    style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.1)"),background:shablon.id===s.id?"rgba(201,168,76,.06)":"rgba(255,255,255,.02)",cursor:"pointer"}}>
+                    <div style={{width:40,height:56,borderRadius:6,background:s.bg,border:"1px solid "+s.accent+"44",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <span style={{fontSize:18}}>🎊</span>
                     </div>
                     <div>
-                      {t.label&&t.label!=="__extra__"&&<div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,.8)"}}>{t.label}</div>}
-                      {t.side&&<span style={{fontSize:9,padding:"1px 6px",borderRadius:8,background:sc+"22",color:sc}}>{t.side}</span>}
+                      <div style={{fontSize:13,fontWeight:700,color:s.accent}}>{s.ad}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,.3)",marginTop:2}}>Klik edib preview bax</div>
                     </div>
+                    {shablon.id===s.id&&<div style={{marginLeft:"auto",color:"#50c878",fontSize:16}}>✓</div>}
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    {sentG.length>0&&<div style={{fontSize:9,color:"rgba(80,200,120,.6)"}}>{"✓ "+sentG.length+" göndərildi"}</div>}
-                    <div style={{fontSize:10,color:tblAllSel?sc:"rgba(232,184,122,.6)"}}>
-                      {tblAllSel?"Seçildi":"⏳ "+notG.length+" qalır"}
-                    </div>
-                  </div>
-                </div>
-                <div style={{padding:"6px 12px"}}>
-                  {notG.map(function(g){
-                    var hasPhone=(g.phone||"").replace(/\D/g,"").length>=7;
-                    var isSel=selected.has(g.id);
-                    var gSc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"rgba(201,168,76,.7)";
-                    return (
-                      <div key={g.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 4px",borderBottom:"1px solid rgba(255,255,255,.05)"}}>
-                        <div onClick={hasPhone?function(){toggle(g.id);}:undefined}
-                          style={{width:20,height:20,borderRadius:6,flexShrink:0,
-                            cursor:hasPhone?"pointer":"default",
-                            border:"1.5px solid "+(isSel?"#e8b87a":hasPhone?"rgba(255,255,255,.2)":"rgba(255,255,255,.08)"),
-                            background:isSel?"#e8b87a":"transparent",
-                            display:"flex",alignItems:"center",justifyContent:"center",
-                            fontSize:11,color:"#080604",fontWeight:800}}>
-                          {isSel?"✓":""}
-                        </div>
-                        <div style={{width:32,height:32,borderRadius:"50%",flexShrink:0,background:gSc+"22",border:"1.5px solid "+gSc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:gSc}}>
-                          {g.name[0]}
-                        </div>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{fontSize:13,fontWeight:600,color:"#f2e8d0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
-                          {!hasPhone&&<div style={{fontSize:9,color:"rgba(220,80,80,.5)"}}>⚠️ nömrə yoxdur</div>}
-                        </div>
-                        <button onClick={function(){sendOne(g,t);}} disabled={!hasPhone}
-                          style={{padding:"6px 10px",borderRadius:8,border:"none",flexShrink:0,
-                            background:hasPhone?"rgba(37,211,102,.2)":"rgba(255,255,255,.04)",
-                            color:hasPhone?"#25d366":"rgba(255,255,255,.15)",
-                            fontSize:11,fontWeight:700,cursor:hasPhone?"pointer":"default"}}>
-                          📱
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
+                ))}
               </div>
-            );
-          })}
-        </div>
-
-        {selected.size>0&&(
-          <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"12px 14px",background:"rgba(8,6,4,.97)",borderTop:"1px solid rgba(232,184,122,.2)"}}>
-            {sending ? (
-              <div style={{textAlign:"center",padding:"10px",color:"#e8b87a",fontSize:12,fontWeight:600}}>
-                {"📱 Göndərilir... "+sentCount+"/"+selected.size}
-              </div>
-            ) : (
-              <button onClick={sendSelected}
-                style={{width:"100%",padding:"13px",borderRadius:12,border:"none",
-                  background:"linear-gradient(90deg,rgba(37,211,102,.45),rgba(37,211,102,.25))",
-                  color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-                {"📱 "+selected.size+" nəfərə WhatsApp göndər"}
+            </div>
+            <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.08)",display:"flex",gap:8}}>
+              <button onClick={()=>setStep("select")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+              <button onClick={()=>{ setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]); setStep("preview"); }}
+                style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                Preview →
               </button>
-            )}
-          </div>
+            </div>
+          </>
+        )}
+
+        {/* STEP 3: Preview + Göndər */}
+        {step==="preview"&&previewTbl&&(
+          <>
+            <div style={{overflowY:"auto",flex:1,padding:"12px 14px"}}>
+              {/* Masa seçici */}
+              <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
+                {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
+                  <button key={t.id} onClick={()=>setPreviewTbl(t)}
+                    style={{padding:"4px 10px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:previewTbl.id===t.id?"rgba(201,168,76,.15)":"transparent",color:previewTbl.id===t.id?"#c9a84c":"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                    Masa {t.id}
+                  </button>
+                ))}
+              </div>
+              {/* Canvas */}
+              <div style={{display:"flex",justifyContent:"center"}}>
+                <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
+              </div>
+            </div>
+            <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.08)",display:"flex",gap:8}}>
+              <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+              <button onClick={sendSelected}
+                style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                📱 Göndər ({selTbls.size} masa)
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 }
+
 
 function LayoutPickerModal({ hall, onConfirm, onClose }){
   const isGulistan = hall && hall._venueName==="Gülüstan Sarayı" && (hall.name==="Böyük Zal"||hall.name==="Kiçik Zal");
