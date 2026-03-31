@@ -100,7 +100,17 @@ export default function RsvpPage(){
   const hallName = hall._venueName||(eventData?.hall_name||"");
   const hallZal = hall.name||"";
   const fullHall = hallName+(hallZal?" — "+hallZal:"");
-  const cardNumber = eventData?.card_number||"";
+  const hallAddress = hall.address||(
+    hallName.includes("Gülüstan")?"Şəhriyar küç. 2, Bakı":
+    hallName.includes("Nərgiz")?"Nizami küç. 45, Bakı":
+    hallName.includes("Grand Palace")?"İstiqlaliyyət küç. 12, Bakı":
+    hallName.includes("Kristal")?"H.Cavid pr. 11, Bakı":
+    hallName.includes("Şüvəlan")?"Şüvəlan, Bakı":""
+  );
+  const mapsQuery = encodeURIComponent((fullHall||hallAddress)+" Bakı");
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+  const wazeUrl = `https://waze.com/ul?q=${mapsQuery}&navigate=yes`;
+  const yandexUrl = `https://yandex.com/maps/?text=${mapsQuery}`;
   const guests = tableData?.guests||[];
   const guestName = rsvp?.guest_name||"";
 
@@ -152,9 +162,26 @@ export default function RsvpPage(){
           <span style={{fontSize:20}}>📅</span>
           <span style={{fontSize:15,color:"#f2e8d0",fontWeight:500}}>{evDate}</span>
         </div>}
-        {fullHall&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
-          <span style={{fontSize:20}}>🏛️</span>
-          <span style={{fontSize:15,color:"#f2e8d0",fontWeight:500}}>{fullHall}</span>
+        {fullHall&&<div style={{borderBottom:hallAddress?"1px solid rgba(255,255,255,.05)":"none"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px"}}>
+            <span style={{fontSize:20}}>🏛️</span>
+            <span style={{fontSize:15,color:"#f2e8d0",fontWeight:500}}>{fullHall}</span>
+          </div>
+          {hallAddress&&<div style={{padding:"0 18px 10px",fontSize:12,color:"rgba(255,255,255,.4)"}}>📍 {hallAddress}</div>}
+        </div>}
+        {(hallAddress||fullHall)&&<div style={{padding:"12px 18px",display:"flex",gap:8"}}>
+          <a href={googleMapsUrl} target="_blank" rel="noreferrer"
+            style={{flex:1,padding:"8px 6px",borderRadius:10,background:"rgba(66,133,244,.15)",border:"1px solid rgba(66,133,244,.3)",color:"#6fa8ff",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>
+            🗺️ Google Maps
+          </a>
+          <a href={wazeUrl} target="_blank" rel="noreferrer"
+            style={{flex:1,padding:"8px 6px",borderRadius:10,background:"rgba(37,211,102,.1)",border:"1px solid rgba(37,211,102,.25)",color:"#50c878",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>
+            🚗 Waze
+          </a>
+          <a href={yandexUrl} target="_blank" rel="noreferrer"
+            style={{flex:1,padding:"8px 6px",borderRadius:10,background:"rgba(255,60,0,.1)",border:"1px solid rgba(255,60,0,.2)",color:"#ff7c4d",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>
+            🗺️ Yandex
+          </a>
         </div>}
       </div>
 
