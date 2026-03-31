@@ -169,7 +169,7 @@ export default function RsvpPage(){
           </div>
           {hallAddress&&<div style={{padding:"0 18px 10px",fontSize:12,color:"rgba(255,255,255,.4)"}}>📍 {hallAddress}</div>}
         </div>}
-        {(hallAddress||fullHall)&&<div style={{padding:"12px 18px",display:"flex",gap:8"}}>
+        {(hallAddress||fullHall)&&<div style={{padding:"12px 18px",display:"flex",gap:8}}>
           <a href={googleMapsUrl} target="_blank" rel="noreferrer"
             style={{flex:1,padding:"8px 6px",borderRadius:10,background:"rgba(66,133,244,.15)",border:"1px solid rgba(66,133,244,.3)",color:"#6fa8ff",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>
             🗺️ Google Maps
