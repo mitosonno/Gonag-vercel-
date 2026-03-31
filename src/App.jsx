@@ -4022,7 +4022,7 @@ function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData
           body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:g.name,guest_phone:g.phone||""})
         });
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
+        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+("\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList)+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
         await new Promise(resolve=>{
