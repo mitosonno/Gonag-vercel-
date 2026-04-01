@@ -15,49 +15,74 @@ async function sbFetch(path, opts={}) {
 
 function TableCircle({ tableId, seats=10, guests=[], label="" }){
   const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
-  const W=200, r=68, cx=100, cy=100;
+  const W=280, r=80, cx=140, cy=140;
   const chairCount = seats;
+  const guestSlots = [];
+  let idx=0;
+  guests.forEach(g=>{ for(let i=0;i<(g.count||1);i++){ guestSlots.push({name:g.name,main:i===0,gender:g.gender}); idx++; } });
+
   const chairs = Array.from({length:chairCount}).map((_,i)=>{
     const angle=(2*Math.PI/chairCount)*i - Math.PI/2;
     const cr=10;
-    const x=cx+(r+18)*Math.cos(angle);
-    const y=cy+(r+18)*Math.sin(angle);
-    const isFilled = i < filled;
-    return { x, y, angle, isFilled };
+    const x=cx+(r+20)*Math.cos(angle);
+    const y=cy+(r+20)*Math.sin(angle);
+    const guest = guestSlots[i];
+    // Ad pozisiyası — dairənin xaricində
+    const tx=cx+(r+48)*Math.cos(angle);
+    const ty=cy+(r+48)*Math.sin(angle);
+    return { x, y, angle, guest, tx, ty };
   });
+
   const pct = seats>0?Math.round(filled/seats*100):0;
   const circumference = 2*Math.PI*r;
   const dash = (pct/100)*circumference;
+
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
       <svg width={W} height={W} style={{overflow:"visible"}}>
         <defs>
-          <radialGradient id="tg" cx="50%" cy="50%" r="50%">
+          <radialGradient id="tg2" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#2a1f08"/>
             <stop offset="100%" stopColor="#1a1200"/>
           </radialGradient>
         </defs>
-        {/* Arxa dairə */}
-        <circle cx={cx} cy={cy} r={r+26} fill="rgba(201,168,76,.06)" stroke="rgba(201,168,76,.15)" strokeWidth="1"/>
+        {/* Xarici dairə */}
+        <circle cx={cx} cy={cy} r={r+32} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
         {/* Progress ring */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,.1)" strokeWidth="8"/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,.12)" strokeWidth="8"/>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#c9a84c" strokeWidth="8"
           strokeDasharray={`${dash} ${circumference}`} strokeLinecap="round"
-          transform={`rotate(-90 ${cx} ${cy})`} style={{transition:"stroke-dasharray .5s"}}/>
-        {/* Oturacaqlar */}
-        {chairs.map((c,i)=>(
-          <ellipse key={i} cx={c.x} cy={c.y} rx={10} ry={7}
-            transform={`rotate(${c.angle*180/Math.PI+90} ${c.x} ${c.y})`}
-            fill={c.isFilled?"#50c878":"rgba(255,255,255,.08)"}
-            stroke={c.isFilled?"rgba(80,200,120,.5)":"rgba(255,255,255,.1)"} strokeWidth="1"/>
-        ))}
-        {/* Masa dairəsi */}
-        <circle cx={cx} cy={cy} r={r-12} fill="url(#tg)" stroke="rgba(201,168,76,.3)" strokeWidth="1.5"/>
-        {/* Masa nömrəsi */}
-        <text x={cx} y={cy-8} textAnchor="middle" fill="#c9a84c" fontSize="28" fontWeight="800" fontFamily="'Playfair Display',serif">{tableId}</text>
-        <text x={cx} y={cy+12} textAnchor="middle" fill="rgba(201,168,76,.5)" fontSize="11">{filled}/{seats}</text>
+          transform={`rotate(-90 ${cx} ${cy})`}/>
+        {/* Oturacaqlar + adlar */}
+        {chairs.map((c,i)=>{
+          const sc = c.guest?(c.guest.gender==="kishi"?"#7aade8":c.guest.gender==="qadin"?"#e87aad":"#50c878"):"rgba(255,255,255,.1)";
+          // Mətni düzgün istiqamətləndir
+          const angleDeg = c.angle*180/Math.PI;
+          const isRight = Math.cos(c.angle)>0.1;
+          const isLeft = Math.cos(c.angle)<-0.1;
+          const anchor = isRight?"start":isLeft?"end":"middle";
+          const nameShort = c.guest?.main ? (c.guest.name.length>8?c.guest.name.slice(0,8)+"…":c.guest.name) : "";
+          return(
+            <g key={i}>
+              <ellipse cx={c.x} cy={c.y} rx={11} ry={8}
+                transform={`rotate(${angleDeg+90} ${c.x} ${c.y})`}
+                fill={c.guest?sc+"33":"rgba(255,255,255,.06)"}
+                stroke={c.guest?sc:"rgba(255,255,255,.1)"} strokeWidth="1.5"/>
+              {nameShort&&(
+                <text x={c.tx} y={c.ty+4} textAnchor={anchor}
+                  fill={sc} fontSize="9.5" fontWeight="600" fontFamily="'DM Sans',sans-serif">
+                  {nameShort}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {/* Masa */}
+        <circle cx={cx} cy={cy} r={r-14} fill="url(#tg2)" stroke="rgba(201,168,76,.35)" strokeWidth="1.5"/>
+        <text x={cx} y={cy-10} textAnchor="middle" fill="#c9a84c" fontSize="32" fontWeight="800" fontFamily="'Playfair Display',serif">{tableId}</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(201,168,76,.45)" fontSize="11">{filled}/{seats}</text>
       </svg>
-      <div style={{marginTop:4,fontSize:13,fontWeight:700,color:"#c9a84c",letterSpacing:1}}>MASA № {tableId}{label?" — "+label:""}</div>
+      <div style={{marginTop:6,fontSize:13,fontWeight:700,color:"#c9a84c",letterSpacing:1,textAlign:"center"}}>MASA № {tableId}{label?" — "+label:""}</div>
     </div>
   );
 }
