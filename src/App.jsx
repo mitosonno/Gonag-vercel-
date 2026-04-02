@@ -3958,237 +3958,375 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allGuests, onClose, onMarkSent, obData, devetPNGOpen, setDevetPNGOpen, allTables, cardNumber, setCardNumber, hall }){
+function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, cardNumber, setCardNumber }){
+  // Ana panel seçimi
+  const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
+  // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
   const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [step, setStep] = useState("select"); // "select"|"shablon"|"preview"|"confirm"
   const [previewTbl, setPreviewTbl] = useState(null);
-  const [step, setStep] = useState("select");
-  const [pulse, setPulse] = useState(true);
   const [senderName, setSenderName] = useState("");
-  const [senderTitle, setSenderTitle] = useState("xanım"); // "xanım"|"müəllim"|"bəy"
+  const [senderTitle, setSenderTitle] = useState("xanım");
+  const [pulse, setPulse] = useState(true);
   const canvasRef = useRef(null);
-  const shablon0Ref = useRef(null);
-  const shablon1Ref = useRef(null);
-  const shablon2Ref = useRef(null);
-  const shablon3Ref = useRef(null);
-  const shabRefs = [shablon0Ref, shablon1Ref, shablon2Ref, shablon3Ref];
+  const shabRefs = [useRef(null),useRef(null),useRef(null),useRef(null)];
+  // Tək-tək göndər
+  const [singleGuest, setSingleGuest] = useState(null); // {guest, tbl}
+  const [singleShablon, setSingleShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [singleStep, setSingleStep] = useState("list"); // "list"|"shablon"|"preview"|"sending"
+  const singleCanvasRef = useRef(null);
+
   const obD = obData||{};
   const hallName = hall?((hall._venueName||"")+(hall.name?" — "+hall.name:"")):"";
-  const demoTbl = notInvTables[0]||{id:1,seats:8,guests:[{name:"Lalezar"},{name:"Vüsal"},{name:"Nigar"}]};
+  const allGuests = notInvTables.flatMap(t=>(t.guests||[]).map(g=>({...g,tbl:t})));
 
   useEffect(()=>{ const t=setInterval(()=>setPulse(p=>!p),900); return ()=>clearInterval(t); },[]);
 
-  // Şablon mini preview-ları yarat
+  // Şablon mini preview
   useEffect(()=>{
-    DEVETNAME_SHABLONLAR.forEach((s,i)=>{
-      const ref = shabRefs[i];
-      if(ref.current){
-        drawDevetnamePNG({canvas:ref.current, shablon:s, tbl:demoTbl, obData:obD, hallName, guestName:(demoTbl.guests||[])[0]?.name||"Lalezar"});
-      }
-    });
-  },[step]);
+    if(panel==="bulk"&&step==="shablon"){
+      DEVETNAME_SHABLONLAR.forEach((s,i)=>{
+        const ref=shabRefs[i];
+        if(ref.current){
+          const demoTbl=notInvTables[0]||{id:1,seats:8,guests:[{name:"Lalezar"}]};
+          drawDevetnamePNG({canvas:ref.current,shablon:s,tbl:demoTbl,obData:obD,hallName,guestName:"Lalezar"});
+        }
+      });
+    }
+  },[panel,step]);
 
+  // Preview canvas
   useEffect(()=>{
-    if(step==="preview"&&previewTbl&&canvasRef.current){
-      const firstG=(previewTbl.guests||[])[0];
-      drawDevetnamePNG({canvas:canvasRef.current,shablon,tbl:previewTbl,obData:obD,hallName,guestName:firstG?firstG.name:""});
+    if(panel==="bulk"&&step==="preview"&&previewTbl&&canvasRef.current){
+      const g=(previewTbl.guests||[])[0];
+      drawDevetnamePNG({canvas:canvasRef.current,shablon,tbl:previewTbl,obData:obD,hallName,guestName:g?g.name:""});
     }
   },[step,previewTbl,shablon]);
 
-  function toggleTbl(id){ setSelTbls(prev=>{ const s=new Set(prev); s.has(id)?s.delete(id):s.add(id); return s; }); }
-  function selectAll(){ setSelTbls(new Set(notInvTables.map(t=>t.id))); }
-  function clearAll(){ setSelTbls(new Set()); }
+  // Tək preview
+  useEffect(()=>{
+    if(singleStep==="preview"&&singleGuest&&singleCanvasRef.current){
+      drawDevetnamePNG({canvas:singleCanvasRef.current,shablon:singleShablon,tbl:singleGuest.tbl,obData:obD,hallName,guestName:singleGuest.guest.name});
+    }
+  },[singleStep,singleGuest,singleShablon]);
 
-  async function sendSelected(){
-    const toSend = notInvTables.filter(t=>selTbls.has(t.id));
-    const baseUrl = window.location.origin;
-    const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||obD.company||"Məclis");
+  async function createRsvp(guest, tbl){
+    const code=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+    const sessionId=localStorage.getItem("gonag_session_id")||"gonag_user_main";
+    await fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/rsvp",{
+      method:"POST",
+      headers:{apikey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368",Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json",Prefer:"return=representation"},
+      body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:guest.name,guest_phone:guest.phone||""})
+    });
+    return code;
+  }
+
+  async function shareMsg(phone, msg, canvas){
+    return new Promise(resolve=>{
+      canvas.toBlob(async(blob)=>{
+        if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
+          try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
+        } else {
+          const a=document.createElement("a"); a.download="devetname.png"; a.href=canvas.toDataURL("image/png"); a.click();
+          await new Promise(r=>setTimeout(r,500));
+          if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        }
+        resolve();
+      },"image/png");
+    });
+  }
+
+  async function sendBulk(){
+    const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
+    const baseUrl=window.location.origin;
+    const toSend=notInvTables.filter(t=>selTbls.has(t.id));
     for(const tbl of toSend){
       for(const g of (tbl.guests||[])){
         const phone=(g.phone||"").replace(/\D/g,"");
         if(!phone) continue;
         const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
-        const code=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
-        const sessionId=localStorage.getItem("gonag_session_id")||"gonag_user_main";
-        await fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/rsvp",{
-          method:"POST",
-          headers:{apikey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368",Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json",Prefer:"return=representation"},
-          body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:g.name,guest_phone:g.phone||""})
-        });
+        const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+("\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList)+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
+        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
-        await new Promise(resolve=>{
-          c.toBlob(async(blob)=>{
-            if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-              try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
-            } else {
-              const a=document.createElement("a"); a.download="devetname.png"; a.href=c.toDataURL("image/png"); a.click();
-              await new Promise(r=>setTimeout(r,500));
-              window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
-            }
-            resolve();
-          },"image/png");
-        });
-        await new Promise(r=>setTimeout(r,1000));
+        await shareMsg(phone,msg,c);
+        await new Promise(r=>setTimeout(r,800));
       }
     }
-    onMarkSent&&onMarkSent(notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests.map(g=>g.id)));
+    onMarkSent&&onMarkSent(toSend.flatMap(t=>t.guests.map(g=>g.id)));
     onClose();
   }
 
-  const stepTitle = step==="select"?"📨 Dəvətnamə — Masa seç":step==="shablon"?"✨ Şablon seç":step==="preview"?"👁 Preview":"✅ Təsdiq";
+  async function sendSingle(){
+    if(!singleGuest) return;
+    const {guest,tbl}=singleGuest;
+    const phone=(guest.phone||"").replace(/\D/g,"");
+    const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
+    const baseUrl=window.location.origin;
+    const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+    const code=await createRsvp(guest,tbl);
+    const rsvpLink=baseUrl+"/rsvp/"+code;
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
+    const c=document.createElement("canvas");
+    drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
+    await shareMsg(phone,msg,c);
+    onMarkSent&&onMarkSent([guest.id]);
+    setSingleGuest(null);
+    setSingleStep("list");
+  }
 
-  return (
+  const gold="#c9a84c";
+
+  // ── ANA EKRAN ──────────────────────────────────
+  return(
     <div style={{position:"fixed",inset:0,zIndex:200,background:"#080604",display:"flex",flexDirection:"column"}}>
       {/* Header */}
       <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(201,168,76,.15)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(201,168,76,.04)"}}>
-        <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:15}}>{stepTitle}</div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {panel!=="home"&&<button onClick={()=>{setPanel("home");setStep("select");setSingleStep("list");setSingleGuest(null);}} style={{background:"none",border:"none",color:"#9a8060",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
+          <div style={{fontFamily:"'Playfair Display',serif",color:gold,fontSize:15}}>
+            {panel==="home"?"📨 Dəvətnamə":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
+          </div>
+        </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
       </div>
 
-      {/* STEP 1: Masa seçimi — TAM EKRAN */}
-      {step==="select"&&(
-        <>
-          <div style={{padding:"10px 14px",borderBottom:"1px solid rgba(201,168,76,.08)",display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
-            <button onClick={selectAll} style={{padding:"6px 14px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,fontWeight:600,cursor:"pointer"}}>✓ Hamısı</button>
-            <button onClick={clearAll} style={{padding:"6px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
-            <span style={{marginLeft:"auto",fontSize:11,color:"rgba(201,168,76,.5)"}}>{selTbls.size}/{notInvTables.length} seçildi</span>
-          </div>
+      {/* HOME */}
+      {panel==="home"&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",gap:12,padding:"24px 16px"}}>
+          <button onClick={()=>setPanel("bulk")}
+            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.06)",textAlign:"left",cursor:"pointer",color:"#f2e8d0"}}>
+            <div style={{fontSize:24,marginBottom:8}}>📨</div>
+            <div style={{fontSize:15,fontWeight:700,color:gold,marginBottom:4}}>Dəvətnamələri göndər</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.4)"}}>Masaları seç → şablon → hamısına birdəfəlik göndər</div>
+          </button>
+          <button onClick={()=>setPanel("single")}
+            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(122,173,232,.25)",background:"rgba(122,173,232,.06)",textAlign:"left",cursor:"pointer",color:"#f2e8d0"}}>
+            <div style={{fontSize:24,marginBottom:8}}>👤</div>
+            <div style={{fontSize:15,fontWeight:700,color:"#7aade8",marginBottom:4}}>Tək-tək göndər</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.4)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
+          </button>
+        </div>
+      )}
 
-          {/* Masalar — tam ekran scroll */}
-          <div style={{flex:1,overflowY:"auto",padding:"16px 12px"}}>
-            <div style={{display:"flex",flexWrap:"wrap",gap:16,justifyContent:"flex-start"}}>
+      {/* BULK — STEP: select */}
+      {panel==="bulk"&&step==="select"&&(
+        <>
+          <div style={{padding:"8px 14px",borderBottom:"1px solid rgba(201,168,76,.06)",display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
+            <button onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:gold,fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
+            <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
+            <span style={{marginLeft:"auto",fontSize:11,color:"rgba(201,168,76,.5)"}}>{selTbls.size}/{notInvTables.length}</span>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:14,justifyContent:"center"}}>
               {notInvTables.map(t=>{
                 const sel=selTbls.has(t.id);
-                const allSent=(t.guests||[]).length>0&&(t.guests||[]).every(g=>g.invited);
-                return (
-                  <div key={t.id} onClick={()=>toggleTbl(t.id)}
-                    style={{position:"relative",cursor:"pointer",width:"calc(25% - 12px)",minWidth:72,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                    {/* Seçim halqası */}
-                    <div style={{position:"relative",filter:allSent?"opacity(0.5)":"none"}}>
-                      <TableSVG table={t} size={68}/>
-                      {sel&&<div style={{position:"absolute",top:-5,right:-5,width:20,height:20,borderRadius:"50%",background:"#50c878",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",boxShadow:"0 0 8px rgba(80,200,120,.7)",zIndex:2}}>✓</div>}
-                    </div>
-                    <div style={{textAlign:"center",marginTop:3,fontSize:9,color:sel?"#c9a84c":"rgba(255,255,255,.35)",fontWeight:700}}>Masa {t.id}</div>
-                    {allSent?(
-                      <div style={{textAlign:"center",fontSize:7,color:"rgba(80,200,120,.5)",marginTop:1}}>Göndərilib ✓</div>
-                    ):(
-                      <div style={{textAlign:"center",fontSize:7,color:pulse?"rgba(255,180,50,.7)":"rgba(255,180,50,.25)",marginTop:1,transition:"color .5s"}}>Göndərilməyib</div>
-                    )}
+                const allSent=(t.guests||[]).every(g=>g.invited);
+                const S=68, total=S+S*0.5, cx=total/2, cy=total/2, r=S/2, seats=t.seats||8;
+                const filled=(t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
+                const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push(g.name); });
+                return(
+                  <div key={t.id} onClick={()=>{const s=new Set(selTbls);s.has(t.id)?s.delete(t.id):s.add(t.id);setSelTbls(s);}}
+                    style={{position:"relative",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",opacity:allSent?.5:1}}>
+                    <svg width={total+60} height={total+40} style={{overflow:"visible"}}>
+                      {Array.from({length:seats}).map((_,i)=>{
+                        const angle=(2*Math.PI/seats)*i-Math.PI/2;
+                        const chairR=r+S*0.18;
+                        const sx=cx+30+chairR*Math.cos(angle), sy=cy+20+chairR*Math.sin(angle);
+                        const g=gSlots[i];
+                        const f=i<filled;
+                        const cc=f?"#4ade80":"rgba(255,255,255,.15)";
+                        // Ad pozisiyası
+                        const nameR=chairR+22;
+                        const nx=cx+30+nameR*Math.cos(angle), ny=cy+20+nameR*Math.sin(angle);
+                        const anch=Math.cos(angle)>0.2?"start":Math.cos(angle)<-0.2?"end":"middle";
+                        return(
+                          <g key={i}>
+                            <rect x={sx-5} y={sy-3.5} width={10} height={7} rx={3} fill={cc} opacity={f?.95:.3} transform={`rotate(${angle*180/Math.PI+90} ${sx} ${sy})`}/>
+                            {g&&<text x={nx} y={ny+3} textAnchor={anch} fill="#50c878" fontSize="7.5" fontWeight="600">{g.length>7?g.slice(0,7)+"…":g}</text>}
+                          </g>
+                        );
+                      })}
+                      <circle cx={cx+30} cy={cy+20} r={r-2} fill={allSent?"#0f3a20":"#1a1200"} stroke={sel?"#c9a84c":"rgba(201,168,76,.3)"} strokeWidth={sel?2.5:1.5}/>
+                      <text x={cx+30} y={cy+20-4} textAnchor="middle" fill={gold} fontSize={S*0.24} fontWeight="800">{t.id}</text>
+                      <text x={cx+30} y={cy+20+12} textAnchor="middle" fill="rgba(201,168,76,.4)" fontSize="9">{filled}/{seats}</text>
+                    </svg>
+                    {sel&&<div style={{position:"absolute",top:0,right:8,width:18,height:18,borderRadius:"50%",background:"#50c878",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff"}}>✓</div>}
+                    <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(255,255,255,.3)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
+                    <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(80,200,120,.5)":pulse?"rgba(255,180,50,.65)":"rgba(255,180,50,.25)",transition:"color .5s"}}>{allSent?"Göndərilib ✓":"Göndərilməyib"}</div>
                   </div>
                 );
               })}
             </div>
           </div>
-
-          <div style={{padding:"12px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.08)"}}>
+          <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.06)"}}>
             <button onClick={()=>selTbls.size>0&&setStep("shablon")} disabled={selTbls.size===0}
-              style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:selTbls.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(255,255,255,.05)",color:selTbls.size>0?"#0a0700":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default"}}>
-              Dəvətnamə seç → ({selTbls.size} masa)
+              style={{width:"100%",padding:"14px",borderRadius:11,border:"none",background:selTbls.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(255,255,255,.05)",color:selTbls.size>0?"#0a0700":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default"}}>
+              Şablon seç → ({selTbls.size} masa)
             </button>
           </div>
         </>
       )}
 
-      {/* STEP 2: Şablon seçimi — real Canvas preview */}
-      {step==="shablon"&&(
+      {/* BULK — STEP: shablon */}
+      {panel==="bulk"&&step==="shablon"&&(
         <>
-          <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:14,textAlign:"center"}}>Şablona klik et — seçilir və preview-a keçir</div>
-            <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              {DEVETNAME_SHABLONLAR.map((s,i)=>(
-                <div key={s.id} onClick={()=>{ setShablon(s); setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]); setStep("preview"); }}
-                  style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",borderRadius:14,border:"2px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.08)"),background:shablon.id===s.id?"rgba(201,168,76,.05)":"rgba(255,255,255,.01)",cursor:"pointer",transition:"border-color .2s"}}>
-                  {/* Real Canvas mini preview */}
-                  <canvas ref={shabRefs[i]} style={{width:60,height:90,borderRadius:8,flexShrink:0,display:"block"}}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:700,color:s.accent,marginBottom:3}}>{s.ad}</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>Klik edib preview bax</div>
-                  </div>
-                  {shablon.id===s.id&&<div style={{color:"#50c878",fontSize:18,flexShrink:0}}>✓</div>}
+          <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:12}}>Şablona klik et — preview açılır:</div>
+            {DEVETNAME_SHABLONLAR.map((s,i)=>(
+              <div key={s.id} onClick={()=>{setShablon(s);setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]);setStep("preview");}}
+                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.08)"),background:shablon.id===s.id?"rgba(201,168,76,.05)":"rgba(255,255,255,.01)",cursor:"pointer",marginBottom:10}}>
+                <canvas ref={shabRefs[i]} style={{width:60,height:90,borderRadius:8,flexShrink:0,display:"block"}}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:700,color:s.accent}}>{s.ad}</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,.3)",marginTop:3}}>Klik et — preview göster</div>
                 </div>
-              ))}
-            </div>
+                {shablon.id===s.id&&<div style={{color:"#50c878",fontSize:18}}>✓</div>}
+              </div>
+            ))}
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-            <button onClick={()=>setStep("select")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
-            <button onClick={()=>{ setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]); setStep("preview"); }}
-              style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>Preview →</button>
+            <button onClick={()=>setStep("select")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
           </div>
         </>
       )}
 
-      {/* STEP 3: Preview */}
-      {step==="preview"&&previewTbl&&(
+      {/* BULK — STEP: preview */}
+      {panel==="bulk"&&step==="preview"&&previewTbl&&(
         <>
           <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
             <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
               {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
                 <button key={t.id} onClick={()=>setPreviewTbl(t)}
-                  style={{padding:"5px 12px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:previewTbl.id===t.id?"rgba(201,168,76,.15)":"transparent",color:previewTbl.id===t.id?"#c9a84c":"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                  style={{padding:"5px 12px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:previewTbl.id===t.id?"rgba(201,168,76,.15)":"transparent",color:previewTbl.id===t.id?gold:"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                   Masa {t.id}
                 </button>
               ))}
             </div>
             <div style={{display:"flex",justifyContent:"center"}}>
-              <canvas ref={canvasRef} style={{width:"100%",maxWidth:300,borderRadius:12,display:"block"}}/>
+              <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
             </div>
           </div>
-          <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-            <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
-            <button onClick={()=>setStep("confirm")}
-              style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#0a0700",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-              Göndər → ({selTbls.size})
-            </button>
+          <div style={{padding:"10px 14px 16px",flexShrink:0}}>
+            <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:8}}>✍️ Kimdən?</div>
+            <input value={senderName} onChange={e=>setSenderName(e.target.value)} placeholder="Adınız (məs: Aytən)"
+              style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}/>
+            <div style={{display:"flex",gap:6,marginBottom:12}}>
+              {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
+                <button key={t} onClick={()=>setSenderTitle(t)}
+                  style={{flex:1,padding:"6px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?gold:"rgba(255,255,255,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  {e} {t}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>🔄 Şablon dəyiş</button>
+              <button onClick={()=>setStep("confirm")}
+                style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#0a0700",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                Göndər → ({selTbls.size})
+              </button>
+            </div>
           </div>
+          <div style={{height:16,flexShrink:0}}/>
         </>
       )}
 
-      {/* STEP 4: Təsdiq */}
-      {step==="confirm"&&(
+      {/* BULK — STEP: confirm */}
+      {panel==="bulk"&&step==="confirm"&&(
         <>
-          <div style={{flex:1,overflowY:"auto",padding:"20px 16px"}}>
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:44,marginBottom:10}}>📨</div>
-              <div style={{fontSize:16,fontWeight:700,color:"#f2e8d0",marginBottom:6}}>{selTbls.size} masa üçün dəvətnamə göndərilsin?</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,.3)",lineHeight:1.6}}>
-                {notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa · {shablon.ad}
-              </div>
+          <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px"}}>
+            <div style={{fontSize:48,marginBottom:16}}>📨</div>
+            <div style={{fontSize:16,fontWeight:700,color:"#f2e8d0",marginBottom:8,textAlign:"center"}}>{selTbls.size} masa üçün göndərilsin?</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.35)",textAlign:"center",lineHeight:1.7,marginBottom:16}}>
+              {notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa
+              {senderName&&" · "+senderName+" "+senderTitle}
             </div>
-
-            {/* Kimdən göndərilsin */}
-            <div style={{background:"rgba(201,168,76,.06)",border:"1px solid rgba(201,168,76,.15)",borderRadius:14,padding:"14px 16px",marginBottom:14}}>
-              <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10}}>✍️ Dəvətnamə kimdən göndərilsin?</div>
-              <input value={senderName} onChange={e=>setSenderName(e.target.value)}
-                placeholder="Adınızı yazın (məs: Aytən, Oğlan evi tərəf...)"
-                style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:9,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
-              <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:8}}>Ünvan:</div>
-              <div style={{display:"flex",gap:8}}>
-                {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
-                  <button key={t} onClick={()=>setSenderTitle(t)}
-                    style={{flex:1,padding:"7px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?"#c9a84c":"rgba(255,255,255,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                    {e} {t}
-                  </button>
-                ))}
-              </div>
-              {senderName&&<div style={{marginTop:10,padding:"8px 12px",background:"rgba(255,255,255,.04)",borderRadius:8,fontSize:12,color:"rgba(255,255,255,.5)",fontStyle:"italic"}}>
-                "Hörmətlə, {senderName} {senderTitle}"
-              </div>}
-            </div>
-
-            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
               {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
-                <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"rgba(201,168,76,.1)",border:"1px solid rgba(201,168,76,.25)",color:"#c9a84c",fontSize:11}}>Masa {t.id}</div>
+                <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"rgba(201,168,76,.1)",border:"1px solid rgba(201,168,76,.25)",color:gold,fontSize:11}}>Masa {t.id}</div>
               ))}
             </div>
           </div>
           <div style={{padding:"10px 14px 36px",flexShrink:0,display:"flex",gap:10}}>
             <button onClick={()=>setStep("preview")} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:13,cursor:"pointer"}}>← Geri</button>
-            <button onClick={sendSelected}
+            <button onClick={sendBulk}
               style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
               ✅ Bəli, göndər!
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* SINGLE — siyahı */}
+      {panel==="single"&&singleStep==="list"&&(
+        <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
+          {notInvTables.map(t=>(
+            <div key={t.id} style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:"rgba(201,168,76,.5)",fontWeight:700,marginBottom:8,letterSpacing:1}}>MASA № {t.id} {t.label&&"— "+t.label}</div>
+              {(t.guests||[]).map((g,i)=>{
+                const sent=g.invited;
+                const phone=(g.phone||"").replace(/\D/g,"");
+                return(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:sent?"rgba(80,200,120,.04)":"rgba(255,255,255,.02)",border:"1px solid "+(sent?"rgba(80,200,120,.15)":"rgba(201,168,76,.08)"),marginBottom:6,opacity:sent?.6:1}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:"rgba(201,168,76,.12)",border:"1px solid rgba(201,168,76,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:gold,flexShrink:0}}>{g.name[0]||"?"}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,color:"#f2e8d0",fontWeight:600}}>{g.name}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,.35)"}}>{g.count>1?g.count+" nəfər · ":""}{phone?"+"+phone:"nömrə yoxdur"}</div>
+                    </div>
+                    {sent?(
+                      <div style={{fontSize:11,color:"rgba(80,200,120,.6)",fontWeight:600}}>✓ Göndərilib</div>
+                    ):phone?(
+                      <button onClick={()=>{setSingleGuest({guest:g,tbl:t});setSingleStep("shablon");}}
+                        style={{padding:"7px 12px",borderRadius:9,border:"none",background:"rgba(37,211,102,.15)",color:"#25d366",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+                        📱 Göndər
+                      </button>
+                    ):(
+                      <div style={{fontSize:10,color:"rgba(255,80,80,.5)"}}>Nömrə yox</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SINGLE — şablon seç */}
+      {panel==="single"&&singleStep==="shablon"&&singleGuest&&(
+        <>
+          <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#f2e8d0"}}>{singleGuest.guest.name}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.35)"}}>Masa № {singleGuest.tbl.id}</div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
+            {DEVETNAME_SHABLONLAR.map((s,i)=>(
+              <div key={s.id} onClick={()=>{setSingleShablon(s);setSingleStep("preview");}}
+                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(singleShablon.id===s.id?s.accent:"rgba(255,255,255,.08)"),background:singleShablon.id===s.id?"rgba(201,168,76,.05)":"rgba(255,255,255,.01)",cursor:"pointer",marginBottom:10}}>
+                <div style={{width:40,height:56,borderRadius:6,background:s.bg,border:"1px solid "+s.accent+"44",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎊</div>
+                <div style={{fontSize:13,fontWeight:700,color:s.accent}}>{s.ad}</div>
+                {singleShablon.id===s.id&&<div style={{marginLeft:"auto",color:"#50c878",fontSize:16}}>✓</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"10px 14px 28px",flexShrink:0}}>
+            <button onClick={()=>setSingleStep("list")} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+          </div>
+        </>
+      )}
+
+      {/* SINGLE — preview */}
+      {panel==="single"&&singleStep==="preview"&&singleGuest&&(
+        <>
+          <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",justifyContent:"center",alignItems:"flex-start"}}>
+            <canvas ref={singleCanvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
+          </div>
+          <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
+            <button onClick={()=>setSingleStep("shablon")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>🔄 Dəyişdir</button>
+            <button onClick={sendSingle}
+              style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
+              ✅ Göndər
             </button>
           </div>
         </>
