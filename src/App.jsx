@@ -2564,11 +2564,42 @@ export default function App(){
   const [statsOpen, setStatsOpen] = useState(false);
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
-  const [agentSlotTable, setAgentSlotTable] = useState(null); // agent tərəfindən açılan slot
+  const [agentSlotTable, setAgentSlotTable] = useState(null);
   const [restOpen, setRestOpen] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
   const [notInvitedDrawerOpen, setNotInvitedDrawerOpen] = useState(false);
+  // Panel navigation
+  const [panelStack, setPanelStack] = useState([]);
+  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [unsavedConfirm, setUnsavedConfirm] = useState(null);
+
+  function pushPanel(name){ setPanelStack(s=>[...s,name]); }
+  function popPanel(){ setPanelStack(s=>s.slice(0,-1)); }
+
+
+
+  function _doClosePanel(panel){
+    popPanel();
+    if(panel==="schema") setSchemaOpen(false);
+    else if(panel==="stats") setStatsOpen(false);
+    else if(panel==="notinv") setNotInvitedDrawerOpen(false);
+    else if(panel==="invited") setInvitedDrawerOpen(false);
+    else if(panel==="meclis") setMeclisOpen(false);
+    else if(panel==="layout") setLayoutPickOpen(false);
+    else if(panel==="devetpng") setDevetPNGOpen(null);
+    setHasUnsaved(false);
+  }
+
+  function closeTopPanel(){
+    const top = panelStack[panelStack.length-1];
+    const needsConfirm = (top==="schema" && schemaChanged);
+    if(needsConfirm){
+      setUnsavedConfirm(()=>()=>{ setSchemaChanged(false); _doClosePanel(top); });
+      return;
+    }
+    _doClosePanel(top);
+  }
   const [glog, setGlog] = useState([]);
   const endRef = useRef(null);
   const inpRef = useRef(null);
@@ -2729,7 +2760,7 @@ export default function App(){
     setTables(ev_snap.tables||[]);
     setMsgs(ev_snap.msgs||[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
     setHist(ev_snap.hist||[]);
-    if(ev_snap.tables&&ev_snap.tables.length>0) setSchemaOpen(true);
+    if(ev_snap.tables&&ev_snap.tables.length>0) pushPanel("schema"); setSchemaOpen(true);
     setMeclisOpen(false);
   }
 
@@ -2900,7 +2931,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       const tbls = tables.map(t=>({...t, seats}));
       setHall({...h, tblCount:tbls.length, seatsPerTable:seats, _step:"done"});
       setTables(tbls);
-      setSchemaOpen(true);
+      pushPanel("schema"); setSchemaOpen(true);
       setSchemaTutStep(1); // tutorial başlat
       setFillMode("one-by-one");
       setActiveTable(null);
@@ -2917,7 +2948,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     const tbls = Array.from({length:tblCount},(_,i)=>({id:i+1,seats,guests:[],label:""}));
     setHall({...h, tblCount, seatsPerTable:seats, _step:"done"});
     setTables(tbls);
-    setSchemaOpen(true);
+    pushPanel("schema"); setSchemaOpen(true);
     setSchemaTutStep(1); // tutorial başlat
     setFillMode("one-by-one");
     setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
@@ -3079,7 +3110,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
 
     // ═══ DƏVƏTNAMƏ FLOW ═══
     if(txt==="🗺️ Sxemi aç"){
-      setSchemaOpen(true);
+      pushPanel("schema"); setSchemaOpen(true);
       setBusy(false); return;
     }
     if(txt==="🪑 Masa-masa ayrıca"||txt==="📨 Hamısına birdəfəlik"){
@@ -3089,17 +3120,17 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       }
     }
     if(txt==="🪑 Masa-masa ayrıca"){
-      setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
+      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
       obReply("Dəvətnamə paneli açıldı! 📨\n\nMətni hazırla və saxla. Sonra ⏳ Göndərilməyən bölməsindən hər masanı ayrıca seçib göndər.",["⏳ Göndərilməyən bölməsi"]);
       return;
     }
     if(txt==="📨 Hamısına birdəfəlik"){
-      setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
+      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
       obReply("Dəvətnamə paneli açıldı! 📨\n\nMətni hazırla və saxla. Sonra ⏳ Göndərilməyən bölməsindən \"Hamısını seç\" basıb hamısına birdəfəlik göndər.",["⏳ Göndərilməyən bölməsi"]);
       return;
     }
     if(txt==="📨 Dəvətnaməni hazırla"||txt==="📨 Dəvət göndər"||txt==="📨 Dəvətnamə hazırla"){
-      setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
+      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
       obReply("Dəvətnamə səhifəsi açıldı! 👇\n\nÖz şəkil/videonu yüklə və ya hazır şablonlardan birini seç. Masa məlumatları avtomatik əlavə olunacaq.",["⏳ Göndərilməyən bölməsi"]);
       return;
     }
@@ -3173,16 +3204,16 @@ ${savedEvsList||"Yoxdur"}`;
       const raw = (d.content&&d.content[0]&&d.content[0].text)||"Xəta baş verdi.";
 
       // Agent əmrlərini icra et
-      if(raw.includes("[OPEN_SCHEMA]")){ setSchemaOpen(true); }
+      if(raw.includes("[OPEN_SCHEMA]")){ pushPanel("schema"); setSchemaOpen(true); }
       if(raw.includes("[OPEN_INVITE]")){ /* dəvətnamə paneli */ }
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
-      if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&setStatsOpen(true); }
+      if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&pushPanel("stats"); setStatsOpen(true); }
 
       // [ADD_GUEST_PANEL:ID] — sxemi aç, masanı seç, slot formu aç
       const addPanelMatch = raw.match(/\[ADD_GUEST_PANEL:(\d+)\]/);
       if(addPanelMatch){
         const tId = parseInt(addPanelMatch[1]);
-        setSchemaOpen(true);
+        pushPanel("schema"); setSchemaOpen(true);
         setActiveTable(tId);
         setAgentSlotTable(tId);
       }
@@ -3192,7 +3223,7 @@ ${savedEvsList||"Yoxdur"}`;
       if(tableMatch){
         const tId = parseInt(tableMatch[1]);
         setActiveTable(tId);
-        setSchemaOpen(true);
+        pushPanel("schema"); setSchemaOpen(true);
       }
 
       // [OPEN_MECLIS:ID_or_NAME] — yadda saxlanmış məclisi aç
@@ -3367,7 +3398,7 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="logo">GONAG<span>.AZ</span></div>
           <div className="pill"><div className="dot"/><span className="pn">Guliya</span></div>
           <div className="tbx">
-            <button className="tt" onClick={()=>setMeclisOpen(true)} style={{position:"relative"}}>
+            <button className="tt" onClick={()=>pushPanel("meclis"); setMeclisOpen(true)} style={{position:"relative"}}>
               🗂 Məclislərim
               {savedEvents.length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#c9a84c",color:"#080604",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{savedEvents.length}</span>}
             </button>
@@ -3414,7 +3445,7 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div className="qbar">
             {hasS&&<button className="qbn on" onClick={()=>{
-              setSchemaOpen(true);
+              pushPanel("schema"); setSchemaOpen(true);
               if(schemaTutStep===0) setSchemaTutStep(1);
             }}>
               🗺️ Zalın sxemi <span className="cnt">{tables.length}</span>
@@ -3424,11 +3455,11 @@ ${savedEvsList||"Yoxdur"}`;
                 setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]);
                 return;
               }
-              setNotInvitedDrawerOpen(true);
+              pushPanel("notinv"); setNotInvitedDrawerOpen(true);
             }}>
               📨 Dəvətnamə
             </button>}
-            {totG>0&&<button className="qbn on" onClick={()=>setStatsOpen(true)}>
+            {totG>0&&<button className="qbn on" onClick={()=>pushPanel("stats"); setStatsOpen(true)}>
               📊 Statistika
             </button>}
             {totG>0&&<button className="qbn on" onClick={()=>printAll(tables,obData,hall)}>
@@ -3447,7 +3478,7 @@ ${savedEvsList||"Yoxdur"}`;
           hallName={hall?hall._venueName+(hall.name?" — "+hall.name:""):""}
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
-          onClose={()=>setDevetPNGOpen(null)}
+          onClose={closeTopPanel}
         />
       )}
       {meclisOpen&&(
@@ -3455,7 +3486,7 @@ ${savedEvsList||"Yoxdur"}`;
           events={savedEvents}
           onSelect={loadEvent}
           onDelete={deleteEvent}
-          onClose={()=>setMeclisOpen(false)}
+          onClose={closeTopPanel}
           onNewEvent={()=>{
             setMeclisOpen(false);
             // Əvvəlcə aktiv məclisi saxla
@@ -3490,7 +3521,7 @@ ${savedEvsList||"Yoxdur"}`;
         <LayoutPickerModal
           hall={layoutPickOpen.hall||hall}
           onConfirm={(mode,photoUrl)=>confirmLayoutMode(mode,photoUrl,layoutPickOpen.hall||hall)}
-          onClose={()=>setLayoutPickOpen(false)}
+          onClose={closeTopPanel}
         />
       )}
 
@@ -3517,7 +3548,7 @@ ${savedEvsList||"Yoxdur"}`;
           tables={tables}
           ev={ev}
           rsvpStats={rsvpStats}
-          onClose={()=>setStatsOpen(false)}
+          onClose={closeTopPanel}
         />
       )}
 
@@ -3747,7 +3778,7 @@ ${savedEvsList||"Yoxdur"}`;
       {invitedDrawerOpen&&(()=>{
         const invitedTables=tables.filter(t=>t.guests.some(g=>g.invited));
         return (
-          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:150}} onClick={()=>setInvitedDrawerOpen(false)}>
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:150}} onClick={closeTopPanel}>
             <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"#0a0603",
               borderTop:"2px solid rgba(80,200,120,.3)",borderRadius:"20px 20px 0 0",
               display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
@@ -3759,7 +3790,7 @@ ${savedEvsList||"Yoxdur"}`;
                   <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#50c878",fontWeight:700}}>✓ Dəvət Göndərilən</div>
                   <div style={{fontSize:11,color:"rgba(80,200,120,.5)",marginTop:2}}>{tables.flatMap(t=>t.guests).filter(g=>g.invited).length} qonaq · {invitedTables.length} masa</div>
                 </div>
-                <button onClick={()=>setInvitedDrawerOpen(false)} style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:14,cursor:"pointer"}}>✕</button>
+                <button onClick={closeTopPanel} style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:14,cursor:"pointer"}}>✕</button>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"0 14px 24px",WebkitOverflowScrolling:"touch"}}>
                 {invitedTables.length===0?(
@@ -3805,7 +3836,7 @@ ${savedEvsList||"Yoxdur"}`;
         <NotInvDrawerBody
           notInvTables={tables.filter(t=>t.guests.length>0)}
           allTables={tables}
-          onClose={()=>setNotInvitedDrawerOpen(false)}
+          onClose={closeTopPanel}
           onMarkSent={(ids)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true}:g)})));}}
           devetData={devetData}
           obData={obData}
@@ -3813,6 +3844,40 @@ ${savedEvsList||"Yoxdur"}`;
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
         />
+      )}
+
+      {/* Dəyişiklik saxlama soruşma modal */}
+      {unsavedConfirm&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"linear-gradient(145deg,#1e1608,#140f05)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:16,padding:"24px 20px",width:"100%",maxWidth:300}}>
+            <div style={{fontSize:28,textAlign:"center",marginBottom:10}}>💾</div>
+            <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,color:"#c9a84c",textAlign:"center",marginBottom:8}}>Dəyişikliklər saxlanmayıb</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Çıxmadan əvvəl saxlamaq istəyirsiniz?</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <button onClick={()=>{
+                saveCurrentEvent({tables:tabRef.current});
+                setSchemaChanged(false);
+                setUnsavedConfirm(null);
+                const top=panelStack[panelStack.length-1];
+                _doClosePanel(top);
+              }} style={{padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                💾 Bəli, saxla və çıx
+              </button>
+              <button onClick={()=>{
+                setSchemaChanged(false);
+                setUnsavedConfirm(null);
+                const top=panelStack[panelStack.length-1];
+                _doClosePanel(top);
+              }} style={{padding:"11px",borderRadius:10,border:"1px solid rgba(220,80,80,.3)",background:"rgba(220,80,80,.08)",color:"rgba(220,80,80,.8)",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                Yox, çıx
+              </button>
+              <button onClick={()=>setUnsavedConfirm(null)}
+                style={{padding:"10px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>
+                İptal — qal
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
