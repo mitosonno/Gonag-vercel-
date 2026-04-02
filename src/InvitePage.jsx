@@ -168,7 +168,20 @@ export default function InvitePage(){
   function addGuest(){
     if(!fName.trim()||!addForm) return;
     const newG={id:"inv_"+Date.now()+Math.random(),name:fName.trim(),phone:fPhone.trim()?"+994"+fPhone.trim():"",count:parseInt(fCount)||1,ushaqCount:parseInt(fUshaq)||0,gender:fGender,invited:false};
-    setTables(prev=>prev.map(t=>t.id!==addForm.tableId?t:{...t,guests:[...t.guests,newG]}));
+    const tblId=addForm.tableId;
+    setTables(prev=>{
+      const updated=prev.map(t=>t.id!==tblId?t:{...t,guests:[...t.guests,newG]});
+      // Avtomatik saxla
+      if(eventData){
+        const allRows=(eventData.tables&&eventData.tables.rows)?[...eventData.tables.rows]:[];
+        const myT=updated.find(t=>t.id===tblId);
+        const updatedRows=allRows.map(t=>t.id===tblId?{...t,guests:myT.guests}:t);
+        const newTablesObj={...(eventData.tables||{}),rows:updatedRows};
+        sbFetch("events?id=eq."+eventData.id,{method:"PATCH",prefer:"return=representation",body:JSON.stringify({tables:newTablesObj,updated_at:new Date().toISOString()})});
+        setEventData(ev=>({...ev,tables:newTablesObj}));
+      }
+      return updated;
+    });
     setAddForm(null); setFName(""); setFPhone(""); setFCount("1"); setFUshaq("0"); setFGender("");
   }
   function saveGuestEdit(updated){ setTables(prev=>prev.map(t=>t.id!==editPopup.tableId?t:{...t,guests:t.guests.map(g=>g.id===updated.id?updated:g)})); setEditPopup(null); }
@@ -277,12 +290,6 @@ export default function InvitePage(){
                 {filled<seats&&(
                   <button onClick={()=>setAddForm({tableId:t.id})} style={{width:"100%",marginTop:10,padding:"9px",borderRadius:9,border:"1px dashed rgba(201,168,76,.3)",background:"transparent",color:"rgba(201,168,76,.6)",fontSize:12,fontWeight:600,cursor:"pointer"}}>+ Qonaq əlavə et</button>
                 )}
-              </div>
-
-              <div style={{padding:"8px 14px 14px"}}>
-                <button onClick={()=>saveTable(t.id)} disabled={isSaving||t.guests.length===0} style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:isSaved?"rgba(80,200,120,.18)":t.guests.length===0?"rgba(255,255,255,.03)":"rgba(201,168,76,.16)",color:isSaved?"#50c878":t.guests.length===0?"rgba(255,255,255,.18)":"#c9a84c",fontSize:12,fontWeight:700,cursor:isSaving||t.guests.length===0?"default":"pointer",transition:"all .3s"}}>
-                  {isSaving?"⏳ Saxlanılır...":isSaved?"✅ Saxlanıldı — Yenidən saxla":"💾 Bu Masanı Yadda Saxla"}
-                </button>
               </div>
             </div>
           );
