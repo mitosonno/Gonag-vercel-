@@ -1162,13 +1162,14 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     id={t.id===tables[0]?.id?"schema-edit-pencil":undefined}
                     onClick={e=>{e.stopPropagation(); setFpPopupTbl(t); setFpPopup(p=>p===t.id?null:t.id);}}
                     style={{position:"absolute",top:-6,right:-6,
-                      width:Math.max(16,20/zoom),height:Math.max(16,20/zoom),
+                      width:22,height:22,
                       borderRadius:"50%",
                       background:"rgba(201,168,76,.9)",color:"#080604",
-                      fontSize:Math.max(9,11/zoom),display:"flex",
+                      fontSize:11,display:"flex",
                       alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
                       boxShadow:"0 1px 4px rgba(0,0,0,.6)",
-                      touchAction:"manipulation"}}>✏</div>}
+                      touchAction:"manipulation",
+                      transform:`scale(${1/zoom})`,transformOrigin:"top right"}}>✏</div>}
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
                     <div className="finger" style={{position:"absolute",top:0,left:"50%",
                       fontSize:22,zIndex:20,pointerEvents:"none",lineHeight:1}}>👆</div>
@@ -1646,13 +1647,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                     <span style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,color:((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)>=exTbl.seats?"#50c878":"#f5d060"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
-                    <button onClick={()=>{
-                      if(onSave) onSave();
-                      setSavedFlash(true);
-                      setTimeout(()=>setSavedFlash(false),1500);
-                    }} style={{padding:"4px 9px",borderRadius:8,border:"1px solid "+(savedFlash?"rgba(80,200,120,.5)":"rgba(201,168,76,.3)"),background:savedFlash?"rgba(80,200,120,.15)":"rgba(201,168,76,.08)",color:savedFlash?"#50c878":"#c9a84c",fontSize:10,fontWeight:600,cursor:"pointer",transition:"all .3s"}}>
-                      {savedFlash?"✅ Saxlandı":"💾 Yadda saxla"}
-                    </button>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
                     <span style={{fontSize:10,color:"rgba(201,168,76,.4)"}}>
