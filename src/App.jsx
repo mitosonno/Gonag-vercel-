@@ -3393,7 +3393,7 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="logo">GONAG<span>.AZ</span></div>
           <div className="pill"><div className="dot"/><span className="pn">Guliya</span></div>
           <div className="tbx">
-            <button className="tt" onClick={()=>pushPanel("meclis"); setMeclisOpen(true)} style={{position:"relative"}}>
+            <button className="tt" onClick={()=>{ pushPanel("meclis"); setMeclisOpen(true); }} style={{position:"relative"}}>
               🗂 Məclislərim
               {savedEvents.length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#c9a84c",color:"#080604",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{savedEvents.length}</span>}
             </button>
