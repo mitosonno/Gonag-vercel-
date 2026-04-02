@@ -197,7 +197,7 @@ export default function InvitePage(){
     const ev=eventData;
     const evName=(ev?.couple)||(ev?.tables?._meta?.obData?.boy&&ev?.tables?._meta?.obData?.girl?ev.tables._meta.obData.boy+" & "+ev.tables._meta.obData.girl:"Məclis");
     const evDate=ev?.tables?._meta?.obData?.date||"";
-    const hallName=ev?.hall_name||ev?.tables?._meta?.hall?.(ev.tables._meta.hall._venueName+(ev.tables._meta.hall.name?" — "+ev.tables._meta.hall.name:"")):"";
+    const hallName=(ev?.hall_name)||(ev?.tables?._meta?.hall?(ev.tables._meta.hall._venueName||"")+(ev.tables._meta.hall.name?" — "+ev.tables._meta.hall.name:""):"");
     const baseUrl=window.location.origin;
     const selTbls=tables.filter(t=>selectedTables.has(t.id));
     for(const tbl of selTbls){
@@ -213,8 +213,12 @@ export default function InvitePage(){
         });
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const msg=buildInviteMsg({sender:senderName,senderTitle,guest:g,table:tbl,evName,evDate,hallName,rsvpLink});
-        await new Promise(r=>setTimeout(r,600));
-        window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        await new Promise(r=>setTimeout(r,500));
+        if(navigator.share){
+          try{ await navigator.share({text:msg}); }catch(e){}
+        } else {
+          window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        }
       }
     }
     setSendPanel(false); setSendStep("tables");
