@@ -2804,7 +2804,7 @@ export default function App(){
   const totP = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
   const totCap = tables.reduce((s,t)=>s+t.seats,0);
   const pct = totCap>0 ? Math.round(totP/totCap*100) : 0;
-  const hasS = hall && tables.length>0;
+  const hasS = tables.length>0;
 
   function parseCmd(raw){
     let text = raw;
@@ -3118,20 +3118,15 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         obReply("Hələ masalarda qonaq yoxdur! Əvvəlcə sxemə qayıdıb qonaqları əlavə et 🙏",["🗺️ Sxemi aç"]);
         return;
       }
-    }
-    if(txt==="🪑 Masa-masa ayrıca"){
-      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
-      obReply("Dəvətnamə paneli açıldı! 📨\n\nMətni hazırla və saxla. Sonra ⏳ Göndərilməyən bölməsindən hər masanı ayrıca seçib göndər.",["⏳ Göndərilməyən bölməsi"]);
-      return;
-    }
-    if(txt==="📨 Hamısına birdəfəlik"){
-      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
-      obReply("Dəvətnamə paneli açıldı! 📨\n\nMətni hazırla və saxla. Sonra ⏳ Göndərilməyən bölməsindən \"Hamısını seç\" basıb hamısına birdəfəlik göndər.",["⏳ Göndərilməyən bölməsi"]);
+      pushPanel("notinv"); setNotInvitedDrawerOpen(true);
       return;
     }
     if(txt==="📨 Dəvətnaməni hazırla"||txt==="📨 Dəvət göndər"||txt==="📨 Dəvətnamə hazırla"){
-      pushPanel("devetpng"); setDevetPNGOpen({tbl: tables.find(t=>(t.guests||[]).length>0)||tables[0]});
-      obReply("Dəvətnamə səhifəsi açıldı! 👇\n\nÖz şəkil/videonu yüklə və ya hazır şablonlardan birini seç. Masa məlumatları avtomatik əlavə olunacaq.",["⏳ Göndərilməyən bölməsi"]);
+      if(totG===0){
+        obReply("Hələ masalarda qonaq yoxdur! Əvvəlcə sxemə qayıdıb qonaqları əlavə et 🙏",["🗺️ Sxemi aç"]);
+        return;
+      }
+      pushPanel("notinv"); setNotInvitedDrawerOpen(true);
       return;
     }
     if(txt==="📋 Masa-masa seç"){
@@ -3459,7 +3454,7 @@ ${savedEvsList||"Yoxdur"}`;
             }}>
               📨 Dəvətnamə
             </button>}
-            {totG>0&&<button className="qbn on" onClick={()=>pushPanel("stats"); setStatsOpen(true)}>
+            {totG>0&&<button className="qbn on" onClick={()=>{ pushPanel("stats"); setStatsOpen(true); }}>
               📊 Statistika
             </button>}
             {totG>0&&<button className="qbn on" onClick={()=>printAll(tables,obData,hall)}>
@@ -3731,8 +3726,9 @@ ${savedEvsList||"Yoxdur"}`;
                 var totG=tables.reduce(function(s,t){return s+t.guests.reduce(function(ss,g){return ss+(g.count||1);},0);},0);
                 var tblCount=tables.filter(function(t){return t.guests.length>0;}).length;
                 setMsgs(function(m){return [...m,{role:"agent",
-                  text:"Saxlanıldı! "+totG+" qonaq, "+tblCount+" masa dolu.\n\nDəvətnamələri necə göndərək? 📨",
-                  qrs:["🪑 Masa-masa ayrıca","📨 Hamısına birdəfəlik"]}];});
+                  text:"Saxlanıldı! "+totG+" qonaq, "+tblCount+" masa dolu.",
+                  qrs:[]}];});
+                pushPanel("notinv"); setNotInvitedDrawerOpen(true);
               }} style={{padding:"10px",borderRadius:10,border:"none",width:"100%",
                 background:"linear-gradient(90deg,rgba(201,168,76,.4),rgba(201,168,76,.2))",
                 color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
