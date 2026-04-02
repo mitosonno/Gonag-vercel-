@@ -96,6 +96,8 @@ export default function RsvpPage(){
   const [answered, setAnswered] = useState(false);
   const [answer, setAnswer] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [tebrikOpen, setTebrikOpen] = useState(false);
+  const [tebrikText, setTebrikText] = useState("Təəssüf ki gələ bilməyəcəyinizi bildirdiniz. Bizi sevindirsəydiniz çox xoş olardı. Hər halda ən xoş arzularımız sizinlədir! 🌹");
 
   useEffect(()=>{ if(code) load(); else setStatus("error"); },[code]);
 
@@ -124,6 +126,7 @@ export default function RsvpPage(){
       body:JSON.stringify({status:resp, updated_at:new Date().toISOString()})
     });
     setAnswer(resp); setAnswered(true);
+    if(resp==="not_attending") setTebrikOpen(true);
   }
 
   function copyCard(){
@@ -295,6 +298,34 @@ export default function RsvpPage(){
           Toy koordinasiya sistemi
         </div>
       </div>
+
+      {/* Tebrik pəncərəsi — Gəlmirəm basanda */}
+      {tebrikOpen&&(
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"flex-end"}}>
+          <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 40px"}}>
+            <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
+            <div style={{fontSize:14,color:"#c9a84c",fontWeight:700,marginBottom:4}}>💌 Tebrik mesajı</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:12}}>İstəsəniz toy sahibinə tebrik mesajı göndərin</div>
+            <textarea value={tebrikText} onChange={e=>setTebrikText(e.target.value)} rows={4}
+              style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none"}}/>
+            <div style={{display:"flex",gap:8,marginTop:12}}>
+              <button onClick={()=>setTebrikOpen(false)}
+                style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>
+                Keç
+              </button>
+              <button onClick={()=>{
+                const ownerPhone=(rsvp?.owner_phone||"").replace(/\D/g,"");
+                if(ownerPhone) window.open("https://wa.me/"+ownerPhone+"?text="+encodeURIComponent(tebrikText),"_blank");
+                else if(navigator.share) navigator.share({text:tebrikText}).catch(()=>{});
+                else window.open("https://wa.me/?text="+encodeURIComponent(tebrikText),"_blank");
+                setTebrikOpen(false);
+              }} style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                📱 WhatsApp-da göndər
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
