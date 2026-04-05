@@ -44,23 +44,108 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
 
   // SVG insan fiquru — baş + bədən + salamlayan əl
   function PersonFigure({cx:px, cy:py, angle, gender}){
-    const color = gender==="kishi"?"#7aade8":gender==="qadin"?"#e87aad":gender==="ushaq"?"#f5d060":"#50c878";
-    const s = gender==="ushaq" ? 5 : 7;
     const rot = (angle*180/Math.PI)+90;
-    return(
-      <g transform={`translate(${px},${py}) rotate(${rot})`}>
-        <circle cx={0} cy={-s*1.8} r={s*0.55} fill={color} opacity={0.9}/>
-        <line x1={0} y1={-s*1.2} x2={0} y2={0} stroke={color} strokeWidth={s*0.35} strokeLinecap="round"/>
-        <line x1={0} y1={-s*0.8} x2={-s*0.8} y2={-s*0.2} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
+    const s = gender==="ushaq" ? 0.55 : 1;
+
+    // Kişi — smoking + papyon
+    function Man(){
+      return(
         <g>
-          <animateTransform attributeName="transform" type="rotate"
-            values="0;-30;0;-30;0" dur="2s" repeatCount="indefinite"
-            additive="sum"/>
-          <line x1={0} y1={-s*0.8} x2={s*0.9} y2={-s*1.5} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
-          <circle cx={s*0.9} cy={-s*1.5} r={s*0.18} fill={color} opacity={0.8}/>
+          {/* Baş */}
+          <circle cx={0} cy={-18} r={5} fill="#f5c5a0"/>
+          {/* Saç */}
+          <path d="M-5,-21 Q0,-25 5,-21 Q3,-18 -3,-18 Z" fill="#3a2a1a"/>
+          {/* Smoking — qara kostyum */}
+          <path d="M-6,-13 L-7,0 L7,0 L6,-13 L2,-10 L0,-8 L-2,-10 Z" fill="#1a1a2e"/>
+          {/* Ağ köynək */}
+          <path d="M-2,-13 L-2,-8 L2,-8 L2,-13 Z" fill="white"/>
+          {/* Papyon (babochka) */}
+          <path d="M-3,-12 L0,-10 L3,-12 L0,-10 L-3,-8 L0,-10 L3,-8 L0,-10 Z" fill="#c9a84c"/>
+          <circle cx={0} cy={-10} r={1} fill="#c9a84c"/>
+          {/* Sol əl */}
+          <line x1={-6} y1={-10} x2={-10} y2={-5} stroke="#1a1a2e" strokeWidth={2} strokeLinecap="round"/>
+          {/* Sağ əl — salamlayan */}
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite" additive="sum"/>
+            <line x1={6} y1={-10} x2={11} y2={-16} stroke="#1a1a2e" strokeWidth={2} strokeLinecap="round"/>
+            <circle cx={11} cy={-16} r={2} fill="#f5c5a0"/>
+          </g>
+          {/* Ayaqlar — qara şalvar */}
+          <rect x={-5} y={0} width={4} height={8} rx={1} fill="#1a1a2e"/>
+          <rect x={1} y={0} width={4} height={8} rx={1} fill="#1a1a2e"/>
+          {/* Ayaqqabı */}
+          <ellipse cx={-3} cy={8} rx={3} ry={1.5} fill="#0a0a0a"/>
+          <ellipse cx={3} cy={8} rx={3} ry={1.5} fill="#0a0a0a"/>
         </g>
-        <line x1={0} y1={0} x2={-s*0.45} y2={s*0.8} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
-        <line x1={0} y1={0} x2={s*0.45} y2={s*0.8} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
+      );
+    }
+
+    // Qadın — qırmızı bal donu
+    function Woman(){
+      return(
+        <g>
+          {/* Baş */}
+          <circle cx={0} cy={-19} r={5} fill="#f5c5a0"/>
+          {/* Saç — uzun */}
+          <path d="M-5,-23 Q0,-27 5,-23 Q6,-18 6,-14 Q3,-16 0,-15 Q-3,-16 -6,-14 Q-6,-18 Z" fill="#3a2010"/>
+          {/* Bal donu — qırmızı, aşağıya açılan */}
+          {/* Üst hissə — korse */}
+          <path d="M-5,-14 L-4,-6 L4,-6 L5,-14 Z" fill="#cc2200"/>
+          {/* Yaka */}
+          <path d="M-5,-14 Q0,-11 5,-14" fill="none" stroke="#ff4422" strokeWidth={1}/>
+          {/* Don ətəyi — geniş */}
+          <path d="M-4,-6 Q-14,2 -12,10 L12,10 Q14,2 4,-6 Z" fill="#cc2200"/>
+          {/* Don detalı */}
+          <path d="M-12,10 Q0,12 12,10" fill="none" stroke="#ff6644" strokeWidth={1}/>
+          {/* Sol əl */}
+          <line x1={-5} y1={-11} x2={-9} y2={-6} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
+          {/* Sağ əl — salamlayan */}
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite" additive="sum"/>
+            <line x1={5} y1={-11} x2={10} y2={-17} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
+            <circle cx={10} cy={-17} r={2} fill="#f5c5a0"/>
+          </g>
+          {/* Ayaqqabı */}
+          <ellipse cx={-3} cy={10} rx={2.5} ry={1.2} fill="#880000"/>
+          <ellipse cx={3} cy={10} rx={2.5} ry={1.2} fill="#880000"/>
+        </g>
+      );
+    }
+
+    // Uşaq — sadə kiçik
+    function Child(){
+      return(
+        <g transform="scale(0.65)">
+          {/* Baş */}
+          <circle cx={0} cy={-16} r={5} fill="#f5c5a0"/>
+          {/* Saç */}
+          <path d="M-5,-20 Q0,-23 5,-20 Q4,-17 -4,-17 Z" fill="#5a3a20"/>
+          {/* Köynək */}
+          <rect x={-5} y={-11} width={10} height={9} rx={2} fill="#f5d060"/>
+          {/* Şalvar */}
+          <rect x={-4} y={-2} width={3.5} height={7} rx={1} fill="#4466aa"/>
+          <rect x={0.5} y={-2} width={3.5} height={7} rx={1} fill="#4466aa"/>
+          {/* Sağ əl — salamlayan */}
+          <g>
+            <animateTransform attributeName="transform" type="rotate"
+              values="0;-40;0;-40;0" dur="1.8s" repeatCount="indefinite" additive="sum"/>
+            <line x1={5} y1={-8} x2={9} y2={-13} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
+            <circle cx={9} cy={-13} r={2} fill="#f5c5a0"/>
+          </g>
+          {/* Sol əl */}
+          <line x1={-5} y1={-8} x2={-8} y2={-4} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
+        </g>
+      );
+    }
+
+    return(
+      <g transform={`translate(${px},${py}) rotate(${rot}) scale(${s})`}>
+        {gender==="kishi"&&<Man/>}
+        {gender==="qadin"&&<Woman/>}
+        {gender==="ushaq"&&<Child/>}
+        {(gender!=="kishi"&&gender!=="qadin"&&gender!=="ushaq")&&<Man/>}
       </g>
     );
   }
