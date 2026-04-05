@@ -13,6 +13,63 @@ async function sbFetch(path, opts={}) {
   try{ return await res.json(); }catch{ return null; }
 }
 
+function TableCircle({ tableId, seats=10, guests=[], label="" }){
+  const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
+  const W=280, r=80, cx=140, cy=140;
+  const guestSlots = [];
+  guests.forEach(g=>{ for(let i=0;i<(g.count||1);i++) guestSlots.push({name:g.name,main:i===0,gender:g.gender}); });
+  const chairs = Array.from({length:seats}).map((_,i)=>{
+    const angle=(2*Math.PI/seats)*i-Math.PI/2;
+    const x=cx+(r+20)*Math.cos(angle), y=cy+(r+20)*Math.sin(angle);
+    const tx=cx+(r+50)*Math.cos(angle), ty=cy+(r+50)*Math.sin(angle);
+    const guest=guestSlots[i];
+    const isRight=Math.cos(angle)>0.1, isLeft=Math.cos(angle)<-0.1;
+    const anchor=isRight?"start":isLeft?"end":"middle";
+    const nameShort=guest?.main?(guest.name.length>8?guest.name.slice(0,8)+"…":guest.name):"";
+    const sc=guest?(guest.gender==="kishi"?"#7aade8":guest.gender==="qadin"?"#e87aad":"#50c878"):"rgba(255,255,255,.1)";
+    return {x,y,angle,guest,tx,ty,anchor,nameShort,sc};
+  });
+  const pct=seats>0?Math.round(filled/seats*100):0;
+  const circ=2*Math.PI*r;
+  const dash=(pct/100)*circ;
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+      <svg width={W} height={W} style={{overflow:"visible"}}>
+        <defs>
+          <radialGradient id="tg3" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#2a1f08"/>
+            <stop offset="100%" stopColor="#1a1200"/>
+          </radialGradient>
+        </defs>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,.12)" strokeWidth="8"/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#c9a84c" strokeWidth="8"
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}/>
+        {chairs.map((c,i)=>(
+          <g key={i}>
+            <ellipse cx={c.x} cy={c.y} rx={11} ry={8}
+              transform={`rotate(${c.angle*180/Math.PI+90} ${c.x} ${c.y})`}
+              fill={c.guest?c.sc+"33":"rgba(255,255,255,.06)"}
+              stroke={c.guest?c.sc:"rgba(255,255,255,.1)"} strokeWidth="1.5"/>
+            {c.nameShort&&(
+              <text x={c.tx} y={c.ty+4} textAnchor={c.anchor}
+                fill={c.sc} fontSize="9.5" fontWeight="600" fontFamily="'DM Sans',sans-serif">
+                {c.nameShort}
+              </text>
+            )}
+          </g>
+        ))}
+        <circle cx={cx} cy={cy} r={r-14} fill="url(#tg3)" stroke="rgba(201,168,76,.35)" strokeWidth="1.5"/>
+        <text x={cx} y={cy-10} textAnchor="middle" fill="#c9a84c" fontSize="32" fontWeight="800" fontFamily="'Playfair Display',serif">{tableId}</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(201,168,76,.45)" fontSize="11">{filled}/{seats}</text>
+      </svg>
+      <div style={{fontSize:13,fontWeight:700,color:"#c9a84c",letterSpacing:1,textAlign:"center",marginTop:4}}>
+        MASA № {tableId}{label?" — "+label:""}
+      </div>
+    </div>
+  );
+}
+
 function GiftSection({ rsvpCode }){
   const [step, setStep] = useState("info");
   const [name, setName] = useState("");
@@ -200,10 +257,14 @@ export default function RsvpPage(){
           </div>
         </div>
 
-        {/* Masa */}
-        <div style={{margin:"0 16px 16px",background:"rgba(255,255,255,.02)",border:"1px solid rgba(201,168,76,.12)",borderRadius:16,padding:"16px"}}>
-          <div style={{fontSize:11,color:"rgba(201,168,76,.5)",letterSpacing:2,marginBottom:10}}>🪑 MASA MƏLUMATI</div>
-          <div style={{fontSize:22,fontWeight:800,color:"#c9a84c",marginBottom:10}}>Masa № {rsvp?.table_id}{tblLabel?" — "+tblLabel:""}</div>
+        {/* Masa dairəsi */}
+        <div style={{margin:"0 16px 16px",textAlign:"center",padding:"10px 0"}}>
+          <TableCircle tableId={rsvp?.table_id} seats={tableData?.seats||10} guests={guests} label={tblLabel}/>
+        </div>
+
+        {/* Qonaqlar siyahısı */}
+        <div style={{margin:"0 16px 16px"}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:8,textAlign:"center",letterSpacing:1}}>Masadakı qonaqlar:</div>
           {guests.map((g,i)=>{
             const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"rgba(201,168,76,.7)";
             return(
