@@ -28,9 +28,9 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
 
   const chairs = Array.from({length:seats}).map((_,i)=>{
     const angle=(2*Math.PI/seats)*i-Math.PI/2;
-    const fx=cx+(r+18)*Math.cos(angle), fy=cy+(r+18)*Math.sin(angle);
-    const nx=cx+(r+36)*Math.cos(angle), ny=cy+(r+36)*Math.sin(angle);
-    const lx=cx+(r+62)*Math.cos(angle), ly=cy+(r+62)*Math.sin(angle);
+    const fx=cx+(r+14)*Math.cos(angle), fy=cy+(r+14)*Math.sin(angle);
+    const nx=cx+(r+28)*Math.cos(angle), ny=cy+(r+28)*Math.sin(angle);
+    const lx=cx+(r+58)*Math.cos(angle), ly=cy+(r+58)*Math.sin(angle);
     const guest=guestSlots[i];
     const isRight=Math.cos(angle)>0.15, isLeft=Math.cos(angle)<-0.15;
     const anchor=isRight?"start":isLeft?"end":"middle";
@@ -114,10 +114,10 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
       );
     }
 
-    // Uşaq — sadə kiçik, böyüdülmüş
+    // Uşaq — böyüdülmüş, aydın görünən
     function Child(){
       return(
-        <g transform="scale(0.85)">
+        <g transform="scale(0.9)">
           {/* Baş */}
           <circle cx={0} cy={-16} r={5} fill="#f5c5a0"/>
           {/* Saç */}
