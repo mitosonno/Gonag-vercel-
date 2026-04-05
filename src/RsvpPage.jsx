@@ -114,10 +114,10 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
       );
     }
 
-    // Uşaq — sadə kiçik
+    // Uşaq — sadə kiçik, böyüdülmüş
     function Child(){
       return(
-        <g transform="scale(0.65)">
+        <g transform="scale(0.85)">
           {/* Baş */}
           <circle cx={0} cy={-16} r={5} fill="#f5c5a0"/>
           {/* Saç */}
@@ -174,12 +174,6 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
         {/* Oturacaqlar + insan fiqurları + adlar */}
         {chairs.map((c,i)=>(
           <g key={i}>
-            {/* Oturacaq */}
-            <ellipse cx={c.fx} cy={c.fy} rx={10} ry={7}
-              transform={`rotate(${c.angle*180/Math.PI+90} ${c.fx} ${c.fy})`}
-              fill={c.guest?c.sc+"22":"rgba(255,255,255,.05)"}
-              stroke={c.guest?c.sc:"rgba(255,255,255,.12)"} strokeWidth="1.5"/>
-
             {/* İnsan fiquru */}
             {c.guest&&<PersonFigure cx={c.nx} cy={c.ny} angle={c.angle} gender={c.guest.gender}/>}
 
