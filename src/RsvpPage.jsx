@@ -16,35 +16,64 @@ async function sbFetch(path, opts={}) {
 function TableCircle({ tableId, seats=10, guests=[], label="" }){
   const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
   const W=320, r=82, cx=160, cy=160;
+
+  // Hər qonaq + uşaqları ayrı slot kimi
   const guestSlots = [];
   guests.forEach(g=>{
     for(let i=0;i<(g.count||1);i++)
-      guestSlots.push({name:i===0?g.name:"",main:i===0,gender:g.gender});
+      guestSlots.push({name:i===0?g.name:"",main:i===0,gender:g.gender||"other"});
+    for(let j=0;j<(g.ushaqCount||0);j++)
+      guestSlots.push({name:j===0&&g.count<=1?g.name+" (u)":"",main:false,gender:"ushaq"});
   });
 
   const chairs = Array.from({length:seats}).map((_,i)=>{
     const angle=(2*Math.PI/seats)*i-Math.PI/2;
     const fx=cx+(r+22)*Math.cos(angle), fy=cy+(r+22)*Math.sin(angle);
-    const nx=cx+(r+52)*Math.cos(angle), ny=cy+(r+52)*Math.sin(angle);
+    const nx=cx+(r+46)*Math.cos(angle), ny=cy+(r+46)*Math.sin(angle);
+    const lx=cx+(r+70)*Math.cos(angle), ly=cy+(r+70)*Math.sin(angle);
     const guest=guestSlots[i];
     const isRight=Math.cos(angle)>0.15, isLeft=Math.cos(angle)<-0.15;
     const anchor=isRight?"start":isLeft?"end":"middle";
     const sc=guest?(guest.gender==="kishi"?"#7aade8":guest.gender==="qadin"?"#e87aad":guest.gender==="ushaq"?"#f5d060":"#50c878"):"rgba(255,255,255,.15)";
-    const emoji=guest?(guest.gender==="kishi"?"👨":guest.gender==="qadin"?"👩":guest.gender==="ushaq"?"👦":"🧑"):"";
-    const name=guest?.main&&guest.name?(guest.name.length>7?guest.name.slice(0,7)+"…":guest.name):"";
-    return {angle,fx,fy,nx,ny,anchor,sc,emoji,name,guest};
+    return {angle,fx,fy,nx,ny,lx,ly,anchor,sc,guest};
   });
 
   const pct=seats>0?Math.round(filled/seats*100):0;
   const circ=2*Math.PI*r;
   const dash=(pct/100)*circ;
 
+  // SVG insan fiquru — baş + bədən + salamlayan əl
+  function PersonFigure({cx:px, cy:py, angle, gender, size=13}){
+    const color = gender==="kishi"?"#7aade8":gender==="qadin"?"#e87aad":gender==="ushaq"?"#f5d060":"#50c878";
+    const s = gender==="ushaq"?size*0.75:size;
+    // Fiqurun istiqaməti — masaya baxsın
+    const rot = (angle*180/Math.PI)+90;
+    return(
+      <g transform={`translate(${px},${py}) rotate(${rot})`}>
+        {/* Baş */}
+        <circle cx={0} cy={-s*1.8} r={s*0.55} fill={color} opacity={0.9}/>
+        {/* Bədən */}
+        <line x1={0} y1={-s*1.2} x2={0} y2={0} stroke={color} strokeWidth={s*0.35} strokeLinecap="round"/>
+        {/* Sol əl — aşağı */}
+        <line x1={0} y1={-s*0.8} x2={-s*0.8} y2={-s*0.2} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
+        {/* Sağ əl — salamlayan, animasiyalı */}
+        <g style={{transformOrigin:`${0}px ${-s*0.8}px`}}>
+          <animateTransform attributeName="transform" type="rotate"
+            values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite"
+            additive="sum"/>
+          <line x1={0} y1={-s*0.8} x2={s*0.9} y2={-s*1.5} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
+          {/* Əl barmaqları */}
+          <circle cx={s*0.9} cy={-s*1.5} r={s*0.2} fill={color} opacity={0.8}/>
+        </g>
+        {/* Ayaqlar */}
+        <line x1={0} y1={0} x2={-s*0.5} y2={s*0.8} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
+        <line x1={0} y1={0} x2={s*0.5} y2={s*0.8} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
+      </g>
+    );
+  }
+
   return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <style>{`
-        @keyframes wave{0%{transform:rotate(0deg)}25%{transform:rotate(-20deg)}75%{transform:rotate(20deg)}100%{transform:rotate(0deg)}}
-        .waving{animation:wave 1s ease-in-out infinite;transform-origin:bottom center;display:inline-block}
-      `}</style>
       <svg width={W} height={W} style={{overflow:"visible"}}>
         <defs>
           <radialGradient id="tg4" cx="50%" cy="50%" r="50%">
@@ -52,43 +81,35 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
             <stop offset="100%" stopColor="#1a1200"/>
           </radialGradient>
         </defs>
+
         {/* Progress ring */}
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,.1)" strokeWidth="6"/>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#c9a84c" strokeWidth="6"
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
           transform={`rotate(-90 ${cx} ${cy})`}/>
+
         {/* Masa */}
         <circle cx={cx} cy={cy} r={r-10} fill="url(#tg4)" stroke="rgba(201,168,76,.4)" strokeWidth="2"/>
-        {/* Masa nömrəsi */}
-        <text x={cx} y={cy-8} textAnchor="middle" fill="#c9a84c" fontSize="30" fontWeight="800" fontFamily="Georgia,serif">{tableId}</text>
-        <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(201,168,76,.5)" fontSize="10">{filled}/{seats}</text>
+        <text x={cx} y={cy-6} textAnchor="middle" fill="#c9a84c" fontSize="28" fontWeight="800" fontFamily="Georgia,serif">{tableId}</text>
+        <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(201,168,76,.4)" fontSize="10">{filled}/{seats}</text>
 
-        {/* Oturacaqlar + insan + ad */}
+        {/* Oturacaqlar + insan fiqurları + adlar */}
         {chairs.map((c,i)=>(
           <g key={i}>
-            {/* Oturacaq ellips */}
+            {/* Oturacaq */}
             <ellipse cx={c.fx} cy={c.fy} rx={10} ry={7}
               transform={`rotate(${c.angle*180/Math.PI+90} ${c.fx} ${c.fy})`}
               fill={c.guest?c.sc+"22":"rgba(255,255,255,.05)"}
-              stroke={c.guest?c.sc:"rgba(255,255,255,.1)"} strokeWidth="1.5"/>
-            {/* İnsan fiquru — emoji kimi SVG foreignObject */}
-            {c.emoji&&(
-              <foreignObject x={c.nx-10} y={c.ny-12} width="20" height="20">
-                <div xmlns="http://www.w3.org/1999/xhtml"
-                  style={{fontSize:"14px",textAlign:"center",lineHeight:"20px"}}
-                  className="waving">
-                  {c.emoji}
-                </div>
-              </foreignObject>
-            )}
-            {/* Ad yazısı */}
-            {c.name&&(
-              <text
-                x={cx+(r+72)*Math.cos(c.angle)}
-                y={cy+(r+72)*Math.sin(c.angle)+4}
-                textAnchor={c.anchor}
-                fill={c.sc} fontSize="9" fontWeight="700" fontFamily="'DM Sans',sans-serif">
-                {c.name}
+              stroke={c.guest?c.sc:"rgba(255,255,255,.12)"} strokeWidth="1.5"/>
+
+            {/* İnsan fiquru */}
+            {c.guest&&<PersonFigure cx={c.nx} cy={c.ny} angle={c.angle} gender={c.guest.gender}/>}
+
+            {/* Ad */}
+            {c.guest?.name&&(
+              <text x={c.lx} y={c.ly+3} textAnchor={c.anchor}
+                fill={c.sc} fontSize="8.5" fontWeight="700" fontFamily="'DM Sans',sans-serif">
+                {c.guest.name.length>8?c.guest.name.slice(0,8)+"…":c.guest.name}
               </text>
             )}
           </g>
