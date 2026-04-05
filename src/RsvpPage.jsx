@@ -23,14 +23,14 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
     for(let i=0;i<(g.count||1);i++)
       guestSlots.push({name:i===0?g.name:"",main:i===0,gender:g.gender||"other"});
     for(let j=0;j<(g.ushaqCount||0);j++)
-      guestSlots.push({name:j===0&&g.count<=1?g.name+" (u)":"",main:false,gender:"ushaq"});
+      guestSlots.push({name:"",main:false,gender:"ushaq"});
   });
 
   const chairs = Array.from({length:seats}).map((_,i)=>{
     const angle=(2*Math.PI/seats)*i-Math.PI/2;
-    const fx=cx+(r+22)*Math.cos(angle), fy=cy+(r+22)*Math.sin(angle);
-    const nx=cx+(r+46)*Math.cos(angle), ny=cy+(r+46)*Math.sin(angle);
-    const lx=cx+(r+70)*Math.cos(angle), ly=cy+(r+70)*Math.sin(angle);
+    const fx=cx+(r+18)*Math.cos(angle), fy=cy+(r+18)*Math.sin(angle);
+    const nx=cx+(r+36)*Math.cos(angle), ny=cy+(r+36)*Math.sin(angle);
+    const lx=cx+(r+62)*Math.cos(angle), ly=cy+(r+62)*Math.sin(angle);
     const guest=guestSlots[i];
     const isRight=Math.cos(angle)>0.15, isLeft=Math.cos(angle)<-0.15;
     const anchor=isRight?"start":isLeft?"end":"middle";
@@ -43,31 +43,24 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
   const dash=(pct/100)*circ;
 
   // SVG insan fiquru — baş + bədən + salamlayan əl
-  function PersonFigure({cx:px, cy:py, angle, gender, size=13}){
+  function PersonFigure({cx:px, cy:py, angle, gender}){
     const color = gender==="kishi"?"#7aade8":gender==="qadin"?"#e87aad":gender==="ushaq"?"#f5d060":"#50c878";
-    const s = gender==="ushaq"?size*0.75:size;
-    // Fiqurun istiqaməti — masaya baxsın
+    const s = gender==="ushaq" ? 5 : 7;
     const rot = (angle*180/Math.PI)+90;
     return(
       <g transform={`translate(${px},${py}) rotate(${rot})`}>
-        {/* Baş */}
         <circle cx={0} cy={-s*1.8} r={s*0.55} fill={color} opacity={0.9}/>
-        {/* Bədən */}
         <line x1={0} y1={-s*1.2} x2={0} y2={0} stroke={color} strokeWidth={s*0.35} strokeLinecap="round"/>
-        {/* Sol əl — aşağı */}
-        <line x1={0} y1={-s*0.8} x2={-s*0.8} y2={-s*0.2} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
-        {/* Sağ əl — salamlayan, animasiyalı */}
-        <g style={{transformOrigin:`${0}px ${-s*0.8}px`}}>
+        <line x1={0} y1={-s*0.8} x2={-s*0.8} y2={-s*0.2} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
+        <g>
           <animateTransform attributeName="transform" type="rotate"
-            values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite"
+            values="0;-30;0;-30;0" dur="2s" repeatCount="indefinite"
             additive="sum"/>
-          <line x1={0} y1={-s*0.8} x2={s*0.9} y2={-s*1.5} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
-          {/* Əl barmaqları */}
-          <circle cx={s*0.9} cy={-s*1.5} r={s*0.2} fill={color} opacity={0.8}/>
+          <line x1={0} y1={-s*0.8} x2={s*0.9} y2={-s*1.5} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
+          <circle cx={s*0.9} cy={-s*1.5} r={s*0.18} fill={color} opacity={0.8}/>
         </g>
-        {/* Ayaqlar */}
-        <line x1={0} y1={0} x2={-s*0.5} y2={s*0.8} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
-        <line x1={0} y1={0} x2={s*0.5} y2={s*0.8} stroke={color} strokeWidth={s*0.25} strokeLinecap="round"/>
+        <line x1={0} y1={0} x2={-s*0.45} y2={s*0.8} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
+        <line x1={0} y1={0} x2={s*0.45} y2={s*0.8} stroke={color} strokeWidth={s*0.22} strokeLinecap="round"/>
       </g>
     );
   }
@@ -108,8 +101,9 @@ function TableCircle({ tableId, seats=10, guests=[], label="" }){
             {/* Ad */}
             {c.guest?.name&&(
               <text x={c.lx} y={c.ly+3} textAnchor={c.anchor}
-                fill={c.sc} fontSize="8.5" fontWeight="700" fontFamily="'DM Sans',sans-serif">
-                {c.guest.name.length>8?c.guest.name.slice(0,8)+"…":c.guest.name}
+                fill={c.sc} fontSize="10" fontWeight="800" fontFamily="'DM Sans',sans-serif"
+                stroke="#080604" strokeWidth="2" paintOrder="stroke">
+                {c.guest.name.length>9?c.guest.name.slice(0,9)+"…":c.guest.name}
               </text>
             )}
           </g>
