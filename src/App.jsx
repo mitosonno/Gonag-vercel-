@@ -3472,8 +3472,10 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       }
       setBusy(false); return;
     }
-    if(txt==="✓ Bəsdir"){
-      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Əla! Başqa masa ilə davam etmək istəyirsiniz, yoxsa zal sxeminə baxaq?",qrs:["🗺️ Sxemi aç"]}]);
+    if(txt==="→ Sxemə keç"){
+      setChatWizard(null);
+      pushPanel("schema"); setSchemaOpen(true);
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
       setBusy(false); return;
     }
 
@@ -3964,17 +3966,16 @@ ${savedEvsList||"Yoxdur"}`;
             const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<t.seats)?hall.plannedSeatsPerTable:t.seats;
             const full = oc>=effectiveCap;
             function finishAdd(){
-              const uc = chatWizard.gender==="ushaq" ? 0 : 0; // uşaq ayrıca say sahəsi yoxdur, gender="ushaq" özü uşaq kimi 1 nəfər sayılır
+              const isUshaq = chatWizard.gender==="ushaq";
               const g = {
                 id:Date.now()+Math.random(), name:chatWizard.name.trim(),
                 phone:chatWizard.phone.trim()?("+994"+chatWizard.phone.trim()):"",
-                count:parseInt(chatWizard.count)||1,
-                gender:chatWizard.gender==="ushaq"?"":chatWizard.gender,
-                ushaqCount: chatWizard.gender==="ushaq" ? (parseInt(chatWizard.count)||1) : 0,
+                count: isUshaq ? 0 : (parseInt(chatWizard.count)||1),
+                gender: isUshaq ? "" : chatWizard.gender,
+                ushaqCount: isUshaq ? (parseInt(chatWizard.count)||1) : 0,
                 invited:false, side:t.side||"", tableId:t.id
               };
-              const addCount = chatWizard.gender==="ushaq" ? 0 : (parseInt(chatWizard.count)||1);
-              const totalAdd = addCount + g.ushaqCount;
+              const totalAdd = g.count + g.ushaqCount;
               if(oc+totalAdd>effectiveCap){
                 setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.`,qrs:[]}]);
                 setChatWizard(null);
@@ -3986,7 +3987,7 @@ ${savedEvsList||"Yoxdur"}`;
               const newOc = oc+totalAdd;
               setMsgs(m=>[...m,{role:"agent",
                 text:`✅ ${g.name} əlavə olundu! Masa ${t.id}: ${newOc}/${effectiveCap} dolu.\n\nNövbəti qonağı əlavə edək?`,
-                qrs:newOc<effectiveCap?["➕ Növbəti qonaq","✓ Bəsdir"]:["✓ Bəsdir"],
+                qrs:newOc<effectiveCap?["➕ Növbəti qonaq","→ Sxemə keç"]:["→ Sxemə keç"],
                 tableSnapshotId:t.id}]);
             }
             return (
@@ -3994,13 +3995,20 @@ ${savedEvsList||"Yoxdur"}`;
                 background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(18px) saturate(150%)",
                 border:"1px solid rgba(255,255,255,.55)",display:"flex",flexDirection:"column",gap:9}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id} — qonaq əlavə et ({oc}/{effectiveCap})</div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""} ({oc}/{effectiveCap})</div>
                   <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
                     style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
                       borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
                     📍 Özüm yerləşdirim
                   </button>
                 </div>
+
+                <input value={t.label&&t.label!=="__extra__"?t.label:""} placeholder="✏️ Masaya ad qoy (məs: VIP, Ailə) — istəyə bağlı"
+                  onChange={e=>{
+                    const lbl = e.target.value;
+                    setTables(ts=>ts.map(x=>x.id===t.id?{...x,label:lbl}:x));
+                  }}
+                  style={{padding:"7px 11px",borderRadius:11,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",fontSize:11,outline:"none",color:"#211A16"}}/>
 
                 {full ? (
                   <div style={{fontSize:11,color:"#C1382A"}}>Bu masa artıq doludur. Başqa masa seçin.</div>
