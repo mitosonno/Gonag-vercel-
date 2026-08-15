@@ -474,45 +474,46 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
   const [nm, setNm] = useState(t.label&&t.label!=="__extra__"?t.label:"");
   const [side, setSide] = useState(t.side||"");
   const isEx = t.label==="__extra__";
-  const gold = "#c9a84c";
+  const gold = "#D4AF5A";
   const nmRef = useRef(nm);
   useEffect(()=>{ nmRef.current=nm; },[nm]);
 
   return (
     <div onClick={onClose} style={{
       position:"fixed",inset:0,zIndex:9999,
-      background:"rgba(0,0,0,.72)",
+      background:"rgba(33,26,22,.4)",backdropFilter:"blur(8px)",
       display:"flex",alignItems:"center",justifyContent:"center",
       padding:"20px"
     }}>
       <div onClick={e=>e.stopPropagation()} style={{
         width:"100%",maxWidth:320,
-        background:"linear-gradient(160deg,#FFFFFF,#FFFFFF)",
-        border:"1.5px solid rgba(201,168,76,.45)",
-        borderRadius:18,
+        background:"linear-gradient(155deg,rgba(255,255,255,.75),rgba(255,255,255,.4))",
+        backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",
+        border:"1px solid rgba(255,255,255,.6)",
+        borderRadius:26,
         padding:"20px 18px 22px",
-        boxShadow:"0 16px 60px rgba(0,0,0,.95)"
+        boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 24px 60px -12px rgba(60,40,20,.4)"
       }}>
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontSize:16,fontWeight:800,color:gold,fontFamily:"'Playfair Display',serif"}}>
+            <div style={{fontSize:16,fontWeight:800,color:"#211A16",fontFamily:"'Fraunces',serif"}}>
               Masa {t.id}
             </div>
             {t.label&&t.label!=="__extra__"&&(
-              <div style={{fontSize:11,color:"rgba(201,168,76,.45)",marginTop:2}}>{t.label}</div>
+              <div style={{fontSize:11,color:"rgba(33,26,22,.5)",marginTop:2}}>{t.label}</div>
             )}
           </div>
           <button onClick={onClose} style={{
-            width:28,height:28,borderRadius:"50%",border:"1px solid rgba(33,26,22,.1)",
-            background:"rgba(33,26,22,.06)",color:"#6B6259",fontSize:14,
+            width:28,height:28,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
+            background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",color:"#6B6259",fontSize:14,
             cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"
           }}>✕</button>
         </div>
 
         {/* Ad input */}
         <div style={{marginBottom:12}}>
-          <div style={{fontSize:10,fontWeight:700,color:"rgba(201,168,76,.5)",letterSpacing:1,marginBottom:6}}>
+          <div style={{fontSize:10,fontWeight:700,color:"rgba(33,26,22,.5)",letterSpacing:1,marginBottom:6}}>
             MASA ADI
           </div>
           <input
@@ -524,28 +525,28 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
             style={{
               display:"block",width:"100%",boxSizing:"border-box",
               padding:"11px 14px",
-              background:"rgba(33,26,22,.07)",
-              border:"1.5px solid rgba(201,168,76,.3)",
-              borderRadius:11,color:"#211A16",fontSize:14,
-              outline:"none",fontFamily:"'DM Sans',sans-serif",
+              background:"rgba(255,255,255,.5)",backdropFilter:"blur(10px)",
+              border:"1px solid rgba(255,255,255,.6)",
+              borderRadius:14,color:"#211A16",fontSize:14,
+              outline:"none",fontFamily:"'Inter',sans-serif",
               transition:"border-color .2s"
             }}
-            onFocus={e=>e.target.style.borderColor="rgba(201,168,76,.7)"}
-            onBlur={e=>e.target.style.borderColor="rgba(201,168,76,.3)"}
+            onFocus={e=>e.target.style.borderColor="rgba(193,56,42,.5)"}
+            onBlur={e=>e.target.style.borderColor="rgba(255,255,255,.6)"}
           />
         </div>
 
         {/* Tərəf seçimi */}
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:10,fontWeight:700,color:"rgba(201,168,76,.5)",letterSpacing:1,marginBottom:6}}>
+          <div style={{fontSize:10,fontWeight:700,color:"rgba(33,26,22,.5)",letterSpacing:1,marginBottom:6}}>
             TƏRƏFİ
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
             {[
-              ["Oğlan evi","#7aade8","👦"],
-              ["Qız evi","#e87aad","👧"],
-              ["Ümumi","#c9a84c","🤝"],
-              ["Extra","#b57aff","⊕"]
+              ["Oğlan evi","#C1382A","👦"],
+              ["Qız evi","#D4AF5A","👧"],
+              ["Ümumi","#8A6FA8","🤝"],
+              ["Extra","#5B84B0","⊕"]
             ].map(([s,sc,ic])=>{
               const active = s==="Extra" ? isEx : side===s;
               return (
@@ -557,11 +558,12 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
                     onSaveSide(newSide);
                   }}
                   style={{
-                    padding:"10px 8px",borderRadius:10,fontSize:12,fontWeight:active?700:500,
+                    padding:"10px 8px",borderRadius:14,fontSize:12,fontWeight:active?700:500,
                     cursor:"pointer",
-                    border:"1.5px solid "+(active?sc:sc+"33"),
-                    background:active?sc+"22":"rgba(33,26,22,.03)",
-                    color:active?sc:"rgba(33,26,22,.4)",
+                    border:"1px solid "+(active?sc+"66":"rgba(255,255,255,.5)"),
+                    background:active?"linear-gradient(155deg,"+sc+"33,"+sc+"12)":"rgba(255,255,255,.35)",
+                    backdropFilter:"blur(8px)",
+                    color:active?sc:"rgba(33,26,22,.5)",
                     display:"flex",alignItems:"center",justifyContent:"center",gap:5,
                     transition:"all .15s"
                   }}>
@@ -578,12 +580,13 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
         <button
           onClick={()=>{ if(nm.trim()) onSaveLabel(nm.trim()); onClose(); }}
           style={{
-            display:"block",width:"100%",padding:"13px",
-            borderRadius:12,border:"2px solid "+gold,
-            background:"linear-gradient(90deg,rgba(201,168,76,.25),rgba(201,168,76,.15))",
-            color:gold,fontSize:15,fontWeight:800,
+            display:"block",width:"100%",padding:"14px",
+            borderRadius:18,border:"1px solid rgba(255,255,255,.4)",
+            background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",
+            color:"#F5EEE0",fontSize:15,fontWeight:700,
             cursor:"pointer",letterSpacing:0.5,
-            fontFamily:"'DM Sans',sans-serif"
+            fontFamily:"'Inter',sans-serif",
+            boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"
           }}
         >
           ✓ Saxla
@@ -886,9 +889,10 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       <div ref={wrapperRef} style={{
         width:"100%", height:canvasH+"px",
         position:"relative", overflow:"hidden",
-        borderRadius:14, border:"2px solid rgba(201,168,76,.25)",
-        background:"#EDE8DC",
-        boxShadow:"inset 0 0 40px rgba(0,0,0,.4), inset 0 0 0 10px rgba(201,168,76,.04)",
+        borderRadius:28, border:"1px solid rgba(255,255,255,.5)",
+        background:"linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08))",
+        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+        boxShadow:"inset 0 1px 0 rgba(255,255,255,.5), inset 0 -20px 40px -20px rgba(160,130,90,.15), 0 8px 24px -8px rgba(60,40,20,.2)",
         touchAction:"pan-y", userSelect:"none"
       }}>
         {/* Inner canvas — scale+pan burada */}
@@ -1097,14 +1101,22 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     const r = S/2;
                     const seatR = r + S*0.16;
                     const seats = t.seats||8;
-                    const stateColor = fu?"#4C7A5E":side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#8A6FA8";
-                    const ringColor = longPressSelected.has(t.id)?"#B23A2E":fpOpen?"#211A16":stateColor;
+                    const stateColor = fu?"#4C9A6E":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":"#8A6FA8";
+                    const stateGlow = fu?"#7ED6A5":side==="Oğlan evi"?"#FF9B85":side==="Qız evi"?"#EFC988":"#B99BD6";
+                    const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":stateColor;
                     const totalSvgSize = S + S*0.62;
                     const cx = totalSvgSize/2;
                     const cy = totalSvgSize/2;
+                    const gid = "orb"+t.id;
                     return (
                       <svg width={totalSvgSize} height={totalSvgSize} style={{display:"block",pointerEvents:"none",overflow:"visible"}}>
-                        {/* Nar dənələri — hər qonaq bir dənə */}
+                        <defs>
+                          <radialGradient id={gid} cx="35%" cy="30%">
+                            <stop offset="0%" stopColor={stateGlow}/>
+                            <stop offset="100%" stopColor={stateColor}/>
+                          </radialGradient>
+                        </defs>
+                        {/* Nar dənələri — hər qonaq bir dənə, şüşə parıltısı ilə */}
                         {Array.from({length:seats}).map((_,i)=>{
                           const angle = (2*Math.PI/seats)*i - Math.PI/2;
                           const sx = cx + seatR*Math.cos(angle);
@@ -1114,17 +1126,19 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                           return (
                             <ellipse key={i}
                               cx={sx} cy={sy} rx={seedW/2} ry={seedH/2}
-                              fill={filled?stateColor:"#FFFFFF"}
+                              fill={filled?`url(#${gid})`:"rgba(255,255,255,.55)"}
                               stroke={stateColor}
-                              strokeWidth={filled?0.5:1.6}
-                              opacity={filled?1:0.55}
+                              strokeWidth={filled?0.4:1.5}
+                              opacity={filled?1:0.75}
+                              style={filled?{filter:`drop-shadow(0 0 2px ${stateColor}99)`}:undefined}
                               transform={`rotate(${(angle*180/Math.PI)+90} ${sx} ${sy})`}
                             />
                           );
                         })}
-                        {/* Masa dairəsi — ağ, incə haşiyə */}
-                        <circle cx={cx} cy={cy} r={r-2} fill="#FFFFFF" stroke={ringColor} strokeWidth="2.5"
-                          style={{filter:"drop-shadow(0 1px 4px rgba(33,26,22,.22))"}}/>
+                        {/* Masa dairəsi — şüşə kürə */}
+                        <circle cx={cx} cy={cy} r={r-2} fill="rgba(255,255,255,.7)" stroke={ringColor} strokeWidth="2.5"
+                          style={{filter:`drop-shadow(0 2px 6px rgba(60,40,20,.25))`}}/>
+                        <circle cx={cx-(r-2)*0.32} cy={cy-(r-2)*0.35} r={(r-2)*0.34} fill="rgba(255,255,255,.65)"/>
                         {/* Qonaq sayı — tünd mürəkkəb rəngi */}
                         <text x={cx} y={side&&side!=="Ümumi"?cy-S*0.1:cy}
                           textAnchor="middle" dominantBaseline="middle"
@@ -1804,25 +1818,26 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 function RestCard({ rest, onPick }){
   const [open, setOpen] = useState(false);
   return (
-    <div style={{border:"1px solid rgba(201,168,76,.2)",borderRadius:10,marginBottom:8,overflow:"hidden"}}>
-      <div onClick={()=>setOpen(o=>!o)} style={{padding:"10px 14px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset",borderRadius:18,marginBottom:10,overflow:"hidden"}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{padding:"12px 14px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <div style={{color:"#c9a84c",fontWeight:700,fontSize:14}}>🏛️ {rest.name}</div>
-          <div style={{color:"rgba(201,168,76,.5)",fontSize:11,marginTop:2}}>{rest.city} · {(rest.halls&&rest.halls.length)||0} zal</div>
+          <div style={{color:"#211A16",fontWeight:700,fontSize:14}}>🏛️ {rest.name}</div>
+          <div style={{color:"rgba(33,26,22,.5)",fontSize:11,marginTop:2}}>{rest.city} · {(rest.halls&&rest.halls.length)||0} zal</div>
         </div>
-        <span style={{color:"rgba(201,168,76,.4)",fontSize:12}}>{open?"▲":"▼"}</span>
+        <span style={{color:"rgba(33,26,22,.4)",fontSize:12}}>{open?"▲":"▼"}</span>
       </div>
       {open&&(
-        <div style={{borderTop:"1px solid rgba(201,168,76,.1)",padding:"8px 14px"}}>
+        <div style={{borderTop:"1px solid rgba(255,255,255,.4)",padding:"8px 14px"}}>
           {(rest.halls||[]).map(h=>(
-            <div key={h.id} onClick={()=>onPick(rest,h)} style={{padding:"8px 10px",borderRadius:8,marginBottom:6,cursor:"pointer",
-              background:h.hasLayout?"rgba(80,200,120,.08)":"rgba(201,168,76,.07)",
-              border:"1px solid "+(h.hasLayout?"rgba(80,200,120,.25)":"rgba(201,168,76,.15)")}}>
+            <div key={h.id} onClick={()=>onPick(rest,h)} style={{padding:"10px 12px",borderRadius:14,marginBottom:7,cursor:"pointer",
+              background:h.hasLayout?"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))":"rgba(255,255,255,.35)",
+              backdropFilter:"blur(8px)",
+              border:"1px solid "+(h.hasLayout?"rgba(76,154,110,.3)":"rgba(255,255,255,.5)")}}>
               <div style={{color:"#211A16",fontSize:13,fontWeight:600}}>
                 {h.name}
-                {h.hasLayout&&<span style={{marginLeft:6,fontSize:10,color:"#50c878",fontWeight:700}}>🗺️ Hazır plan</span>}
+                {h.hasLayout&&<span style={{marginLeft:6,fontSize:10,color:"#4C9A6E",fontWeight:700}}>🗺️ Hazır plan</span>}
               </div>
-              <div style={{color:"rgba(201,168,76,.5)",fontSize:11,marginTop:2}}>{h.cap||h.capacity} nəfər</div>
+              <div style={{color:"rgba(33,26,22,.5)",fontSize:11,marginTop:2}}>{h.cap||h.capacity} nəfər</div>
             </div>
           ))}
         </div>
@@ -1868,23 +1883,23 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
     setSmsText("Təəssüf ki gələ bilməyəcəyinizi bildirdiniz. Bizi sevindirsəydiniz çox xoş olardı. Hər halda ən xoş arzularımız sizinlədir! 🌹");
   }
 
-  const gold="#c9a84c";
+  const gold="#D4AF5A";
   const statCard = (label,val,color,icon)=>(
-    <div style={{background:"rgba(33,26,22,.03)",border:"1px solid "+color+"33",borderRadius:12,padding:"12px",textAlign:"center"}}>
+    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:18,padding:"13px",textAlign:"center"}}>
       <div style={{fontSize:22}}>{icon}</div>
-      <div style={{fontSize:24,fontWeight:800,color,marginTop:4}}>{val}</div>
-      <div style={{fontSize:10,color:"rgba(33,26,22,.35)",marginTop:2}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:800,color,marginTop:4,fontFamily:"'Fraunces',serif"}}>{val}</div>
+      <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginTop:2}}>{label}</div>
     </div>
   );
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)"}} onClick={onClose}>
-      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#F7F4EE",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={onClose}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"linear-gradient(180deg,rgba(255,255,255,.75),rgba(245,238,224,.6))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",borderRadius:"26px 26px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 6px",flexShrink:0}}>
-          <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
+          <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
         </div>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
-          <div style={{fontFamily:"'Playfair Display',serif",color:gold,fontSize:15}}>📊 Statistika</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
+          <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>📊 Statistika</div>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}}>✕</button>
         </div>
 
@@ -1909,13 +1924,13 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
             {/* Gəlirəm */}
             <div onClick={()=>setExpand(expand==="attending"?null:"attending")}
-              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(80,200,120,.25)",background:"rgba(80,200,120,.06)",marginBottom:8,cursor:"pointer"}}>
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))",backdropFilter:"blur(10px)",marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:20}}>✅</span>
-                <span style={{fontSize:14,fontWeight:700,color:"#50c878"}}>Gəlirəm</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#4C9A6E"}}>Gəlirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{background:"rgba(80,200,120,.25)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#50c878"}}>{attending.length}</div>
+                <div style={{background:"rgba(76,154,110,.22)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#4C9A6E"}}>{attending.length}</div>
                 <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="attending"?"▲":"▼"}</span>
               </div>
             </div>
@@ -1932,13 +1947,13 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
             {/* Gəlmirəm */}
             <div onClick={()=>setExpand(expand==="not_attending"?null:"not_attending")}
-              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(255,80,80,.2)",background:"rgba(255,80,80,.05)",marginBottom:8,cursor:"pointer"}}>
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(193,56,42,.25)",background:"linear-gradient(155deg,rgba(193,56,42,.1),rgba(193,56,42,.03))",backdropFilter:"blur(10px)",marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:20}}>❌</span>
-                <span style={{fontSize:14,fontWeight:700,color:"#ff8888"}}>Gəlmirəm</span>
+                <span style={{fontSize:14,fontWeight:700,color:"#C1382A"}}>Gəlmirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{background:"rgba(255,80,80,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#ff8888"}}>{notAttending.length}</div>
+                <div style={{background:"rgba(193,56,42,.18)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#C1382A"}}>{notAttending.length}</div>
                 <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="not_attending"?"▲":"▼"}</span>
               </div>
             </div>
@@ -1961,13 +1976,13 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
             {/* Gözləyirəm */}
             <div onClick={()=>setExpand(expand==="pending"?null:"pending")}
-              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:10,border:"1px solid rgba(201,168,76,.2)",background:"rgba(201,168,76,.04)",cursor:"pointer"}}>
+              style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(212,175,90,.3)",background:"linear-gradient(155deg,rgba(212,175,90,.14),rgba(212,175,90,.04))",backdropFilter:"blur(10px)",cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
                 <span style={{fontSize:20}}>⏳</span>
                 <span style={{fontSize:14,fontWeight:700,color:gold}}>Gözləyirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{background:"rgba(201,168,76,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:gold}}>{pending.length+noPhone.length}</div>
+                <div style={{background:"rgba(212,175,90,.22)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#8A6B1E"}}>{pending.length+noPhone.length}</div>
                 <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="pending"?"▲":"▼"}</span>
               </div>
             </div>
@@ -2012,45 +2027,45 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
   const [confirmId, setConfirmId] = useState(null);
   if(!events||events.length===0) return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.6)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
-      <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1px solid rgba(201,168,76,.25)",borderRadius:20,padding:"32px 24px",textAlign:"center",maxWidth:320,width:"90%"}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
+      <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 20px 50px -15px rgba(60,40,20,.35)",borderRadius:26,padding:"32px 24px",textAlign:"center",maxWidth:320,width:"90%"}} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:40,marginBottom:12}}>🎊</div>
-        <div style={{fontSize:16,fontWeight:700,color:"#c9a84c",marginBottom:8}}>Hələ məclis yoxdur</div>
-        <div style={{fontSize:12,color:"rgba(33,26,22,.35)",marginBottom:20}}>Gul Agent ilə yeni məclis yaradın</div>
-        <button onClick={onClose} style={{padding:"10px 28px",borderRadius:12,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>Bağla</button>
+        <div style={{fontSize:16,fontWeight:700,color:"#211A16"}}>Hələ məclis yoxdur</div>
+        <div style={{fontSize:12,color:"rgba(33,26,22,.5)",marginBottom:20,marginTop:4}}>Gul Agent ilə yeni məclis yaradın</div>
+        <button onClick={onClose} style={{padding:"10px 28px",borderRadius:16,border:"1px solid rgba(193,56,42,.3)",background:"linear-gradient(155deg,rgba(193,56,42,.2),rgba(193,56,42,.08))",color:"#C1382A",fontSize:13,fontWeight:700,cursor:"pointer"}}>Bağla</button>
       </div>
     </div>
   );
 
-  const statusColor = s => s==="tamamlandi"?"#50c878":s==="devetname"?"#7aade8":"#e8b87a";
+  const statusColor = s => s==="tamamlandi"?"#4C9A6E":s==="devetname"?"#5B84B0":"#8A6B1E";
   const statusLabel = s => s==="tamamlandi"?"✅ Tamamlandı":s==="devetname"?"📨 Dəvətnamə göndərildi":"⏳ Natamam";
   const typeIcon = t => t==="toy"?"💍":t==="nishan"?"💫":t==="adgunu"?"🎂":"🏢";
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.6)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}} onClick={onClose}>
-      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"linear-gradient(180deg,#FFFFFF,#F7F4EE)",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)"}} onClick={onClose}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"linear-gradient(180deg,rgba(255,255,255,.75),rgba(245,238,224,.6))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset",borderRadius:"26px 26px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
 
         {/* Handle */}
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
-          <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
+          <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
         </div>
 
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 18px 14px"}}>
           <div>
-            <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:"#c9a84c",fontWeight:700}}>Məclislərim</div>
-            <div style={{fontSize:11,color:"rgba(33,26,22,.3)",marginTop:2}}>{events.length} məclis</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,color:"#211A16",fontWeight:700}}>Məclislərim</div>
+            <div style={{fontSize:11,color:"rgba(33,26,22,.45)",marginTop:2}}>{events.length} məclis</div>
           </div>
-          <button onClick={onClose} style={{width:34,height:34,borderRadius:"50%",border:"none",background:"rgba(33,26,22,.08)",color:"#fff",fontSize:15,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{width:34,height:34,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(10px)",color:"#211A16",fontSize:15,cursor:"pointer"}}>✕</button>
         </div>
 
         {/* List */}
         <div style={{flex:1,overflowY:"auto",padding:"0 14px 16px",WebkitOverflowScrolling:"touch",touchAction:"pan-y"}}>
           {events.map((ev,i)=>(
-            <div key={ev.id} style={{background:"rgba(33,26,22,.04)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,padding:"14px 16px",marginBottom:10,position:"relative"}}>
+            <div key={ev.id} style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.2))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -8px rgba(60,40,20,.2)",borderRadius:22,padding:"14px 16px",marginBottom:10,position:"relative"}}>
 
               {/* Status badge */}
-              <div style={{position:"absolute",top:12,right:12,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"18",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 8px"}}>
+              <div style={{position:"absolute",top:12,right:12,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 8px"}}>
                 {statusLabel(ev.status)}
               </div>
 
@@ -2058,7 +2073,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,paddingRight:90}}>
                 <div style={{fontSize:28}}>{typeIcon(ev.evType)}</div>
                 <div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#211A16"}}>
+                  <div style={{fontSize:15,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif"}}>
                     {ev.evType==="toy"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
                     {ev.evType==="toy"&&(!ev.obData||!ev.obData.boy)?"💍 Toy — davam edir":""}
                     {ev.evType==="nishan"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
@@ -2069,7 +2084,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                     {ev.evType==="korporativ"&&(!ev.obData||!ev.obData.company)?"🏢 Korporativ — davam edir":""}
                     {!ev.evType&&"⏳ Başlanmamış məclis"}
                   </div>
-                  <div style={{fontSize:11,color:"rgba(201,168,76,.5)",marginTop:2}}>
+                  <div style={{fontSize:11,color:"rgba(33,26,22,.5)",marginTop:2}}>
                     {ev.obData&&ev.obData.date&&<span>{ev.obData.date} · </span>}
                     {ev.hall&&ev.hall.name&&<span>{ev.hall.name} · </span>}
                     {ev.tables&&ev.tables.length>0&&<span>{ev.tables.length} masa · </span>}
@@ -2086,11 +2101,11 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                 return (
                   <div style={{marginBottom:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:10,color:"rgba(33,26,22,.3)"}}>Masa dolulugu</span>
-                      <span style={{fontSize:10,color:"#c9a84c",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
+                      <span style={{fontSize:10,color:"rgba(33,26,22,.45)"}}>Masa dolulugu</span>
+                      <span style={{fontSize:10,color:"#C1382A",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
                     </div>
-                    <div style={{height:5,background:"rgba(33,26,22,.07)",borderRadius:3,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:pct+"%",background:pct>=100?"#50c878":"linear-gradient(90deg,#c9a84c,#f5d060)",borderRadius:3}}/>
+                    <div style={{height:5,background:"rgba(150,120,80,.15)",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:pct+"%",background:pct>=100?"linear-gradient(90deg,#7ED6A5,#4C9A6E)":"linear-gradient(90deg,#FF9B85,#C1382A)",borderRadius:3,boxShadow:"0 0 6px rgba(193,56,42,.4)"}}/>
                     </div>
                   </div>
                 );
@@ -2099,19 +2114,19 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
               {/* Buttons */}
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>onSelect(ev)}
-                  style={{flex:1,padding:"9px",borderRadius:10,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  style={{flex:1,padding:"9px",borderRadius:14,border:"1px solid rgba(193,56,42,.25)",background:"linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06))",color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                   ▶ Davam et
                 </button>
                 {confirmId===ev.id?(
                   <div style={{display:"flex",gap:4,alignItems:"center"}}>
                     <button onClick={()=>{onDelete(ev.id, ev.dbId);setConfirmId(null);}}
-                      style={{padding:"6px 10px",borderRadius:8,border:"none",background:"rgba(220,80,80,.3)",color:"#ff6b6b",fontSize:11,fontWeight:700,cursor:"pointer"}}>Hə, sil</button>
+                      style={{padding:"6px 10px",borderRadius:10,border:"1px solid rgba(220,80,80,.3)",background:"rgba(220,80,80,.15)",color:"#C1382A",fontSize:11,fontWeight:700,cursor:"pointer"}}>Hə, sil</button>
                     <button onClick={()=>setConfirmId(null)}
-                      style={{padding:"6px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.2)",background:"transparent",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Yox</button>
+                      style={{padding:"6px 10px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",background:"transparent",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Yox</button>
                   </div>
                 ):(
                   <button onClick={()=>setConfirmId(ev.id)}
-                    style={{width:38,height:38,borderRadius:10,border:"1px solid rgba(220,80,80,.25)",background:"rgba(220,80,80,.08)",color:"rgba(220,80,80,.6)",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    style={{width:38,height:38,borderRadius:14,border:"1px solid rgba(220,80,80,.2)",background:"rgba(220,80,80,.08)",color:"rgba(193,56,42,.7)",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
                     🗑
                   </button>
                 )}
@@ -2120,10 +2135,10 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
           ))}
         </div>
         {/* Sabit alt düymə */}
-        <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+        <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
           <button onClick={()=>{onClose();if(onNewEvent)onNewEvent();}}
-            style={{width:"100%",padding:"13px",borderRadius:12,border:"1.5px solid rgba(201,168,76,.4)",
-              background:"rgba(201,168,76,.12)",color:"#c9a84c",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+            style={{width:"100%",padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",
+              background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
             ✨ Yeni Məclis Yarat
           </button>
         </div>
@@ -3373,7 +3388,7 @@ ${savedEvsList||"Yoxdur"}`;
     if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
 
-  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:#F7F4EE;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FFFFFF;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#B23A2E;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:#FBEFED;border-radius:20px;border:1px solid #E7E1D6;}\n.dot{width:7px;height:7px;border-radius:50%;background:#B23A2E;animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(178,58,46,.35)}70%{box-shadow:0 0 0 7px rgba(178,58,46,0)}100%{box-shadow:0 0 0 0 rgba(178,58,46,0)}}\n.pn{font-size:11px;color:#B23A2E;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:8px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:#F7F4EE;}\n.menu3{width:32px;height:32px;border-radius:50%;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:#F7F4EE;}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #E7E1D6;background:#F7F4EE;}\n.schema-panel{flex:1;overflow:hidden;background:#F7F4EE;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:#D8D0C2;}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:#B23A2E;border:1px solid #B23A2E;}\n.av.u{background:#EDE8DC;}\n.bb{padding:9px 12px;border-radius:14px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{background:#FFFFFF;border:1px solid #E7E1D6;color:#211A16;border-radius:14px 14px 14px 3px;}\n.bb.u{background:#211A16;color:#F7F4EE;margin-left:auto;border-radius:14px 14px 3px 14px;}\n.qw{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}\n.qb{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:11px;cursor:pointer;font-weight:500;}\n.qb:hover{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#B23A2E;animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:8px 12px;display:flex;gap:6px;border-top:1px solid #E7E1D6;flex-shrink:0;}\n.inp{flex:1;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;padding:9px 14px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:#B23A2E;}\n.sndb{width:38px;height:38px;padding:0;background:#B23A2E;border:1px solid #B23A2E;border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}\n.sndb:hover{background:#983026;}\n.sndb:disabled{opacity:.3;cursor:not-allowed;}\n.qbar{display:flex;gap:5px;padding:7px 12px;border-top:1px solid #E7E1D6;flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#6B6259;font-size:11px;cursor:pointer;font-weight:500;}\n.qbn:hover{border-color:#B23A2E;color:#B23A2E;}\n.qbn.on{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.cnt{display:inline-block;margin-left:4px;background:#C9A84C;color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.6);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid #E7E1D6;}\n.rsi{width:100%;background:#F7F4EE;border:1px solid #E7E1D6;border-radius:10px;padding:8px 12px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:7px 14px;border-radius:10px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:#F7F4EE;}\n.pbar-bg{height:4px;background:#E7E1D6;border-radius:2px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:#B23A2E;border-radius:2px;transition:width .5s;}
+  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%);}\n.glass,.tb,.pill,.tt,.menu3,.bb.a,.qb,.qbn,.ir .inp,.sndb,.rsp,.back-btn,.ev-card,.gcard,.rsvp-row,.dev-opt,.stat-card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 8px 22px -8px rgba(60,40,20,.22);position:relative;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin:14px 12px 0;border-radius:22px;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#C1382A;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;}\n.dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 8px rgba(193,56,42,.65);animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,.35)}70%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 7px rgba(193,56,42,0)}100%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,0)}}\n.pn{font-size:11px;color:#211A16;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:16px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.menu3{width:32px;height:32px;border-radius:50%;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.4);background:transparent;}\n.schema-panel{flex:1;overflow:hidden;background:transparent;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(150,120,80,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 10px rgba(193,56,42,.5);border:none;}\n.av.u{background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25));backdrop-filter:blur(10px);}\n.bb{padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{color:#211A16;border-radius:18px 18px 18px 5px;}\n.bb.u{background:linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);color:#F5EEE0;margin-left:auto;border-radius:18px 18px 5px 18px;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 26px -10px rgba(0,0,0,.5);}\n.qw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}\n.qb{padding:7px 13px;border-radius:18px;color:#211A16;font-size:11.5px;cursor:pointer;font-weight:600;}\n.qb:hover{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#C1382A;box-shadow:0 0 4px rgba(193,56,42,.6);animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:10px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.inp{flex:1;background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:10px 16px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:rgba(193,56,42,.5);}\n.sndb{width:38px;height:38px;padding:0;background:linear-gradient(155deg,#FF6B52,#C1382A);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -2px rgba(193,56,42,.55),0 1px 0 rgba(255,255,255,.3) inset;}\n.sndb:hover{filter:brightness(1.08);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}\n.qbar{display:flex;gap:6px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.4);flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:7px 13px;border-radius:18px;color:#6B6259;font-size:11px;cursor:pointer;font-weight:600;}\n.qbn:hover{border-color:rgba(193,56,42,.4);color:#C1382A;}\n.qbn.on{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.cnt{display:inline-block;margin-left:4px;background:linear-gradient(155deg,#EFC988,#D4AF5A);color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;box-shadow:0 0 4px rgba(212,175,90,.5);}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.45);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{border-radius:26px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.4);}\n.rsi{width:100%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:9px 13px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:8px 15px;border-radius:14px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.pbar-bg{height:5px;background:rgba(150,120,80,.15);border-radius:3px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#FF9B85,#C1382A);border-radius:3px;transition:width .5s;box-shadow:0 0 6px rgba(193,56,42,.4);}\n.glass::before,.tb::before,.pill::before,.tt::before,.bb.a::before,.qb::before,.qbn::before,.inp::before,.rsp::before,.ev-card::before,.gcard::before,.rsvp-row::before,.dev-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.55) 0%,transparent 30%,transparent 70%,rgba(255,255,255,.2) 100%);pointer-events:none;}
 @keyframes tpulse{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-50%) scale(1.3)}65%{transform:translate(-50%,-50%) scale(0.92)}100%{transform:translate(-50%,-50%) scale(1)}}
 .tpulse{animation:tpulse 0.65s ease;}
 .lp-selected{filter:drop-shadow(0 0 8px rgba(178,58,46,0.9));}
@@ -4403,32 +4418,32 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
 function LayoutPickerModal({ hall, onConfirm, onClose }){
   const isGulistan = hall && hall._venueName==="Gülüstan Sarayı" && (hall.name==="Böyük Zal"||hall.name==="Kiçik Zal");
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:200,display:"flex",alignItems:"flex-end"}}
+    <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.4)",backdropFilter:"blur(8px)",zIndex:200,display:"flex",alignItems:"flex-end"}}
       onClick={onClose}>
-      <div style={{width:"100%",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.25)",
-        borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}}
+      <div style={{width:"100%",background:"linear-gradient(180deg,rgba(255,255,255,.8),rgba(245,238,224,.65))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",
+        borderRadius:"26px 26px 0 0",padding:"20px 16px 36px"}}
         onClick={e=>e.stopPropagation()}>
-        <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
-        <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:17,textAlign:"center",marginBottom:6}}>
+        <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)",margin:"0 auto 16px"}}/>
+        <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:17,fontWeight:600,textAlign:"center",marginBottom:6}}>
           🗺️ Sxem növünü seçin
         </div>
-        <div style={{color:"rgba(201,168,76,.45)",fontSize:11,textAlign:"center",marginBottom:20}}>
+        <div style={{color:"rgba(33,26,22,.5)",fontSize:11,textAlign:"center",marginBottom:20}}>
           {hall&&hall._venueName} — {hall&&hall.name}
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {isGulistan&&(
             <button onClick={()=>onConfirm("ready",null)}
-              style={{padding:"14px 16px",borderRadius:12,border:"1px solid rgba(80,200,120,.4)",
-                background:"rgba(80,200,120,.08)",cursor:"pointer",textAlign:"left",width:"100%"}}>
-              <div style={{color:"#50c878",fontSize:14,fontWeight:700,marginBottom:3}}>🗺️ Hazır Plan</div>
-              <div style={{color:"rgba(33,26,22,.45)",fontSize:11}}>Sistemdəki hazır zal sxemi — masalar real yerlərdə</div>
+              style={{padding:"14px 16px",borderRadius:18,border:"1px solid rgba(76,154,110,.35)",
+                background:"linear-gradient(155deg,rgba(76,154,110,.16),rgba(76,154,110,.05))",backdropFilter:"blur(10px)",cursor:"pointer",textAlign:"left",width:"100%"}}>
+              <div style={{color:"#4C9A6E",fontSize:14,fontWeight:700,marginBottom:3}}>🗺️ Hazır Plan</div>
+              <div style={{color:"rgba(33,26,22,.55)",fontSize:11}}>Sistemdəki hazır zal sxemi — masalar real yerlərdə</div>
             </button>
           )}
           <button onClick={()=>onConfirm("custom",null)}
-            style={{padding:"14px 16px",borderRadius:12,border:"1px solid rgba(150,150,150,.2)",
-              background:"rgba(150,150,150,.05)",cursor:"pointer",textAlign:"left",width:"100%"}}>
-            <div style={{color:"rgba(33,26,22,.7)",fontSize:14,fontWeight:700,marginBottom:3}}>⬜ Özüm Qurarım</div>
-            <div style={{color:"rgba(33,26,22,.35)",fontSize:11}}>Boş sxem — masaları özünüz əlavə edib yerləşdirin</div>
+            style={{padding:"14px 16px",borderRadius:18,border:"1px solid rgba(255,255,255,.5)",
+              background:"rgba(255,255,255,.4)",backdropFilter:"blur(10px)",cursor:"pointer",textAlign:"left",width:"100%"}}>
+            <div style={{color:"rgba(33,26,22,.75)",fontSize:14,fontWeight:700,marginBottom:3}}>⬜ Özüm Qurarım</div>
+            <div style={{color:"rgba(33,26,22,.5)",fontSize:11}}>Boş sxem — masaları özünüz əlavə edib yerləşdirin</div>
           </button>
         </div>
       </div>
