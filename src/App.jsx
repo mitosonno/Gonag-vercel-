@@ -974,13 +974,27 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               </div>
             );})()}
 
-            {/* Custom zal divar konturu — Zal Builder-də çəkilmiş */}
-            {hall&&hall._wallPath&&hall._wallPath.length>2&&(
+            {/* Custom zal divar konturu — Zal Builder-də çəkilmiş (xətlərlə) */}
+            {hall&&hall._wallEdges&&hall._wallEdges.length>0&&hall._wallPath&&(
               <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
-                <polygon points={hall._wallPath.map(p=>p.x+","+p.y).join(" ")}
-                  fill="rgba(255,255,255,.15)" stroke="rgba(150,120,80,.4)" strokeWidth="0.4"/>
+                {hall._wallEdges.map(function(ed,idx){
+                  var a=hall._wallPath.find(function(p){return p.id===ed.from;});
+                  var b=hall._wallPath.find(function(p){return p.id===ed.to;});
+                  if(!a||!b) return null;
+                  return <line key={idx} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgba(150,120,80,.5)" strokeWidth="0.4"/>;
+                })}
               </svg>
             )}
+
+            {/* Custom zal sütunları */}
+            {hall&&hall._columns&&hall._columns.map(function(c,idx){
+              return (
+                <div key={idx} style={{position:"absolute",left:c.xPct+"%",top:c.yPct+"%",transform:"translate(-50%,-50%)",
+                  width:14,height:14,borderRadius:3,
+                  background:"repeating-linear-gradient(45deg,#8A7A6E,#8A7A6E 2px,#B8AC9C 2px,#B8AC9C 4px)",
+                  border:"1px solid rgba(90,78,69,.5)",zIndex:1,pointerEvents:"none"}}/>
+              );
+            })}
 
             {/* Kiçik Zal elementləri */}
             {hasHallElements&&hall._hallElements.map(function(el,idx){
@@ -2572,7 +2586,9 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [capacity, setCapacity] = useState("150");
   const [photoUrl, setPhotoUrl] = useState(null);
   const [mode, setMode] = useState("wall");
-  const [wallPoints, setWallPoints] = useState([]);
+  const [wallPoints, setWallPoints] = useState([]); // [{id,x,y}]
+  const [wallEdges, setWallEdges] = useState([]); // [{id,from,to}]
+  const [selectedPoint, setSelectedPoint] = useState(null);
   const [zones, setZones] = useState([]);
   const [tables, setTables] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -2613,30 +2629,14 @@ function HallBuilderPanel({ onClose, onSaved }){
     return {x,y};
   }
 
-  // Bucaq snap — divar nöqtəsi əvvəlki nöqtəyə görə 15° addımlarına "yapışır"
-  // beləliklə əl-titrəməsindən yaranan əyriliklər avtomatik düzəlir
-  function snapAngle(prevPt, rawPt){
-    if(!prevPt || !snapOn) return rawPt;
-    const dx = rawPt.x - prevPt.x, dy = rawPt.y - prevPt.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if(dist < 1.5) return rawPt;
-    let angle = Math.atan2(dy, dx);
-    const step = Math.PI/12; // 15°
-    angle = Math.round(angle/step)*step;
-    return {
-      x: Math.max(0,Math.min(100, prevPt.x + dist*Math.cos(angle))),
-      y: Math.max(0,Math.min(100, prevPt.y + dist*Math.sin(angle)))
-    };
-  }
-
   function canvasClick(e){
     if(movedRef.current){ movedRef.current=false; return; }
     if(!canvasRef.current) return;
     const raw = ptFromEvent(e);
     if(mode==="wall"){
-      const prev = wallPoints[wallPoints.length-1];
-      const snapped = snapAngle(prev, raw);
-      setWallPoints(p=>[...p,snapped]);
+      // Boş yerə klik — sərbəst, birləşməmiş nöqtə əlavə edir
+      const id = wallPoints.length? Math.max(...wallPoints.map(p=>p.id))+1 : 1;
+      setWallPoints(p=>[...p,{id,x:raw.x,y:raw.y}]);
     }
     else if(mode==="zone"){ setZoneLabelInput(raw); }
     else if(mode==="table"){
@@ -2647,6 +2647,30 @@ function HallBuilderPanel({ onClose, onSaved }){
       const id = columns.length? Math.max(...columns.map(c=>c.id))+1 : 1;
       setColumns(c=>[...c,{id,x:raw.x,y:raw.y}]);
     }
+  }
+
+  // Nöqtəyə toxunulanda — ilk toxunma seçir, ikinci toxunma xətt çəkib birləşdirir
+  function pointTap(id){
+    if(mode!=="wall") return;
+    if(selectedPoint===null){ setSelectedPoint(id); return; }
+    if(selectedPoint===id){ setSelectedPoint(null); return; }
+    const exists = wallEdges.some(ed=>(ed.from===selectedPoint&&ed.to===id)||(ed.from===id&&ed.to===selectedPoint));
+    if(!exists){
+      const a = wallPoints.find(p=>p.id===selectedPoint), b = wallPoints.find(p=>p.id===id);
+      let x2=b.x, y2=b.y;
+      if(a && snapOn){
+        const dx=b.x-a.x, dy=b.y-a.y, dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>=1.5){
+          let angle=Math.atan2(dy,dx); const step=Math.PI/12;
+          angle=Math.round(angle/step)*step;
+          x2=Math.max(0,Math.min(100,a.x+dist*Math.cos(angle)));
+          y2=Math.max(0,Math.min(100,a.y+dist*Math.sin(angle)));
+          setWallPoints(p=>p.map(pt=>pt.id===id?{...pt,x:x2,y:y2}:pt));
+        }
+      }
+      setWallEdges(edges=>[...edges,{id:Date.now(),from:selectedPoint,to:id}]);
+    }
+    setSelectedPoint(null);
   }
 
   function addZone(label, type){
@@ -2664,7 +2688,7 @@ function HallBuilderPanel({ onClose, onSaved }){
     movedRef.current = true;
     const {x,y} = ptFromEvent(e);
     const {kind,id} = dragRef.current;
-    if(kind==="wall") setWallPoints(p=>p.map((pt,i)=>i===id?{x,y}:pt));
+    if(kind==="wall") setWallPoints(p=>p.map(pt=>pt.id===id?{...pt,x,y}:pt));
     if(kind==="zone") setZones(z=>z.map(zz=>zz.id===id?{...zz,x,y}:zz));
     if(kind==="table") setTables(t=>t.map(tt=>tt.id===id?{...tt,x,y}:tt));
     if(kind==="column") setColumns(c=>c.map(cc=>cc.id===id?{...cc,x,y}:cc));
@@ -2673,7 +2697,7 @@ function HallBuilderPanel({ onClose, onSaved }){
 
   async function saveHall(){
     if(!venueName.trim()||!hallName.trim()){ alert("Restoran və zal adını yazın 🙏"); return; }
-    if(wallPoints.length<3){ alert("Ən azı 3 divar nöqtəsi çəkin (zalın konturu) 🙏"); return; }
+    if(wallEdges.length<3){ alert("Ən azı 3 divar xətti çəkin (nöqtələri bir-birinə toxunub birləşdirin) 🙏"); return; }
     setSaving(true);
     try{
       let venueId = null;
@@ -2689,7 +2713,7 @@ function HallBuilderPanel({ onClose, onSaved }){
       await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
-        wall_path:wallPoints, columns:columnsData, photo_url:photoUrl||null, has_layout:true
+        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, has_layout:true
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
       if(onSaved) onSaved();
@@ -2697,8 +2721,6 @@ function HallBuilderPanel({ onClose, onSaved }){
     }catch(e){ alert("Xəta baş verdi, yenidən cəhd edin."); }
     setSaving(false);
   }
-
-  const polyPoints = wallPoints.map(p=>p.x+"%,"+p.y+"%").join(" ");
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:600,
@@ -2753,7 +2775,7 @@ function HallBuilderPanel({ onClose, onSaved }){
 
       <div style={{padding:"7px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
         <div style={{fontSize:10,color:"#6B6259",flex:1}}>
-          {mode==="wall"&&"Divar künclərinə ardıcıl klikləyin — bucaqlar avtomatik düzləşir (əyriliklər özü düzəlir)"}
+          {mode==="wall"&&"Boş yerə klikləyib nöqtələr qoyun. Sonra 2 nöqtəyə ardıcıl toxunub xətlə birləşdirin (yaşıl = seçili)"}
           {mode==="column"&&"Sütunun yerinə klikləyin — divardan ayrı, öz nişanı ilə görünür"}
           {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
           {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
@@ -2777,17 +2799,25 @@ function HallBuilderPanel({ onClose, onSaved }){
         backgroundColor:"rgba(255,255,255,.4)",
         border:"1px solid rgba(255,255,255,.5)",cursor:"crosshair",touchAction:"none"}}>
 
-        {wallPoints.length>1 && (
+        {wallEdges.length>0 && (
           <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
-            <polygon points={wallPoints.map(p=>p.x+","+p.y).join(" ")} fill="rgba(193,56,42,.1)" stroke="#C1382A" strokeWidth="0.6"/>
+            {wallEdges.map(ed=>{
+              const a = wallPoints.find(p=>p.id===ed.from), b = wallPoints.find(p=>p.id===ed.to);
+              if(!a||!b) return null;
+              return <line key={ed.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C1382A" strokeWidth="0.7"/>;
+            })}
           </svg>
         )}
-        {wallPoints.map((p,i)=>(
-          <div key={i}
-            onTouchStart={e=>dragStart("wall",i,e)} onMouseDown={e=>dragStart("wall",i,e)}
+        {wallPoints.map((p)=>(
+          <div key={p.id}
+            onTouchStart={e=>dragStart("wall",p.id,e)} onMouseDown={e=>dragStart("wall",p.id,e)}
+            onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) pointTap(p.id); }}
             style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",
-            width:16,height:16,borderRadius:"50%",background:"#C1382A",border:"2px solid #fff",cursor:"grab",zIndex:5,
-            boxShadow:"0 2px 5px rgba(0,0,0,.3)"}}/>
+            width:selectedPoint===p.id?20:16,height:selectedPoint===p.id?20:16,borderRadius:"50%",
+            background:selectedPoint===p.id?"#4C9A6E":"#C1382A",
+            border:"2px solid #fff",cursor:"grab",zIndex:5,
+            boxShadow:selectedPoint===p.id?"0 0 0 4px rgba(76,154,110,.3), 0 2px 5px rgba(0,0,0,.3)":"0 2px 5px rgba(0,0,0,.3)",
+            transition:"width .15s,height .15s"}}/>
         ))}
 
         {zones.map(z=>(
@@ -2843,7 +2873,10 @@ function HallBuilderPanel({ onClose, onSaved }){
 
       <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:6}}>
         <button onClick={()=>{
-          if(mode==="wall") setWallPoints(p=>p.slice(0,-1));
+          if(mode==="wall"){
+            if(wallEdges.length>0) setWallEdges(ed=>ed.slice(0,-1));
+            else setWallPoints(p=>p.slice(0,-1));
+          }
           else if(mode==="column") setColumns(c=>c.slice(0,-1));
           else if(mode==="zone") setZones(z=>z.slice(0,-1));
           else if(mode==="table") setTables(t=>t.slice(0,-1));
@@ -2851,7 +2884,7 @@ function HallBuilderPanel({ onClose, onSaved }){
           style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:10.5,cursor:"pointer",whiteSpace:"nowrap"}}>↺ Sonuncu</button>
         <button onClick={()=>{
           if(!confirm("Bütün zal (divarlar, sütunlar, zonalar, masalar) sıfırlansın?")) return;
-          setWallPoints([]); setColumns([]); setZones([]); setTables([]); setPhotoUrl(null);
+          setWallPoints([]); setWallEdges([]); setSelectedPoint(null); setColumns([]); setZones([]); setTables([]); setPhotoUrl(null);
         }}
           style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(193,56,42,.35)",background:"rgba(193,56,42,.1)",backdropFilter:"blur(8px)",color:"#C1382A",fontSize:10.5,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>🗑 Sıfırla</button>
         <button onClick={saveHall} disabled={saving}
@@ -3261,6 +3294,8 @@ export default function App(){
       totalGuests: hallObj.capacity, _step:"done",
       _hallElements: hallObj.elements||[],
       _wallPath: hallObj.wall_path||[],
+      _wallEdges: hallObj.wall_edges||[],
+      _columns: hallObj.columns||[],
       planImageUrl: hallObj.photo_url||null
     };
     const customTables = (hallObj.layout||[]).map(t=>({
