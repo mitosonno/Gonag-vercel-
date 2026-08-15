@@ -2575,6 +2575,8 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [wallPoints, setWallPoints] = useState([]);
   const [zones, setZones] = useState([]);
   const [tables, setTables] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
   const canvasRef = useRef(null);
@@ -2598,15 +2600,39 @@ function HallBuilderPanel({ onClose, onSaved }){
     return {x,y};
   }
 
+  // Bucaq snap — divar nöqtəsi əvvəlki nöqtəyə görə 15° addımlarına "yapışır"
+  // beləliklə əl-titrəməsindən yaranan əyriliklər avtomatik düzəlir
+  function snapAngle(prevPt, rawPt){
+    if(!prevPt || !snapOn) return rawPt;
+    const dx = rawPt.x - prevPt.x, dy = rawPt.y - prevPt.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if(dist < 1.5) return rawPt;
+    let angle = Math.atan2(dy, dx);
+    const step = Math.PI/12; // 15°
+    angle = Math.round(angle/step)*step;
+    return {
+      x: Math.max(0,Math.min(100, prevPt.x + dist*Math.cos(angle))),
+      y: Math.max(0,Math.min(100, prevPt.y + dist*Math.sin(angle)))
+    };
+  }
+
   function canvasClick(e){
     if(movedRef.current){ movedRef.current=false; return; }
     if(!canvasRef.current) return;
-    const {x,y} = ptFromEvent(e);
-    if(mode==="wall"){ setWallPoints(p=>[...p,{x,y}]); }
-    else if(mode==="zone"){ setZoneLabelInput({x,y}); }
+    const raw = ptFromEvent(e);
+    if(mode==="wall"){
+      const prev = wallPoints[wallPoints.length-1];
+      const snapped = snapAngle(prev, raw);
+      setWallPoints(p=>[...p,snapped]);
+    }
+    else if(mode==="zone"){ setZoneLabelInput(raw); }
     else if(mode==="table"){
       const id = tables.length? Math.max(...tables.map(t=>t.id))+1 : 1;
-      setTables(t=>[...t,{id,x,y,seats:8,label:""}]);
+      setTables(t=>[...t,{id,x:raw.x,y:raw.y,seats:8,label:""}]);
+    }
+    else if(mode==="column"){
+      const id = columns.length? Math.max(...columns.map(c=>c.id))+1 : 1;
+      setColumns(c=>[...c,{id,x:raw.x,y:raw.y}]);
     }
   }
 
@@ -2628,6 +2654,7 @@ function HallBuilderPanel({ onClose, onSaved }){
     if(kind==="wall") setWallPoints(p=>p.map((pt,i)=>i===id?{x,y}:pt));
     if(kind==="zone") setZones(z=>z.map(zz=>zz.id===id?{...zz,x,y}:zz));
     if(kind==="table") setTables(t=>t.map(tt=>tt.id===id?{...tt,x,y}:tt));
+    if(kind==="column") setColumns(c=>c.map(cc=>cc.id===id?{...cc,x,y}:cc));
   }
   function dragEnd(){ dragRef.current=null; }
 
@@ -2645,10 +2672,11 @@ function HallBuilderPanel({ onClose, onSaved }){
       }
       const layout = tables.map(t=>({id:t.id,xPct:t.x,yPct:t.y,seats:t.seats,label:t.label||""}));
       const elements = zones.map(z=>({type:z.type,xPct:z.x,yPct:z.y,w:z.w,h:z.h,label:z.label}));
+      const columnsData = columns.map(c=>({id:c.id,xPct:c.x,yPct:c.y}));
       await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
-        wall_path:wallPoints, photo_url:photoUrl||null, has_layout:true
+        wall_path:wallPoints, columns:columnsData, photo_url:photoUrl||null, has_layout:true
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
       if(onSaved) onSaved();
@@ -2685,18 +2713,29 @@ function HallBuilderPanel({ onClose, onSaved }){
       </div>
 
       <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
-        {[["wall","🧱 Divar"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
+        {[["wall","🧱 Divar"],["column","🟤 Sütun"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
           <button key={m} onClick={()=>setMode(m)}
-            style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid "+(mode===m?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+            style={{flex:1,padding:"9px 4px",borderRadius:12,border:"1px solid "+(mode===m?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
               background:mode===m?"rgba(193,56,42,.16)":"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",
-              color:mode===m?"#C1382A":"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
+              color:mode===m?"#C1382A":"#6B6259",fontSize:10,fontWeight:700,cursor:"pointer"}}>{l}</button>
         ))}
       </div>
 
-      <div style={{fontSize:10,color:"#6B6259",padding:"7px 16px",flexShrink:0}}>
-        {mode==="wall"&&"Divar künclərinə ardıcıl klikləyin (ən azı 3 nöqtə) — nöqtələri sonra sürüşdürüb düzəldə bilərsiniz"}
-        {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
-        {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
+      <div style={{padding:"7px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <div style={{fontSize:10,color:"#6B6259",flex:1}}>
+          {mode==="wall"&&"Divar künclərinə ardıcıl klikləyin — bucaqlar avtomatik düzləşir (əyriliklər özü düzəlir)"}
+          {mode==="column"&&"Sütunun yerinə klikləyin — divardan ayrı, öz nişanı ilə görünür"}
+          {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
+          {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
+        </div>
+        {mode==="wall"&&(
+          <button onClick={()=>setSnapOn(s=>!s)} style={{flexShrink:0,marginLeft:8,padding:"4px 9px",borderRadius:10,
+            border:"1px solid "+(snapOn?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),
+            background:snapOn?"rgba(76,154,110,.18)":"rgba(255,255,255,.3)",
+            color:snapOn?"#4C9A6E":"#6B6259",fontSize:9,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+            {snapOn?"✓ Düzləşdirmə AÇIQ":"Düzləşdirmə BAĞLI"}
+          </button>
+        )}
       </div>
 
       <div ref={canvasRef} onClick={canvasClick}
@@ -2745,6 +2784,17 @@ function HallBuilderPanel({ onClose, onSaved }){
               style={{position:"absolute",top:-7,right:-7,width:17,height:17,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
           </div>
         ))}
+
+        {columns.map(c=>(
+          <div key={c.id}
+            onTouchStart={e=>dragStart("column",c.id,e)} onMouseDown={e=>dragStart("column",c.id,e)}
+            style={{position:"absolute",left:c.x+"%",top:c.y+"%",transform:"translate(-50%,-50%)",
+            width:16,height:16,borderRadius:4,background:"repeating-linear-gradient(45deg,#8A7A6E,#8A7A6E 2px,#B8AC9C 2px,#B8AC9C 4px)",
+            border:"1.5px solid #5A4E45",cursor:"grab",zIndex:7,boxShadow:"0 2px 5px rgba(0,0,0,.25)"}}>
+            <span onClick={e=>{e.stopPropagation();setColumns(cc=>cc.filter(x=>x.id!==c.id));}}
+              style={{position:"absolute",top:-8,right:-8,width:15,height:15,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
+          </div>
+        ))}
       </div>
 
       {zoneLabelInput && (
@@ -2762,8 +2812,13 @@ function HallBuilderPanel({ onClose, onSaved }){
       )}
 
       <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:8}}>
-        <button onClick={()=>setWallPoints(p=>p.slice(0,-1))}
-          style={{padding:"12px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>↺ Son nöqtə</button>
+        <button onClick={()=>{
+          if(mode==="wall") setWallPoints(p=>p.slice(0,-1));
+          else if(mode==="column") setColumns(c=>c.slice(0,-1));
+          else if(mode==="zone") setZones(z=>z.slice(0,-1));
+          else if(mode==="table") setTables(t=>t.slice(0,-1));
+        }}
+          style={{padding:"12px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>↺ Sonuncunu sil</button>
         <button onClick={saveHall} disabled={saving}
           style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",
             background:"linear-gradient(155deg,#5EB889,#3d8259)",backdropFilter:"blur(8px)",
