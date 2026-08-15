@@ -974,6 +974,14 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               </div>
             );})()}
 
+            {/* Custom zal divar konturu — Zal Builder-də çəkilmiş */}
+            {hall&&hall._wallPath&&hall._wallPath.length>2&&(
+              <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
+                <polygon points={hall._wallPath.map(p=>p.x+"%,"+p.y+"%").join(" ")}
+                  fill="rgba(255,255,255,.15)" stroke="rgba(150,120,80,.4)" strokeWidth="1.5"/>
+              </svg>
+            )}
+
             {/* Kiçik Zal elementləri */}
             {hasHallElements&&hall._hallElements.map(function(el,idx){
               var isDF=el.type==="danceFloor", isBG=el.type==="brideGroom",
@@ -1436,7 +1444,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -1499,6 +1507,47 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
   return (
     <div style={{minHeight:0}}>
+      {/* Cütlük kartı */}
+      {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
+        const title = obData.boy&&obData.girl ? obData.boy+" & "+obData.girl : (obData.name||obData.company||"");
+        const initials = obData.boy&&obData.girl
+          ? (obData.boy[0]||"")+"·"+(obData.girl[0]||"")
+          : (title.split(" ").map(w=>w[0]).slice(0,2).join("")||"?");
+        const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
+        const cap = tables.reduce((s,t)=>s+t.seats,0);
+        return (
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,padding:"13px 15px",borderRadius:20,
+            background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+            border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
+            <div style={{width:42,height:42,borderRadius:"50%",border:"1.5px solid #D4AF5A",background:"rgba(212,175,90,.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:600,color:"#8A6B1E",flexShrink:0}}>
+              {initials}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+              <div style={{fontSize:9.5,color:"rgba(33,26,22,.5)",marginTop:2}}>
+                {hall&&hall.name} {obData.date?" · "+obData.date:""}
+              </div>
+            </div>
+            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>MASA</div>
+            </div>
+            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{totG}</div>
+              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
+            </div>
+            <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
+              <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
+              <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
+                strokeDasharray={2*Math.PI*13} strokeDashoffset={2*Math.PI*13*(1-(pct||0)/100)}
+                strokeLinecap="round" transform="rotate(-90 17 17)"/>
+              <text x="17" y="20" textAnchor="middle" fontFamily="'IBM Plex Mono',monospace" fontSize="8" fontWeight="700" fill="#211A16">{pct||0}%</text>
+            </svg>
+          </div>
+        );
+      })()}
+
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,
         background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
@@ -2516,6 +2565,217 @@ function MasaDevetCard({ tbl, ev, hall, setDevetPNGOpen }){
 }
 
 
+// ═══ ZAL BUILDER — admin real zal sxemi qurma aləti ═══
+function HallBuilderPanel({ onClose, onSaved }){
+  const [venueName, setVenueName] = useState("");
+  const [hallName, setHallName] = useState("");
+  const [capacity, setCapacity] = useState("150");
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [mode, setMode] = useState("wall");
+  const [wallPoints, setWallPoints] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [zoneLabelInput, setZoneLabelInput] = useState(null);
+  const canvasRef = useRef(null);
+  const dragRef = useRef(null);
+  const movedRef = useRef(false);
+
+  function handlePhotoUpload(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setPhotoUrl(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function ptFromEvent(e){
+    const rect = canvasRef.current.getBoundingClientRect();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    const x = Math.max(0,Math.min(100, Math.round(((cx-rect.left)/rect.width)*1000)/10));
+    const y = Math.max(0,Math.min(100, Math.round(((cy-rect.top)/rect.height)*1000)/10));
+    return {x,y};
+  }
+
+  function canvasClick(e){
+    if(movedRef.current){ movedRef.current=false; return; }
+    if(!canvasRef.current) return;
+    const {x,y} = ptFromEvent(e);
+    if(mode==="wall"){ setWallPoints(p=>[...p,{x,y}]); }
+    else if(mode==="zone"){ setZoneLabelInput({x,y}); }
+    else if(mode==="table"){
+      const id = tables.length? Math.max(...tables.map(t=>t.id))+1 : 1;
+      setTables(t=>[...t,{id,x,y,seats:8,label:""}]);
+    }
+  }
+
+  function addZone(label, type){
+    if(!zoneLabelInput) return;
+    setZones(z=>[...z,{id:Date.now(),x:zoneLabelInput.x,y:zoneLabelInput.y,w:22,h:9,label,type}]);
+    setZoneLabelInput(null);
+  }
+
+  function dragStart(kind,id,e){
+    e.stopPropagation();
+    dragRef.current = {kind,id};
+  }
+  function dragMove(e){
+    if(!dragRef.current || !canvasRef.current) return;
+    movedRef.current = true;
+    const {x,y} = ptFromEvent(e);
+    const {kind,id} = dragRef.current;
+    if(kind==="wall") setWallPoints(p=>p.map((pt,i)=>i===id?{x,y}:pt));
+    if(kind==="zone") setZones(z=>z.map(zz=>zz.id===id?{...zz,x,y}:zz));
+    if(kind==="table") setTables(t=>t.map(tt=>tt.id===id?{...tt,x,y}:tt));
+  }
+  function dragEnd(){ dragRef.current=null; }
+
+  async function saveHall(){
+    if(!venueName.trim()||!hallName.trim()){ alert("Restoran və zal adını yazın 🙏"); return; }
+    if(wallPoints.length<3){ alert("Ən azı 3 divar nöqtəsi çəkin (zalın konturu) 🙏"); return; }
+    setSaving(true);
+    try{
+      let venueId = null;
+      const existing = await sbFetch("venues?name=eq."+encodeURIComponent(venueName.trim()));
+      if(existing && existing[0]) venueId = existing[0].id;
+      else {
+        const created = await sbFetch("venues",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({name:venueName.trim()})});
+        venueId = created && created[0] && created[0].id;
+      }
+      const layout = tables.map(t=>({id:t.id,xPct:t.x,yPct:t.y,seats:t.seats,label:t.label||""}));
+      const elements = zones.map(z=>({type:z.type,xPct:z.x,yPct:z.y,w:z.w,h:z.h,label:z.label}));
+      await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
+        venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
+        capacity:parseInt(capacity)||150, layout:layout, elements:elements,
+        wall_path:wallPoints, photo_url:photoUrl||null, has_layout:true
+      })});
+      alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
+      if(onSaved) onSaved();
+      onClose();
+    }catch(e){ alert("Xəta baş verdi, yenidən cəhd edin."); }
+    setSaving(false);
+  }
+
+  const polyPoints = wallPoints.map(p=>p.x+"%,"+p.y+"%").join(" ");
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:600,
+      background:"radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%)",
+      display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",
+        background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(18px)",borderBottom:"1px solid rgba(255,255,255,.4)"}}>
+        <span style={{fontWeight:700,fontSize:14,color:"#211A16"}}>🛠 Zal Builder</span>
+        <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,color:"#6B6259",cursor:"pointer"}}>✕</button>
+      </div>
+
+      <div style={{padding:"10px 14px",display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
+        <div style={{display:"flex",gap:6}}>
+          <input value={venueName} onChange={e=>setVenueName(e.target.value)} placeholder="Restoran adı"
+            style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
+          <input value={hallName} onChange={e=>setHallName(e.target.value)} placeholder="Zal adı"
+            style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
+          <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Tutum" type="number"
+            style={{width:74,padding:"9px 8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
+        </div>
+        <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
+          📷 {photoUrl?"Şəkil yükləndi — dəyişmək üçün klik":"Zalın şəklini/planını yüklə (istəyə bağlı)"}
+          <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
+        </label>
+      </div>
+
+      <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
+        {[["wall","🧱 Divar"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
+          <button key={m} onClick={()=>setMode(m)}
+            style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid "+(mode===m?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+              background:mode===m?"rgba(193,56,42,.16)":"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",
+              color:mode===m?"#C1382A":"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
+        ))}
+      </div>
+
+      <div style={{fontSize:10,color:"#6B6259",padding:"7px 16px",flexShrink:0}}>
+        {mode==="wall"&&"Divar künclərinə ardıcıl klikləyin (ən azı 3 nöqtə) — nöqtələri sonra sürüşdürüb düzəldə bilərsiniz"}
+        {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
+        {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
+      </div>
+
+      <div ref={canvasRef} onClick={canvasClick}
+        onTouchMove={dragMove} onTouchEnd={dragEnd}
+        onMouseMove={dragMove} onMouseUp={dragEnd}
+        style={{flex:1,margin:"6px 14px",borderRadius:20,position:"relative",overflow:"hidden",
+        backgroundImage:photoUrl?`url(${photoUrl})`:"none",
+        backgroundSize:"contain",backgroundPosition:"center",backgroundRepeat:"no-repeat",
+        backgroundColor:"rgba(255,255,255,.4)",
+        border:"1px solid rgba(255,255,255,.5)",cursor:"crosshair",touchAction:"none"}}>
+
+        {wallPoints.length>1 && (
+          <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
+            <polygon points={polyPoints} fill="rgba(193,56,42,.1)" stroke="#C1382A" strokeWidth="2"/>
+          </svg>
+        )}
+        {wallPoints.map((p,i)=>(
+          <div key={i}
+            onTouchStart={e=>dragStart("wall",i,e)} onMouseDown={e=>dragStart("wall",i,e)}
+            style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",
+            width:16,height:16,borderRadius:"50%",background:"#C1382A",border:"2px solid #fff",cursor:"grab",zIndex:5,
+            boxShadow:"0 2px 5px rgba(0,0,0,.3)"}}/>
+        ))}
+
+        {zones.map(z=>(
+          <div key={z.id}
+            onTouchStart={e=>dragStart("zone",z.id,e)} onMouseDown={e=>dragStart("zone",z.id,e)}
+            style={{position:"absolute",left:z.x+"%",top:z.y+"%",transform:"translate(-50%,-50%)",
+            padding:"5px 10px",borderRadius:10,background:"rgba(91,132,176,.28)",border:"1px solid #5B84B0",
+            fontSize:9,fontWeight:700,color:"#2E4A66",cursor:"grab",whiteSpace:"nowrap",zIndex:6}}>
+            {z.label}
+            <span onClick={e=>{e.stopPropagation();setZones(zz=>zz.filter(x=>x.id!==z.id));}}
+              style={{marginLeft:6,color:"#C1382A",cursor:"pointer",fontWeight:900}}>✕</span>
+          </div>
+        ))}
+
+        {tables.map(t=>(
+          <div key={t.id}
+            onTouchStart={e=>dragStart("table",t.id,e)} onMouseDown={e=>dragStart("table",t.id,e)}
+            style={{position:"absolute",left:t.x+"%",top:t.y+"%",transform:"translate(-50%,-50%)",
+            width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,.9)",border:"2px solid #D4AF5A",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#8A6B1E",
+            cursor:"grab",zIndex:6,boxShadow:"0 2px 6px rgba(0,0,0,.2)"}}>
+            {t.id}
+            <span onClick={e=>{e.stopPropagation();setTables(tt=>tt.filter(x=>x.id!==t.id));}}
+              style={{position:"absolute",top:-7,right:-7,width:17,height:17,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
+          </div>
+        ))}
+      </div>
+
+      {zoneLabelInput && (
+        <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setZoneLabelInput(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(155deg,rgba(255,255,255,.9),rgba(255,255,255,.7))",backdropFilter:"blur(20px)",borderRadius:20,padding:18,width:"100%",maxWidth:280,border:"1px solid rgba(255,255,255,.6)"}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12,color:"#211A16"}}>Zona növü seçin</div>
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              {[["🎭 Səhnə","stage"],["💃 Rəqs meydanı","danceFloor"],["🎸 Musiqiçilər","stage"],["🚪 Giriş","entrance"],["🍽️ Mətbəx","entrance"],["📸 Foto zona","entrance"],["👰 Bəy&Gəlin","brideGroom"]].map(([lbl,type])=>(
+                <button key={lbl} onClick={()=>addZone(lbl,type)}
+                  style={{padding:"10px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",fontSize:12,cursor:"pointer",textAlign:"left",color:"#211A16"}}>{lbl}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:8}}>
+        <button onClick={()=>setWallPoints(p=>p.slice(0,-1))}
+          style={{padding:"12px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>↺ Son nöqtə</button>
+        <button onClick={saveHall} disabled={saving}
+          style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",
+            background:"linear-gradient(155deg,#5EB889,#3d8259)",backdropFilter:"blur(8px)",
+            color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
+          {saving?"Saxlanılır...":"✓ Zalı saxla"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 export default function App(){
   // ── Məclislərim ──
   const [savedEvents, setSavedEvents] = useState([]);
@@ -2581,6 +2841,21 @@ export default function App(){
   const [activeTable, setActiveTable] = useState(null);
   const [agentSlotTable, setAgentSlotTable] = useState(null);
   const [restOpen, setRestOpen] = useState(false);
+  const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
+  const [customHalls, setCustomHalls] = useState([]);
+  useEffect(function(){
+    if(!restOpen) return;
+    sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
+      if(!rows) return;
+      const byVenue = {};
+      rows.forEach(h=>{
+        const vname = h.venue_name||"Digər";
+        if(!byVenue[vname]) byVenue[vname]={id:"custom_"+vname,name:vname,city:"Bakı",halls:[]};
+        byVenue[vname].halls.push({...h,hasLayout:true,cap:h.capacity});
+      });
+      setCustomHalls(Object.values(byVenue));
+    });
+  },[restOpen]);
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
   const [notInvitedDrawerOpen, setNotInvitedDrawerOpen] = useState(false);
@@ -2885,6 +3160,28 @@ export default function App(){
     setRestOpen(false);
     setLayoutMode(null);
     setLayoutPickOpen({hall:h}); // pass hall directly, don't rely on state
+  }
+
+  function pickCustomHall(rest, hallObj){
+    const h = {
+      _venueName: rest.name, name: hallObj.name,
+      totalGuests: hallObj.capacity, _step:"done",
+      _hallElements: hallObj.elements||[],
+      _wallPath: hallObj.wall_path||[],
+      planImageUrl: hallObj.photo_url||null
+    };
+    const customTables = (hallObj.layout||[]).map(t=>({
+      id:t.id, seats:t.seats, label:t.label||"", side:t.side||"",
+      guests:[], pos:{xPct:t.xPct, yPct:t.yPct}
+    }));
+    setHall(h);
+    setTables(customTables);
+    setLayoutMode("ready");
+    setRestOpen(false);
+    const evLabel = evType==="nishan"?"Nişana":evType==="adgunu"?"Tədbirə":evType==="korporativ"?"Tədbirə":"Toya";
+    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🗺️ Real zal sxemi yükləndi (${customTables.length} masa)!\n\nZalın sxeminə baxa bilərsiniz.`;
+    setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+    setHist(hh=>[...hh,{role:"assistant",content:msg}]);
   }
 
   function confirmLayoutMode(mode, photoUrl, hallObj){
@@ -3547,15 +3844,39 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="rsp" onClick={e=>e.stopPropagation()}>
             <div className="rsh">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:16}}>🏛️ Restoran seç</div>
+                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>🏛️ Restoran seç</div>
                 <button className="dcl" onClick={()=>setRestOpen(false)}>✕</button>
               </div>
             </div>
             <div className="rsb">
+              <button onClick={()=>{setRestOpen(false);setHallBuilderOpen(true);}}
+                style={{width:"100%",padding:"11px",marginBottom:12,borderRadius:14,border:"1px dashed rgba(76,154,110,.4)",
+                  background:"rgba(76,154,110,.08)",color:"#4C9A6E",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                🛠 Yeni zal qur (real sxem)
+              </button>
+              {customHalls.map(r=><RestCard key={"c"+r.id} rest={r} onPick={(rr,h)=>pickCustomHall(rr,h)}/>)}
               {RESTAURANTS.map(r=><RestCard key={r.id} rest={r} onPick={pickHall}/>)}
             </div>
           </div>
         </div>
+      )}
+
+      {hallBuilderOpen&&(
+        <HallBuilderPanel
+          onClose={()=>setHallBuilderOpen(false)}
+          onSaved={()=>{
+            sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
+              if(!rows) return;
+              const byVenue = {};
+              rows.forEach(h=>{
+                const vname = h.venue_name||"Digər";
+                if(!byVenue[vname]) byVenue[vname]={id:"custom_"+vname,name:vname,city:"Bakı",halls:[]};
+                byVenue[vname].halls.push({...h,hasLayout:true,cap:h.capacity});
+              });
+              setCustomHalls(Object.values(byVenue));
+            });
+          }}
+        />
       )}
 
       {/* SCHEMA BOTTOM DRAWER */}
@@ -3617,6 +3938,8 @@ ${savedEvsList||"Yoxdur"}`;
                 onAgentSlotClear={()=>setAgentSlotTable(null)}
                 hall={hall}
                 pct={pct}
+                obData={obData}
+                evType={evType}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
                 layoutMode={layoutMode}
                 onAddTable={()=>{
