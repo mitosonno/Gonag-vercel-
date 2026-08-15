@@ -1458,7 +1458,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -1561,6 +1561,20 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           </div>
         );
       })()}
+
+      {/* Naviqasiya: Sxem / Statistika / Dəvətnamə */}
+      {onOpenStats&&onOpenInvite&&(
+        <div style={{display:"flex",gap:5,marginBottom:10,padding:4,borderRadius:16,
+          background:"linear-gradient(155deg,rgba(255,255,255,.5),rgba(255,255,255,.2))",backdropFilter:"blur(14px)",
+          border:"1px solid rgba(255,255,255,.5)"}}>
+          <div style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff"}}>🗺 Sxem</div>
+          <button onClick={onOpenStats} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📊 Statistika</button>
+          <button onClick={onOpenInvite} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📨 Dəvətnamə</button>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,
@@ -1835,8 +1849,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 const uc=(slotExtras.find(x=>x.type==="usher")||{count:0}).count;
                 const addCount=(parseInt(slotCount)||1)+uc;
                 const curOcc=occ(exTbl);
-                if(curOcc+addCount > exTbl.seats){
-                  alert(`⚠️ Masa doludur!\n\nBu masada ${exTbl.seats} yer var, hazırda ${curOcc} dolu.\n${addCount} nəfər əlavə etmək mümkün deyil.\n\nNövbəti masanı doldurun.`);
+                const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<exTbl.seats) ? hall.plannedSeatsPerTable : exTbl.seats;
+                if(curOcc+addCount > effectiveCap){
+                  alert(`⚠️ Masa doludur!\n\nBu masa üçün ${effectiveCap} nəfər planlaşdırılıb (fiziki tutum ${exTbl.seats}), hazırda ${curOcc} dolu.\n${addCount} nəfər əlavə etmək mümkün deyil.\n\nNövbəti masanı doldurun.`);
                   return;
                 }
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||""});
@@ -2973,6 +2988,8 @@ export default function App(){
   //        "korp_company"|"korp_topic"|"korp_date"
   //        "restoran"|"done"
   const [obStep, setObStep] = useState("type");
+  const [pickerDate, setPickerDate] = useState("");
+  const [pickerTime, setPickerTime] = useState("19:00");
   const [obData, setObData] = useState({});
   const [tables, setTables] = useState([]);
   const [layoutMode, setLayoutMode] = useState(null); // "ready"|"photo"|"custom"
@@ -3582,15 +3599,47 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(/^\d+$/.test(txt)){
         const n=parseInt(txt);
         if(n>=1){
-          setHall(h=>({...h, totalGuests:n, _step:"done"}));
-          pushPanel("schema"); setSchemaOpen(true);
-          const msg = `${n} nəfər qeyd edildi! ✅\n\nİndi zal sxeminə baxıb masaları doldura bilərsiniz — hər masanın öz tutumu artıq təyin olunub.`;
-          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+          setHall(h=>({...h, totalGuests:n, _step:"customSeats"}));
+          const msg = `${n} nəfər qeyd edildi! ✅\n\nHər masada neçə nəfər əyləşdirməyi planlaşdırırsınız? (Masalar daha böyük ola bilər, amma az adam əyləşdirə bilərsiniz — məs. 12 yerlik masada 10 nəfər)`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["6","8","10","12","Masanın öz tutumu"]}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
         }
       }
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa yalnız rəqəm yazın (məs: 150)",qrs:[]}]);
+      setBusy(false); return;
+    }
+    // Custom hal — hər masada neçə nəfər əyləşdirmə planı (fiziki tutumdan az ola bilər)
+    if(hall && hall._step==="customSeats"){
+      if(txt==="Masanın öz tutumu"){
+        setHall(h=>({...h, _step:"done"}));
+        pushPanel("schema"); setSchemaOpen(true);
+        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+        setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+        setBusy(false); return;
+      }
+      if(["6","8","10","12"].includes(txt)){
+        const n=parseInt(txt);
+        setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
+        pushPanel("schema"); setSchemaOpen(true);
+        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+        setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+        setBusy(false); return;
+      }
+      if(/^\d+$/.test(txt)){
+        const n=parseInt(txt);
+        if(n>=1&&n<=30){
+          setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
+          pushPanel("schema"); setSchemaOpen(true);
+          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+          setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+          setBusy(false); return;
+        }
+      }
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa rəqəm yazın",qrs:["6","8","10","12","Masanın öz tutumu"]}]);
       setBusy(false); return;
     }
     // Hall seats step — stolda neçə nəfər
@@ -3896,6 +3945,33 @@ ${savedEvsList||"Yoxdur"}`;
             {busy&&<div className="mw agent"><div className="av a">👩‍💼</div><div className="bb a tbb"><div className="ds"><span/><span/><span/></div></div></div>}
             <div ref={endRef}/>
           </div>
+          {["toy_date","nishan_date","adgunu_date","korp_date"].includes(obStep)&&(
+            <div style={{margin:"0 12px 8px",padding:"11px 12px",borderRadius:16,
+              background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(16px)",
+              border:"1px solid rgba(255,255,255,.5)",display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.55)",fontWeight:600}}>📅 Tarixi seçin (və ya yuxarıda əl ilə yazın)</div>
+              <div style={{display:"flex",gap:7}}>
+                <input type="date" value={pickerDate} onChange={e=>setPickerDate(e.target.value)}
+                  style={{flex:1,padding:"9px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.6)",fontSize:12,outline:"none",color:"#211A16"}}/>
+                <input type="time" value={pickerTime} onChange={e=>setPickerTime(e.target.value)}
+                  style={{width:92,padding:"9px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.6)",fontSize:12,outline:"none",color:"#211A16"}}/>
+              </div>
+              <button onClick={()=>{
+                if(!pickerDate) return;
+                const azMonths=["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+                const d=new Date(pickerDate+"T00:00:00");
+                const formatted=d.getDate()+" "+azMonths[d.getMonth()]+" "+d.getFullYear()+(pickerTime?", "+pickerTime:"");
+                send(formatted);
+                setPickerDate("");
+              }} disabled={!pickerDate}
+                style={{padding:"10px",borderRadius:13,border:"none",
+                  background:pickerDate?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                  color:pickerDate?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,
+                  cursor:pickerDate?"pointer":"default"}}>
+                ✓ Bu tarixi təsdiqlə
+              </button>
+            </div>
+          )}
           <div className="ir">
             <button onClick={toggleVoice} style={{
               width:38,height:38,borderRadius:"50%",border:"1px solid",flexShrink:0,
@@ -4110,6 +4186,8 @@ ${savedEvsList||"Yoxdur"}`;
                 pct={pct}
                 obData={obData}
                 evType={evType}
+                onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
+                onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
                 layoutMode={layoutMode}
                 onAddTable={()=>{
