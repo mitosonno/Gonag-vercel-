@@ -1203,57 +1203,57 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       {/* LONG PRESS PANEL — fixed overlay, overflow:hidden-dən təsirlənmir */}
       {showLongPressPanel&&longPressSelected.size>0&&(
         <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:300,
-          background:"rgba(255,255,255,.98)",borderTop:"1px solid rgba(255,60,60,.3)",
-          borderRadius:"16px 16px 0 0",padding:"16px 16px 32px",
-          boxShadow:"0 -4px 24px rgba(0,0,0,.6)"}}>
+          background:"linear-gradient(180deg,rgba(255,255,255,.85),rgba(245,238,224,.7))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",
+          borderRadius:"22px 22px 0 0",padding:"16px 16px 32px",
+          boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 -8px 30px -8px rgba(60,40,20,.25)"}}>
           {longPressResult?(
             <div>
-              <div style={{fontSize:12,color:"#ff6666",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
-              <div style={{background:"rgba(0,0,0,.5)",borderRadius:10,padding:"10px",textAlign:"center",marginBottom:10}}>
-                <div style={{fontSize:24,fontWeight:900,color:"#ff9999",letterSpacing:4,fontFamily:"monospace"}}>{longPressResult.code}</div>
-                <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:3}}>{longPressResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
+              <div style={{fontSize:12,color:"#C1382A",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
+              <div style={{background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",borderRadius:14,padding:"12px",textAlign:"center",marginBottom:10}}>
+                <div style={{fontSize:24,fontWeight:900,color:"#D4AF5A",letterSpacing:4,fontFamily:"'IBM Plex Mono',monospace"}}>{longPressResult.code}</div>
+                <div style={{fontSize:9,color:"rgba(245,238,224,.5)",marginTop:3}}>{longPressResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
               </div>
-              <div style={{fontSize:10,color:"rgba(255,200,200,.6)",marginBottom:10,lineHeight:1.5}}>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.55)",marginBottom:10,lineHeight:1.5}}>
                 {"Həmin adam GONAG.AZ-da \"Yönəlt kodunu daxil et\" bölməsindən "+longPressResult.code+" yazır → yalnız bu masaları görür → doldurur → data sxeminizə əlavə olunur."}
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
                   var msg="🎊 Sizi məclisimizin masa sxeminə dəvət edirəm!\n\nAşağıdakı linkə basın — masanızı görəcək və adınızı əlavə edəcəksiniz:\n\n👉 https://gonag-vercel.vercel.app/invite/"+longPressResult.code+"\n\nTəşəkkür edirik! 🙏";
                   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-                }} style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                }} style={{flex:1,padding:"10px",borderRadius:13,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                   📱 WhatsApp
                 </button>
                 <button onClick={function(){
                   try{navigator.clipboard.writeText(longPressResult.code);}catch(e){}
                   alert("Kod kopyalandı: "+longPressResult.code);
-                }} style={{padding:"9px 12px",borderRadius:9,border:"1px solid rgba(255,100,100,.3)",background:"transparent",color:"#ff9999",fontSize:11,cursor:"pointer"}}>
+                }} style={{padding:"10px 13px",borderRadius:13,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",fontSize:11,cursor:"pointer"}}>
                   📋
                 </button>
                 <button onClick={function(){setShowLongPressPanel(false);setLongPressSelected(new Set());setLongPressResult(null);}}
-                  style={{padding:"9px 10px",borderRadius:9,border:"none",background:"transparent",color:"rgba(33,26,22,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
+                  style={{padding:"10px 11px",borderRadius:13,border:"none",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:11,cursor:"pointer"}}>✕</button>
               </div>
             </div>
           ):(
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div style={{fontSize:12,color:"#ff9999",fontWeight:700}}>
+                <div style={{fontSize:12,color:"#C1382A",fontWeight:700}}>
                   {"🔴 "+longPressSelected.size+" masa seçildi — diger şəxsə yönəlt"}
                 </div>
                 <button onClick={function(){setLongPressSelected(new Set());setShowLongPressPanel(false);}}
-                  style={{background:"none",border:"none",color:"rgba(33,26,22,.3)",fontSize:13,cursor:"pointer"}}>✕</button>
+                  style={{background:"none",border:"none",color:"rgba(33,26,22,.4)",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
                 {Array.from(longPressSelected).map(function(id){
                   var tbl=tables.find(function(t){return t.id===id;});
                   return (
-                    <span key={id} style={{padding:"3px 8px",borderRadius:6,background:"rgba(255,60,60,.2)",
-                      border:"1px solid rgba(255,60,60,.4)",color:"#ff9999",fontSize:10,fontWeight:600}}>
+                    <span key={id} style={{padding:"4px 9px",borderRadius:10,background:"rgba(193,56,42,.16)",backdropFilter:"blur(6px)",
+                      border:"1px solid rgba(193,56,42,.35)",color:"#C1382A",fontSize:10,fontWeight:600}}>
                       {"№"+id+(tbl&&tbl.label&&tbl.label!=="__extra__"?" "+tbl.label:"")}
                     </span>
                   );
                 })}
               </div>
-              <div style={{fontSize:10,color:"rgba(255,200,200,.5)",marginBottom:10,lineHeight:1.5}}>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:10,lineHeight:1.5}}>
                 Bu masalar üçün xüsusi kod yaranacaq. Həmin kod ilə başqa şəxs yalnız bu masaları dolduracaq.
               </div>
               <button onClick={function(){
@@ -1267,9 +1267,9 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     body:JSON.stringify({code:code,session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
                   }).catch(function(){});
                 }catch(e){}
-              }} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",
-                background:"linear-gradient(90deg,rgba(255,60,60,.4),rgba(255,60,60,.2))",
-                color:"#ffaaaa",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              }} style={{width:"100%",padding:"11px",borderRadius:15,border:"1px solid rgba(193,56,42,.3)",
+                background:"linear-gradient(155deg,rgba(193,56,42,.26),rgba(193,56,42,.1))",backdropFilter:"blur(8px)",
+                color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                 {"🔴 "+longPressSelected.size+" masa üçün kod yarat → Göndər"}
               </button>
             </div>
@@ -1321,19 +1321,19 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   function saveEdit(){ if(!eName.trim()) return; onEdit(g.id,exTbl.id,{name:eName.trim(),phone:ePhone.trim(),count:parseInt(eCount)||1}); onClose(); }
 
   return (
-    <div style={{position:"relative",margin:"10px 0",background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(245,208,96,.45)",borderRadius:14,padding:"13px 15px",zIndex:30,minWidth:230,boxShadow:"0 10px 40px rgba(0,0,0,.7)"}}>
+    <div style={{position:"relative",margin:"10px 0",background:"linear-gradient(155deg,rgba(255,255,255,.75),rgba(255,255,255,.4))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",border:"1px solid rgba(255,255,255,.6)",borderRadius:20,padding:"14px 16px",zIndex:30,minWidth:230,boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 16px 40px -10px rgba(60,40,20,.35)"}}>
       <button onClick={onClose}
-        style={{position:"absolute",top:7,right:8,width:22,height:22,borderRadius:"50%",border:"none",background:"rgba(33,26,22,.07)",color:"#6B6259",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        style={{position:"absolute",top:8,right:9,width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
 
       {/* Guest header */}
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-        <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,background:sc+"22",border:"1.5px solid "+sc+"66",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:sc}}>{g.name[0]}</div>
+        <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,background:sc+"26",border:"1px solid "+sc+"66",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:sc}}>{g.name[0]}</div>
         <div>
           <div style={{fontSize:14,fontWeight:700,color:"#211A16"}}>{g.name}</div>
           <div style={{fontSize:10,marginTop:2,display:"flex",alignItems:"center",gap:5}}>
             <span style={{padding:"1px 6px",borderRadius:5,fontSize:9,fontWeight:700,background:sbg,color:sc}}>{g.side||"Umumi"}</span>
-            {g.phone&&<span style={{color:"rgba(201,168,76,.45)"}}>{g.phone}</span>}
-            <span style={{color:"rgba(201,168,76,.4)"}}>{g.count||1} nəfər</span>
+            {g.phone&&<span style={{color:"rgba(33,26,22,.5)"}}>{g.phone}</span>}
+            <span style={{color:"rgba(33,26,22,.45)"}}>{g.count||1} nəfər</span>
           </div>
         </div>
       </div>
@@ -1342,25 +1342,25 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
       {mode==="menu" && (
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
           <button onClick={startEdit}
-            style={{flex:1,padding:"8px 0",borderRadius:9,border:"1px solid rgba(122,173,232,.3)",background:"rgba(122,173,232,.08)",color:"#7aade8",fontSize:12,fontWeight:600,cursor:"pointer"}}>✏️ Redaktə</button>
-          <button onClick={()=>{setMode("move");setPopupMoveTgt("");}} style={{flex:1,padding:"8px 0",borderRadius:9,border:"1px solid rgba(201,168,76,.28)",background:"rgba(201,168,76,.09)",color:"#c9a84c",fontSize:12,fontWeight:600,cursor:"pointer"}}>↔ Köçür</button>
-          <button onClick={()=>{onDelete(g.id,exTbl.id);onClose();}} style={{flex:"0 0 100%",padding:"8px 0",borderRadius:9,border:"1px solid rgba(220,80,80,.22)",background:"rgba(220,80,80,.08)",color:"rgba(220,80,80,.75)",fontSize:12,fontWeight:600,cursor:"pointer"}}>✕ Sil</button>
+            style={{flex:1,padding:"9px 0",borderRadius:13,border:"1px solid rgba(91,132,176,.35)",background:"linear-gradient(155deg,rgba(91,132,176,.2),rgba(91,132,176,.06))",backdropFilter:"blur(6px)",color:"#5B84B0",fontSize:12,fontWeight:600,cursor:"pointer"}}>✏️ Redaktə</button>
+          <button onClick={()=>{setMode("move");setPopupMoveTgt("");}} style={{flex:1,padding:"9px 0",borderRadius:13,border:"1px solid rgba(212,175,90,.35)",background:"linear-gradient(155deg,rgba(212,175,90,.2),rgba(212,175,90,.06))",backdropFilter:"blur(6px)",color:"#8A6B1E",fontSize:12,fontWeight:600,cursor:"pointer"}}>↔ Köçür</button>
+          <button onClick={()=>{onDelete(g.id,exTbl.id);onClose();}} style={{flex:"0 0 100%",padding:"9px 0",borderRadius:13,border:"1px solid rgba(193,56,42,.28)",background:"linear-gradient(155deg,rgba(193,56,42,.16),rgba(193,56,42,.05))",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer"}}>✕ Sil</button>
         </div>
       )}
 
       {/* EDIT mode */}
       {mode==="edit" && (
         <div>
-          <div style={{fontSize:10,color:"rgba(201,168,76,.5)",marginBottom:7,fontWeight:700,letterSpacing:.8}}>MELUMATLARı DEYİŞ</div>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:8,fontWeight:700,letterSpacing:.8}}>MƏLUMATLARI DƏYİŞ</div>
           <input value={eName} onChange={e=>setEName(e.target.value)} placeholder="Adı Soyadı" autoFocus
-            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ep-inp")&&document.getElementById("ep-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.3)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
+            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ep-inp")&&document.getElementById("ep-inp").focus()} style={{width:"100%",marginBottom:7,padding:"9px 12px",boxSizing:"border-box",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:13,color:"#211A16",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none"}}/>
           <input id="ep-inp" value={ePhone} onChange={e=>setEPhone(e.target.value)} placeholder="Mobil nömrə"
-            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ec-inp")&&document.getElementById("ec-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
+            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ec-inp")&&document.getElementById("ec-inp").focus()} style={{width:"100%",marginBottom:7,padding:"9px 12px",boxSizing:"border-box",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:13,color:"#211A16",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none"}}/>
           <div style={{display:"flex",gap:6,marginBottom:2}}>
-            <input id="ec-inp" type="number" min="1" max="20" value={eCount} onChange={e=>setECount(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit()} style={{width:52,padding:"8px 6px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#211A16",fontSize:14,fontWeight:700,outline:"none",textAlign:"center"}}/>
+            <input id="ec-inp" type="number" min="1" max="20" value={eCount} onChange={e=>setECount(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit()} style={{width:52,padding:"9px 6px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:13,color:"#211A16",fontSize:14,fontWeight:700,outline:"none",textAlign:"center"}}/>
             <button onClick={saveEdit}
-              style={{flex:1,padding:"8px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Saxla</button>
-            <button onClick={()=>setMode("menu")} style={{padding:"8px 11px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Geri</button>
+              style={{flex:1,padding:"9px",borderRadius:13,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.2)",color:"#4C9A6E",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Saxla</button>
+            <button onClick={()=>setMode("menu")} style={{padding:"9px 12px",borderRadius:13,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Geri</button>
           </div>
         </div>
       )}
@@ -1368,30 +1368,30 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
       {/* CONFLICT mode */}
       {mode==="conflict" && conflictTbl && (
         <div>
-          <div style={{fontSize:12,color:"#e8b87a",marginBottom:10,lineHeight:1.5}}>
+          <div style={{fontSize:12,color:"#8A6B1E",marginBottom:10,lineHeight:1.5}}>
             ⚠️ Masa <strong style={{color:"#211A16"}}>{conflictTbl.label||conflictTbl.id}</strong> doludur!<br/>
-            <span style={{fontSize:11,color:"rgba(201,168,76,.6)"}}>
+            <span style={{fontSize:11,color:"rgba(33,26,22,.55)"}}>
               {((conflictTbl&&conflictTbl.guests)||[]).reduce((s,x)=>s+(x.count||1),0)}/{conflictTbl.seats} yer tutulub
             </span>
           </div>
-          <div style={{display:"flex",flexDirection:"column",gap:7}}>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
             <button onClick={()=>{
               // Swap: move first guest of target back to source, then move our guest
               const swapG = (conflictTbl&&conflictTbl.guests&&conflictTbl.guests[0]);
               if(swapG) onMove(swapG.id, conflictTbl.id, exTbl.id);
               onMove(g.id, exTbl.id, conflictTbl.id);
               onClose();
-            }} style={{padding:"9px",borderRadius:9,border:"1px solid rgba(232,184,122,.4)",background:"rgba(232,184,122,.1)",color:"#e8b87a",fontSize:12,cursor:"pointer",fontWeight:600,textAlign:"left"}}>
+            }} style={{padding:"10px",borderRadius:13,border:"1px solid rgba(212,175,90,.4)",background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.06))",backdropFilter:"blur(6px)",color:"#8A6B1E",fontSize:12,cursor:"pointer",fontWeight:600,textAlign:"left"}}>
               🔄 Əvəzləşdir — <span style={{opacity:.7,fontSize:11}}>{(conflictTbl&&conflictTbl.guests&&conflictTbl.guests[0]&&conflictTbl.guests[0].name)||"?"} geri qayıtsın</span>
             </button>
             <button onClick={()=>{
               // Expand seats and move
               onMove(g.id, exTbl.id, conflictTbl.id, true); // true = force expand
               onClose();
-            }} style={{padding:"9px",borderRadius:9,border:"1px solid rgba(80,200,120,.35)",background:"rgba(80,200,120,.08)",color:"#78e896",fontSize:12,cursor:"pointer",fontWeight:600,textAlign:"left"}}>
+            }} style={{padding:"10px",borderRadius:13,border:"1px solid rgba(76,154,110,.35)",background:"linear-gradient(155deg,rgba(76,154,110,.16),rgba(76,154,110,.05))",backdropFilter:"blur(6px)",color:"#4C9A6E",fontSize:12,cursor:"pointer",fontWeight:600,textAlign:"left"}}>
               ➕ Masa yerini artır — köçür
             </button>
-            <button onClick={()=>setMode("move")} style={{padding:"7px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>← Geri</button>
+            <button onClick={()=>setMode("move")} style={{padding:"8px",borderRadius:13,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)",color:"#6B6259",fontSize:12,cursor:"pointer"}}>← Geri</button>
           </div>
         </div>
       )}
@@ -1399,7 +1399,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
       {/* MOVE mode */}
       {mode==="move" && (
         <div>
-          <div style={{fontSize:10,color:"rgba(201,168,76,.5)",marginBottom:6}}>Hansı masaya köçürülsün?</div>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:7}}>Hansı masaya köçürülsün?</div>
           <div style={{display:"flex",gap:5}}>
             <input type="number" min={1} max={tables.length} value={popupMoveTgt}
               onChange={e=>setPopupMoveTgt(e.target.value)} placeholder="Masa №" autoFocus
@@ -1412,9 +1412,9 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
                 const guestCount=g.count||1;
                 if(tgtOcc+guestCount>tgt.seats){ setConflictTbl(tgt); setMode("conflict"); }
                 else { onMove(g.id,exTbl.id,n); onClose(); }
-              }}} style={{flex:1,padding:"8px 10px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.32)",borderRadius:9,color:"#211A16",fontSize:15,fontWeight:700,outline:"none",textAlign:"center"}}/>
+              }}} style={{flex:1,padding:"9px 11px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:13,color:"#211A16",fontSize:15,fontWeight:700,outline:"none",textAlign:"center"}}/>
             <button
-              style={{padding:"8px 14px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:14,cursor:"pointer",fontWeight:700}} onClick={()=>{
+              style={{padding:"9px 15px",borderRadius:13,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.2)",color:"#4C9A6E",fontSize:14,cursor:"pointer",fontWeight:700}} onClick={()=>{
                 const n=+popupMoveTgt;
                 if(!n||n===exTbl.id) return;
                 const tgt=tables.find(function(t){return t.id===n;});
@@ -1499,23 +1499,26 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   return (
     <div style={{minHeight:0}}>
       {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,
+        background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+        border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset",borderRadius:22,padding:"14px 16px"}}>
         <div>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:14,color:"#c9a84c",fontWeight:700}}>{hall&&hall.name||"Sxem"}</div>
-          <div style={{fontSize:10,color:"rgba(201,168,76,.5)",marginTop:2}}>
-            {hall&&hall.totalGuests&&<span style={{marginRight:6}}>{hall.totalGuests} nəfər</span>}
-            {tables.length} masa · {pct||0}% dolu
+          <div style={{fontFamily:"'Fraunces',serif",fontSize:17,color:"#211A16",fontWeight:600}}>{hall&&hall.name||"Sxem"}</div>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginTop:3,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:.3}}>
+            {hall&&hall.totalGuests&&<span style={{marginRight:6}}>{hall.totalGuests} NƏFƏR ·</span>}
+            {tables.length} MASA · {pct||0}% DOLU
           </div>
         </div>
-        <div style={{display:"flex",gap:6}}>
+        <div style={{display:"flex",gap:7}}>
           <button onClick={function(){setShareMode(function(s){return !s;}); setShareResult(null); setShareSelected(new Set());}}
-            style={{padding:"6px 10px",borderRadius:9,
-              border:"1px solid "+(shareMode?"rgba(122,173,232,.5)":"rgba(201,168,76,.25)"),
-              background:shareMode?"rgba(122,173,232,.12)":"transparent",
-              color:shareMode?"#7aade8":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+            style={{padding:"7px 12px",borderRadius:14,
+              border:"1px solid "+(shareMode?"rgba(91,132,176,.5)":"rgba(255,255,255,.5)"),
+              background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.4)",
+              backdropFilter:"blur(8px)",
+              color:shareMode?"#5B84B0":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             📤 Yönəlt
           </button>
-          <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"6px 12px",borderRadius:9,border:"1px solid "+(editMode?"rgba(80,200,120,.45)":"rgba(201,168,76,.3)"),background:editMode?"rgba(80,200,120,.12)":"transparent",color:editMode?"#78e896":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+          <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"7px 13px",borderRadius:14,border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             {editMode?"✓ Bitir":"✏️ Düzəlt"}
           </button>
         </div>
@@ -1523,49 +1526,49 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
       {/* YÖNƏLT PANEL */}
       {shareMode&&(
-        <div style={{background:"rgba(122,173,232,.06)",border:"1px solid rgba(122,173,232,.2)",
-          borderRadius:12,padding:"12px",marginBottom:10}}>
+        <div style={{background:"linear-gradient(155deg,rgba(91,132,176,.14),rgba(91,132,176,.05))",backdropFilter:"blur(14px)",border:"1px solid rgba(91,132,176,.3)",
+          borderRadius:18,padding:"13px",marginBottom:12}}>
           {shareResult?(
             <div>
-              <div style={{fontSize:12,color:"#7aade8",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
-              <div style={{background:"rgba(0,0,0,.4)",borderRadius:10,padding:"12px",textAlign:"center",marginBottom:10}}>
-                <div style={{fontSize:26,fontWeight:900,color:"#f5d060",letterSpacing:4,fontFamily:"monospace"}}>{shareResult.code}</div>
-                <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:4}}>{shareResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
+              <div style={{fontSize:12,color:"#5B84B0",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
+              <div style={{background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",borderRadius:16,padding:"14px",textAlign:"center",marginBottom:10}}>
+                <div style={{fontSize:26,fontWeight:900,color:"#D4AF5A",letterSpacing:4,fontFamily:"'IBM Plex Mono',monospace"}}>{shareResult.code}</div>
+                <div style={{fontSize:9,color:"rgba(245,238,224,.5)",marginTop:4}}>{shareResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
                   var msg="Zəhmət olmasa GONAG.AZ-ı aç, Yönəlt kodunu daxil et: "+shareResult.code+". Masaları sən doldur! 🙏";
                   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-                }} style={{flex:1,padding:"8px",borderRadius:8,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                }} style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))",color:"#4C9A6E",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                   📱 WhatsApp
                 </button>
                 <button onClick={function(){
                   try{navigator.clipboard.writeText(shareResult.code);}catch(e){}
                   alert("Kod kopyalandı: "+shareResult.code);
-                }} style={{padding:"8px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.3)",background:"transparent",color:"#c9a84c",fontSize:11,cursor:"pointer"}}>
+                }} style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",fontSize:11,cursor:"pointer"}}>
                   📋
                 </button>
                 <button onClick={function(){setShareResult(null);setShareSelected(new Set());setShareMode(false);}}
-                  style={{padding:"8px 10px",borderRadius:8,border:"none",background:"transparent",color:"rgba(33,26,22,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
+                  style={{padding:"9px 12px",borderRadius:12,border:"none",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:11,cursor:"pointer"}}>✕</button>
               </div>
             </div>
           ):(
             <div>
-              <div style={{fontSize:11,color:"#7aade8",fontWeight:700,marginBottom:8}}>📤 Yönəltmək üçün masaları seç:</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
+              <div style={{fontSize:11,color:"#5B84B0",fontWeight:700,marginBottom:8}}>📤 Yönəltmək üçün masaları seç:</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:10}}>
                 <button onClick={function(){
                   var allIds=new Set(tables.map(function(t){return t.id;}));
                   var allSel=tables.every(function(t){return shareSelected.has(t.id);});
                   setShareSelected(allSel?new Set():allIds);
-                }} style={{padding:"4px 10px",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",
-                  border:"1px solid rgba(122,173,232,.4)",
-                  background:tables.every(function(t){return shareSelected.has(t.id);})?"rgba(122,173,232,.2)":"transparent",
-                  color:"#7aade8"}}>
+                }} style={{padding:"5px 11px",borderRadius:12,fontSize:10,fontWeight:700,cursor:"pointer",
+                  border:"1px solid rgba(91,132,176,.4)",backdropFilter:"blur(6px)",
+                  background:tables.every(function(t){return shareSelected.has(t.id);})?"rgba(91,132,176,.22)":"rgba(255,255,255,.3)",
+                  color:"#5B84B0"}}>
                   {tables.every(function(t){return shareSelected.has(t.id);})?"✓ Hamısı":"Hamısını seç"}
                 </button>
                 {tables.map(function(t){
                   var isSel=shareSelected.has(t.id);
-                  var sc=t.side==="Oğlan evi"?"#7aade8":t.side==="Qız evi"?"#e87aad":"rgba(201,168,76,.8)";
+                  var sc=t.side==="Oğlan evi"?"#C1382A":t.side==="Qız evi"?"#D4AF5A":"#8A6FA8";
                   return (
                     <button key={t.id} onClick={function(){
                       setShareSelected(function(prev){
@@ -1573,9 +1576,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                         if(s.has(t.id)) s.delete(t.id); else s.add(t.id);
                         return s;
                       });
-                    }} style={{padding:"4px 9px",borderRadius:7,fontSize:10,fontWeight:700,cursor:"pointer",
-                      border:"1px solid "+(isSel?sc:sc+"44"),
-                      background:isSel?sc+"22":"transparent",color:isSel?sc:sc+"66"}}>
+                    }} style={{padding:"5px 10px",borderRadius:12,fontSize:10,fontWeight:700,cursor:"pointer",backdropFilter:"blur(6px)",
+                      border:"1px solid "+(isSel?sc+"88":sc+"33"),
+                      background:isSel?sc+"26":"rgba(255,255,255,.25)",color:isSel?sc:sc+"aa"}}>
                       №{t.id}{t.label&&t.label!=="__extra__"?" "+t.label.substring(0,5):""}
                     </button>
                   );
@@ -1593,15 +1596,15 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                       body:JSON.stringify({code:code,table_ids:tblIds,status:"active",created_at:new Date().toISOString()})
                     }).catch(function(){});
                   }catch(e){}
-                }} style={{width:"100%",padding:"9px",borderRadius:10,border:"none",
-                  background:"linear-gradient(90deg,rgba(122,173,232,.4),rgba(122,173,232,.2))",
-                  color:"#7aade8",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                }} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(91,132,176,.3)",
+                  background:"linear-gradient(155deg,rgba(91,132,176,.24),rgba(91,132,176,.1))",backdropFilter:"blur(8px)",
+                  color:"#5B84B0",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                   {"📤 "+shareSelected.size+" masa üçün kod yarat"}
                 </button>
               )}
               <button onClick={function(){setShareMode(false);setShareSelected(new Set());}}
-                style={{width:"100%",marginTop:5,padding:"6px",borderRadius:8,border:"none",
-                  background:"transparent",color:"rgba(33,26,22,.25)",fontSize:10,cursor:"pointer"}}>
+                style={{width:"100%",marginTop:6,padding:"7px",borderRadius:10,border:"none",
+                  background:"transparent",color:"rgba(33,26,22,.35)",fontSize:10,cursor:"pointer"}}>
                 Ləğv et
               </button>
             </div>
@@ -1610,8 +1613,8 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
       )}
 
       {/* Progress */}
-      <div style={{height:3,background:"rgba(33,26,22,.06)",borderRadius:2,marginBottom:12,overflow:"hidden"}}>
-        <div style={{height:"100%",width:(pct||0)+"%",background:"linear-gradient(90deg,#c9a84c,#f5d060)",borderRadius:2}}/>
+      <div style={{height:5,background:"rgba(150,120,80,.15)",borderRadius:3,marginBottom:14,overflow:"hidden"}}>
+        <div style={{height:"100%",width:(pct||0)+"%",background:"linear-gradient(90deg,#FF9B85,#C1382A)",borderRadius:3,boxShadow:"0 0 6px rgba(193,56,42,.4)"}}/>
       </div>
 
       {/* Floor plan - always visible */}
@@ -1637,7 +1640,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
       {/* Expanded table panel */}
       {exTbl&&(
-        <div ref={guestPanelRef} style={{marginTop:10,background:"linear-gradient(145deg,rgba(245,208,96,.07),rgba(201,168,76,.03))",border:"1.5px solid rgba(245,208,96,.3)",borderRadius:18,padding:14}}>
+        <div ref={guestPanelRef} style={{marginTop:12,background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 8px 22px -8px rgba(60,40,20,.2)",borderRadius:22,padding:16}}>
 
           {/* Table header */}
           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -1645,26 +1648,26 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{display:"flex",gap:5,flex:1,alignItems:"center"}}>
                 <input value={lblVal} onChange={e=>setLblVal(e.target.value)} autoFocus
                   onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal);setEditLbl(false);}}} placeholder="Masanın adı..."
-                  style={{flex:1,padding:"6px 10px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(245,208,96,.4)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
-                <button onClick={()=>{onLabel(expandedId,lblVal);setEditLbl(false);}} style={{padding:"6px 12px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
-                <button onClick={()=>setEditLbl(false)} style={{padding:"6px 10px",borderRadius:9,border:"none",background:"rgba(33,26,22,.06)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
+                  style={{flex:1,padding:"7px 11px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,color:"#211A16",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none"}}/>
+                <button onClick={()=>{onLabel(expandedId,lblVal);setEditLbl(false);}} style={{padding:"7px 13px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
+                <button onClick={()=>setEditLbl(false)} style={{padding:"7px 11px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
             )}
             {!editLbl&&(
               <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,color:((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)>=exTbl.seats?"#50c878":"#f5d060"}}>
+                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
-                    <span style={{fontSize:10,color:"rgba(201,168,76,.4)"}}>
+                    <span style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>
                       {((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)}/{exTbl.seats} nəfər
                     </span>
                   </div>
                 </div>
-                <button onClick={()=>{setExpandedId(null);setPopup(null);}} style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(201,168,76,.2)",background:"rgba(201,168,76,.07)",color:"#c9a84c",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                <button onClick={()=>{setExpandedId(null);setPopup(null);}} style={{width:28,height:28,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
             )}
           </div>
@@ -1682,9 +1685,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           </div>
 
           {slotInput&&(
-            <div style={{marginTop:8,background:"rgba(255,255,255,.98)",border:"1px solid rgba(201,168,76,.3)",borderRadius:12,padding:"10px 12px"}}>
+            <div style={{marginTop:10,background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.4))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset",borderRadius:18,padding:"12px 14px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <span style={{fontSize:11,fontWeight:700,color:"#c9a84c"}}>{"Masa "+expandedId+" — Qonaq əlavə et"}</span>
+                <span style={{fontSize:11,fontWeight:700,color:"#211A16"}}>{"Masa "+expandedId+" — Qonaq əlavə et"}</span>
                 <button onClick={()=>{setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);}}
                   style={{background:"none",border:"none",color:"#6B6259",fontSize:14,cursor:"pointer",padding:"0 2px"}}>✕</button>
               </div>
@@ -1692,15 +1695,15 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               {/* Ad Soyad */}
               <input ref={slotRef} value={slotName} onChange={e=>setSlotName(e.target.value)}
                 placeholder="Ad Soyad"
-                style={{display:"block",width:"100%",boxSizing:"border-box",padding:"7px 10px",marginBottom:7,
-                  background:"rgba(33,26,22,.07)",border:"1px solid rgba(201,168,76,.3)",
-                  borderRadius:8,color:"#211A16",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
+                style={{display:"block",width:"100%",boxSizing:"border-box",padding:"8px 11px",marginBottom:8,
+                  background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",
+                  borderRadius:11,color:"#211A16",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif"}}/>
 
               {/* Telefon nömrəsi */}
               <div style={{display:"flex",gap:6,marginBottom:4,alignItems:"center"}}>
-                <div style={{flex:1,display:"flex",alignItems:"center",background:"rgba(33,26,22,.07)",
-                  border:"1px solid rgba(201,168,76,.25)",borderRadius:8,overflow:"hidden"}}>
-                  <span style={{padding:"0 7px",fontSize:12,color:"rgba(201,168,76,.7)",flexShrink:0,fontWeight:600}}>+994</span>
+                <div style={{flex:1,display:"flex",alignItems:"center",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",
+                  border:"1px solid rgba(255,255,255,.55)",borderRadius:11,overflow:"hidden"}}>
+                  <span style={{padding:"0 7px",fontSize:12,color:"rgba(33,26,22,.55)",flexShrink:0,fontWeight:600}}>+994</span>
                   <input
                     type="tel"
                     value={slotPhone}
@@ -1710,11 +1713,11 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                     }}
                     placeholder="XX XXX XX XX"
                     inputMode="tel"
-                    style={{flex:1,padding:"7px 4px",background:"transparent",border:"none",
-                      color:"#211A16",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif",minWidth:0}}/>
+                    style={{flex:1,padding:"8px 4px",background:"transparent",border:"none",
+                      color:"#211A16",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif",minWidth:0}}/>
                   {slotPhone&&(
                     <button onClick={()=>setSlotPhone("")}
-                      style={{background:"none",border:"none",color:"rgba(201,168,76,.4)",fontSize:11,cursor:"pointer",padding:"0 7px",flexShrink:0}}>✕</button>
+                      style={{background:"none",border:"none",color:"rgba(33,26,22,.4)",fontSize:11,cursor:"pointer",padding:"0 7px",flexShrink:0}}>✕</button>
                   )}
                 </div>
                 {/* Kontakt düyməsi — tezliklə app versiyada aktiv olacaq */}
@@ -1722,43 +1725,43 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   onClick={()=>alert("📱 Bu funksiya tezliklə GONAG.AZ tətbiqində aktiv olacaq!")}
                   title="Kontaktlardan seç — tezliklə"
                   style={{display:"flex",alignItems:"center",justifyContent:"center",
-                    width:36,height:36,flexShrink:0,borderRadius:8,
-                    background:"rgba(201,168,76,.07)",border:"1px solid rgba(201,168,76,.2)",
-                    fontSize:16,cursor:"pointer",opacity:0.6}}>
+                    width:38,height:38,flexShrink:0,borderRadius:12,
+                    background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.5)",
+                    fontSize:16,cursor:"pointer",opacity:0.7}}>
                   👤
                 </button>
               </div>
-              <div style={{fontSize:9,color:"rgba(201,168,76,.35)",marginBottom:7,paddingLeft:2}}>
+              <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginBottom:8,paddingLeft:2}}>
                 İstəyə bağlı — WhatsApp dəvəti üçün lazımdır
               </div>
 
-              <div style={{display:"flex",gap:6,marginBottom:7}}>
-                {[["👨 Kişi","kishi","#7aade8"],["👩 Qadın","qadin","#e87aad"]].map(([lbl,val,sc])=>(
+              <div style={{display:"flex",gap:6,marginBottom:8}}>
+                {[["👨 Kişi","kishi","#5B84B0"],["👩 Qadın","qadin","#C9668A"]].map(([lbl,val,sc])=>(
                   <button key={val} onClick={()=>setSlotGender(g=>g===val?"":val)}
-                    style={{flex:1,padding:"5px",borderRadius:7,fontSize:11,fontWeight:700,cursor:"pointer",
-                      border:"1.5px solid "+(slotGender===val?sc:"rgba(33,26,22,.08)"),
-                      background:slotGender===val?sc+"22":"rgba(33,26,22,.03)",
-                      color:slotGender===val?sc:"rgba(33,26,22,.3)"}}>
+                    style={{flex:1,padding:"6px",borderRadius:12,fontSize:11,fontWeight:700,cursor:"pointer",backdropFilter:"blur(6px)",
+                      border:"1px solid "+(slotGender===val?sc+"88":"rgba(255,255,255,.5)"),
+                      background:slotGender===val?sc+"26":"rgba(255,255,255,.3)",
+                      color:slotGender===val?sc:"rgba(33,26,22,.45)"}}>
                     {lbl}
                   </button>
                 ))}
               </div>
 
-              <div style={{display:"flex",gap:6,marginBottom:8}}>
-                {[["Böyük","#c9a84c",slotCount,
+              <div style={{display:"flex",gap:6,marginBottom:10}}>
+                {[["Böyük","#C1382A",slotCount,
                   ()=>setSlotCount(c=>String(Math.max(1,parseInt(c||1)-1))),
                   ()=>setSlotCount(c=>String(parseInt(c||1)+1))
-                ],["👧 Uşaq","#f5d060",
+                ],["👧 Uşaq","#D4AF5A",
                   String((slotExtras.find(x=>x.type==="usher")||{count:0}).count),
                   ()=>setSlotExtras(xs=>{const n=Math.max(0,((xs.find(x=>x.type==="usher")||{count:0}).count)-1);return n===0?[]:[{type:"usher",count:n}];}),
                   ()=>setSlotExtras(xs=>{const n=((xs.find(x=>x.type==="usher")||{count:0}).count)+1;return [{type:"usher",count:n}];})
                 ]].map(([lbl,sc,val,dec,inc])=>(
                   <div key={lbl} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-                    background:"rgba(33,26,22,.04)",border:"1px solid "+sc+"33",borderRadius:7,padding:"5px 8px"}}>
-                    <span style={{fontSize:9,color:sc+"88"}}>{lbl}</span>
-                    <button onClick={dec} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"22",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>−</button>
+                    background:"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",border:"1px solid "+sc+"33",borderRadius:12,padding:"6px 9px"}}>
+                    <span style={{fontSize:9,color:sc+"cc"}}>{lbl}</span>
+                    <button onClick={dec} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"26",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>−</button>
                     <span style={{fontSize:13,fontWeight:800,color:sc,minWidth:16,textAlign:"center"}}>{val}</span>
-                    <button onClick={inc} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"22",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>+</button>
+                    <button onClick={inc} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"26",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>+</button>
                   </div>
                 ))}
               </div>
@@ -1774,9 +1777,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 }
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||""});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);
-              }} style={{width:"100%",padding:"8px",borderRadius:8,border:"none",
-                background:"linear-gradient(90deg,rgba(80,200,120,.45),rgba(80,200,120,.25))",
-                color:"#78e896",fontSize:12,fontWeight:800,cursor:"pointer"}}>
+              }} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
+                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
+                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
                 ✓ Əlavə et
               </button>
             </div>
@@ -1792,15 +1795,15 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
           {/* Guest list */}
           {((exTbl&&exTbl.guests&&exTbl.guests.length||0)||0)>0&&(
-            <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:8,maxHeight:160,overflowY:"auto"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:8,maxHeight:160,overflowY:"auto"}}>
               {((exTbl&&exTbl.guests)||[]).map(g=>{
-                const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"#c9a84c";
+                const sc=g.gender==="kishi"?"#5B84B0":g.gender==="qadin"?"#C9668A":"#8A6FA8";
                 return (
-                  <div key={g.id} onClick={()=>guestClick(g)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(201,168,76,.04)",border:"1px solid rgba(201,168,76,.08)",borderRadius:8,cursor:"pointer"}}>
-                    <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,background:sc+"22",border:"1px solid "+sc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:sc}}>{g.name[0]}</div>
+                  <div key={g.id} onClick={()=>guestClick(g)} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 11px",background:"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",border:"1px solid rgba(255,255,255,.5)",borderRadius:14,cursor:"pointer"}}>
+                    <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,background:sc+"26",border:"1px solid "+sc+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:sc}}>{g.name[0]}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:12,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</div>
-                      <div style={{fontSize:9,color:"rgba(201,168,76,.5)",marginTop:1}}>
+                      <div style={{fontSize:9,color:"rgba(33,26,22,.5)",marginTop:1}}>
                         {g.count>1&&g.count+" nəfər"}{g.side&&" · "+g.side}
                       </div>
                     </div>
@@ -2339,13 +2342,13 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
   }
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.97)",display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,zIndex:500,background:"radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%)",display:"flex",flexDirection:"column"}}>
       {/* Header */}
-      <div style={{background:"#FFFFFF",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"11px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <span style={{fontSize:14,fontWeight:700,color:"#c9a84c"}}>🎊 Dəvətnamə PNG</span>
+      <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",borderBottom:"1px solid rgba(255,255,255,.4)",padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <span style={{fontSize:14,fontWeight:700,color:"#211A16"}}>🎊 Dəvətnamə PNG</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>setCardSettingsOpen&&setCardSettingsOpen(v=>!v)}
-            style={{padding:"5px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,cursor:"pointer"}}>
+            style={{padding:"6px 11px",borderRadius:12,border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.15)",backdropFilter:"blur(6px)",color:"#8A6B1E",fontSize:11,cursor:"pointer",fontWeight:600}}>
             🎁 Kart
           </button>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -2353,20 +2356,20 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       </div>
       {/* Kart nömrəsi */}
       {cardSettingsOpen&&(
-        <div style={{padding:"10px 16px",background:"rgba(201,168,76,.04)",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
-          <div style={{fontSize:10,color:"rgba(33,26,22,.35)",marginBottom:6}}>🎁 Hədiyyə kart nömrəsi (qonaq linkdə görəcək):</div>
+        <div style={{padding:"10px 16px",background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)",borderBottom:"1px solid rgba(255,255,255,.3)",flexShrink:0}}>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:6}}>🎁 Hədiyyə kart nömrəsi (qonaq linkdə görəcək):</div>
           <input value={cardNumber||""} onChange={e=>setCardNumber&&setCardNumber(e.target.value)}
             placeholder="Məs: 4169 7388 1234 5678"
-            style={{width:"100%",padding:"8px 12px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,color:"#211A16",fontSize:13,outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
+            style={{width:"100%",padding:"9px 13px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,color:"#211A16",fontSize:13,outline:"none",fontFamily:"'IBM Plex Mono',monospace",boxSizing:"border-box"}}/>
         </div>
       )}
 
       {/* Şablon seçimi */}
-      <div style={{padding:"8px 14px",background:"#FFFFFF",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+      <div style={{padding:"10px 14px",background:"rgba(255,255,255,.3)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.3)",flexShrink:0}}>
         <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
           {DEVETNAME_SHABLONLAR.map(s=>(
             <button key={s.id} onClick={()=>setShablon(s)}
-              style={{padding:"5px 11px",borderRadius:18,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(33,26,22,.12)"),background:shablon.id===s.id?"rgba(201,168,76,.1)":"transparent",color:shablon.id===s.id?s.accent:"rgba(33,26,22,.3)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+              style={{padding:"6px 12px",borderRadius:18,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.5)"),background:shablon.id===s.id?s.accent+"22":"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",color:shablon.id===s.id?s.accent:"rgba(33,26,22,.5)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
               {s.ad}
             </button>
           ))}
@@ -2375,11 +2378,11 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
 
       {/* Masa seçimi */}
       {tables2use.length>1&&(
-        <div style={{padding:"6px 14px",background:"rgba(201,168,76,.03)",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+        <div style={{padding:"8px 14px",background:"rgba(255,255,255,.2)",backdropFilter:"blur(10px)",borderBottom:"1px solid rgba(255,255,255,.3)",flexShrink:0}}>
           <div style={{display:"flex",gap:5,overflowX:"auto"}}>
             {tables2use.map((t,i)=>(
               <button key={t.id} onClick={()=>setActiveTblIdx(i)}
-                style={{padding:"4px 10px",borderRadius:14,border:"1px solid "+(activeTblIdx===i?"rgba(201,168,76,.6)":"rgba(33,26,22,.1)"),background:activeTblIdx===i?"rgba(201,168,76,.15)":"transparent",color:activeTblIdx===i?"#c9a84c":"rgba(33,26,22,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                style={{padding:"5px 11px",borderRadius:14,border:"1px solid "+(activeTblIdx===i?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),background:activeTblIdx===i?"rgba(193,56,42,.16)":"rgba(255,255,255,.3)",backdropFilter:"blur(6px)",color:activeTblIdx===i?"#C1382A":"rgba(33,26,22,.5)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                 Masa {t.id} ({(t.guests||[]).length})
               </button>
             ))}
@@ -2390,26 +2393,26 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       {/* Ana hissə: qonaq siyahısı + preview */}
       <div style={{display:"flex",flex:1,overflow:"hidden",minHeight:0}}>
         {/* Sol — qonaq siyahısı */}
-        <div style={{width:"40%",borderRight:"1px solid rgba(201,168,76,.08)",overflowY:"auto",background:"#FFFFFF"}}>
-          <div style={{padding:"7px 10px",fontSize:9,color:"rgba(33,26,22,.25)"}}>Preview üçün seç:</div>
-          {guests.length===0&&<div style={{padding:"16px",fontSize:12,color:"rgba(33,26,22,.3)",textAlign:"center"}}>Qonaq yoxdur</div>}
+        <div style={{width:"40%",borderRight:"1px solid rgba(255,255,255,.3)",overflowY:"auto",background:"rgba(255,255,255,.2)",backdropFilter:"blur(10px)"}}>
+          <div style={{padding:"8px 11px",fontSize:9,color:"rgba(33,26,22,.4)"}}>Preview üçün seç:</div>
+          {guests.length===0&&<div style={{padding:"16px",fontSize:12,color:"rgba(33,26,22,.4)",textAlign:"center"}}>Qonaq yoxdur</div>}
           {guests.map((g,i)=>{
-            const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"#c9a84c";
+            const sc=g.gender==="kishi"?"#5B84B0":g.gender==="qadin"?"#C9668A":"#8A6FA8";
             const hasPhone=!!(g.phone||"").replace(/\D/g,"");
             return (
               <div key={g.id||i} onClick={()=>setSelIdx(i)}
-                style={{padding:"9px 10px",cursor:"pointer",borderBottom:"1px solid rgba(33,26,22,.04)",background:selIdx===i?"rgba(201,168,76,.1)":"transparent"}}>
+                style={{padding:"10px 11px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,.25)",background:selIdx===i?"rgba(193,56,42,.12)":"transparent"}}>
                 <div style={{display:"flex",alignItems:"center",gap:7}}>
-                  <div style={{width:26,height:26,borderRadius:"50%",background:sc+"22",border:"1px solid "+sc+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:sc,flexShrink:0}}>{g.name[0]||"?"}</div>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:sc+"26",border:"1px solid "+sc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:sc,flexShrink:0}}>{g.name[0]||"?"}</div>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:11,fontWeight:600,color:"#211A16",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
-                    <div style={{fontSize:9,color:hasPhone?"rgba(37,211,102,.5)":"rgba(255,80,80,.4)"}}>{hasPhone?"📱":"yox"}</div>
+                    <div style={{fontSize:9,color:hasPhone?"rgba(76,154,110,.7)":"rgba(193,56,42,.5)"}}>{hasPhone?"📱":"yox"}</div>
                   </div>
                 </div>
                 {selIdx===i&&(
-                  <div style={{display:"flex",gap:4,marginTop:7}}>
-                    <button onClick={e=>{e.stopPropagation();downloadOne(g);}} style={{flex:1,padding:"5px",borderRadius:6,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:9,fontWeight:700,cursor:"pointer"}}>⬇️ PNG</button>
-                    <button onClick={e=>{e.stopPropagation();sendOneWA(g);}} style={{flex:1,padding:"5px",borderRadius:6,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:9,fontWeight:700,cursor:"pointer"}}>📱 WA</button>
+                  <div style={{display:"flex",gap:4,marginTop:8}}>
+                    <button onClick={e=>{e.stopPropagation();downloadOne(g);}} style={{flex:1,padding:"6px",borderRadius:10,border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.15)",backdropFilter:"blur(4px)",color:"#8A6B1E",fontSize:9,fontWeight:700,cursor:"pointer"}}>⬇️ PNG</button>
+                    <button onClick={e=>{e.stopPropagation();sendOneWA(g);}} style={{flex:1,padding:"6px",borderRadius:10,border:"1px solid rgba(76,154,110,.35)",background:"rgba(76,154,110,.2)",backdropFilter:"blur(4px)",color:"#4C9A6E",fontSize:9,fontWeight:700,cursor:"pointer"}}>📱 WA</button>
                   </div>
                 )}
               </div>
@@ -2418,20 +2421,20 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
         </div>
 
         {/* Sağ — canvas preview */}
-        <div style={{flex:1,overflowY:"auto",background:"#F7F4EE",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"10px 6px"}}>
+        <div style={{flex:1,overflowY:"auto",background:"rgba(255,255,255,.15)",backdropFilter:"blur(10px)",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"10px 6px"}}>
           <canvas ref={canvasRef} style={{width:"100%",maxWidth:260,borderRadius:10,display:"block"}}/>
         </div>
       </div>
 
       {/* Footer — hamısına göndər */}
-      <div style={{padding:"10px 14px 30px",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+      <div style={{padding:"10px 14px 30px",background:"linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.5))",backdropFilter:"blur(16px)",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
         {sending?(
           <div style={{textAlign:"center",padding:"10px"}}>
-            <div style={{fontSize:13,color:"#25d366",fontWeight:700}}>📤 {sentCount}/{guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} göndərilir...</div>
+            <div style={{fontSize:13,color:"#4C9A6E",fontWeight:700}}>📤 {sentCount}/{guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} göndərilir...</div>
           </div>
         ):(
           <button onClick={sendAllWA}
-            style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.25))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+            style={{width:"100%",padding:"14px",borderRadius:16,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.3),rgba(76,154,110,.12))",backdropFilter:"blur(8px)",color:"#4C9A6E",fontSize:13,fontWeight:800,cursor:"pointer"}}>
             📱 Masa {activeTbl&&activeTbl.id}-in hamısına göndər ({guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrə)
           </button>
         )}
