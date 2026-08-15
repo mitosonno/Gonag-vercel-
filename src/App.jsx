@@ -54,16 +54,17 @@ AKTİV ƏMRLƏR (cavabın SONUNA əlavə et):
 [OPEN_SCHEMA] — masa sxemini aç
 [OPEN_REST] — restoran axtarışını aç
 [OPEN_INVITE] — dəvətnamə panelini aç
-[OPEN_TABLE:ID] — tək masanı seç və aç
+[OPEN_TABLE:ID] — həmin masanın kiçik sxemini chat-da göstər (ad, telefon, cins soruşmadan qonaq YAZMA — bu əmr yalnız göstərir)
 [OPEN_MECLIS:ID_ya_ad] — yadda saxlanmış məclisi aç
-[ADD_GUEST_PANEL:MasaID] — qonaq əlavə etmə formasını aç (istifadəçi özü doldurur)
-[ADD_GUEST:MasaID:Ad:Say] — qonaq əlavə et (agent özü əlavə edir)
+[ADD_GUEST_PANEL:MasaID] — chat daxilində addım-addım qonaq əlavə etmə formasını başlat (Ad→Telefon→Cins→Say — istifadəçi doldurur, SƏN özün ad/say yazıb əlavə ETMİRSƏN)
 [SHOW_STATS] — statistika göstər
 
+VACIB: Qonaq əlavə etmək HƏMİŞƏ [ADD_GUEST_PANEL:ID] ilə olur — heç vaxt özün ad, telefon və ya say uydurub "əlavə olundu" demə. Yalnız formanı başlat, istifadəçi doldursun.
+
 Misal: "masa sxemini göstər" → qısa cavab + [OPEN_SCHEMA]
-Misal: "Masa 5-ə qonaq əlavə et" → cavab + [OPEN_SCHEMA] + [ADD_GUEST_PANEL:5]
+Misal: "Masa 5-ə qonaq əlavə et" → cavab + [ADD_GUEST_PANEL:5]
 Misal: "Leyla Mehdi məclisini aç" → cavab + [OPEN_MECLIS:Leyla]
-Misal: "Masa 5-ə Əli əlavə et 3 nəfər" → cavab + [ADD_GUEST:5:Əli:3]
+Misal: "Masa 12-ni dolduraq" → cavab + [OPEN_TABLE:12] + [ADD_GUEST_PANEL:12]
 Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz müqayisəsi + büdcə hesabı`;
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
@@ -2990,6 +2991,7 @@ export default function App(){
   const [obStep, setObStep] = useState("type");
   const [pickerDate, setPickerDate] = useState("");
   const [pickerTime, setPickerTime] = useState("19:00");
+  const [chatWizard, setChatWizard] = useState(null); // {tableId, step, name, phone, gender, count}
   const [obData, setObData] = useState({});
   const [tables, setTables] = useState([]);
   const [layoutMode, setLayoutMode] = useState(null); // "ready"|"photo"|"custom"
@@ -3462,6 +3464,18 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
 
 
     if(txt==="🔍 Restoran axtar"){ setRestOpen(true); setBusy(false); return; }
+    if(txt==="➕ Növbəti qonaq"){
+      const lastTid = tabRef.current.length>0 ? activeTable : null;
+      if(lastTid){
+        setChatWizard({tableId:lastTid, step:"name", name:"", phone:"", gender:"", count:"1"});
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
+      }
+      setBusy(false); return;
+    }
+    if(txt==="✓ Bəsdir"){
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Əla! Başqa masa ilə davam etmək istəyirsiniz, yoxsa zal sxeminə baxaq?",qrs:["🗺️ Sxemi aç"]}]);
+      setBusy(false); return;
+    }
 
     // ═══ ONBOARDING STATE MACHINE — tamamilə client-side ═══
     function obReply(msg, qrs=[]){
@@ -3613,7 +3627,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="customSeats"){
       if(txt==="Masanın öz tutumu"){
         setHall(h=>({...h, _step:"done"}));
-        pushPanel("schema"); setSchemaOpen(true);
         const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
         setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
@@ -3622,7 +3635,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(["6","8","10","12"].includes(txt)){
         const n=parseInt(txt);
         setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-        pushPanel("schema"); setSchemaOpen(true);
         const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
         setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
@@ -3632,7 +3644,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         const n=parseInt(txt);
         if(n>=1&&n<=30){
           setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-          pushPanel("schema"); setSchemaOpen(true);
           const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
           setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
@@ -3750,21 +3761,22 @@ ${savedEvsList||"Yoxdur"}`;
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
       if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&pushPanel("stats"); setStatsOpen(true); }
 
-      // [ADD_GUEST_PANEL:ID] — sxemi aç, masanı seç, slot formu aç
+      // [ADD_GUEST_PANEL:ID] — masanın chat-daxili formu başlayır (Ad→Telefon→Cins→Say)
       const addPanelMatch = raw.match(/\[ADD_GUEST_PANEL:(\d+)\]/);
+      let attachTableId = null;
       if(addPanelMatch){
         const tId = parseInt(addPanelMatch[1]);
-        pushPanel("schema"); setSchemaOpen(true);
         setActiveTable(tId);
-        setAgentSlotTable(tId);
+        attachTableId = tId;
+        setChatWizard({tableId:tId, step:"name", name:"", phone:"", gender:"", count:"1"});
       }
 
-      // [OPEN_TABLE:ID] — tək masanı seç
+      // [OPEN_TABLE:ID] — masanın kiçik sxemi chat-da göstərilsin
       const tableMatch = raw.match(/\[OPEN_TABLE:(\d+)\]/);
       if(tableMatch){
         const tId = parseInt(tableMatch[1]);
         setActiveTable(tId);
-        pushPanel("schema"); setSchemaOpen(true);
+        attachTableId = tId;
       }
 
       // [OPEN_MECLIS:ID_or_NAME] — yadda saxlanmış məclisi aç
@@ -3785,18 +3797,7 @@ ${savedEvsList||"Yoxdur"}`;
         else { gulivaSpeak("Bu adda məclis tapılmadı."); }
       }
 
-      // [ADD_GUEST:MasaID:Ad:Say] parse et
-      const addMatches = [...raw.matchAll(/\[ADD_GUEST:(\d+):([^:]+):(\d+)\]/g)];
-      if(addMatches.length>0){
-        addMatches.forEach(m=>{
-          const tblId=parseInt(m[1]), gName=m[2].trim(), gCount=parseInt(m[3])||1;
-          const newG={id:Date.now()+Math.random(),name:gName,count:gCount,phone:"",gender:"",invited:false,tableId:tblId};
-          const next=applyGuests([newG],tabRef.current);
-          setTables(next);
-        });
-      }
-
-      // Əmr etiketlərini cavabdan çıxar
+      // Əmr etiketlərini cavabdan çıxar (köhnə [ADD_GUEST:...] artıq işlədilmir — tam forma tələb olunur)
       const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
 
       const {text,qrs,newEv,adds,focN,labels} = parseCmd(cleanRaw);
@@ -3812,7 +3813,7 @@ ${savedEvsList||"Yoxdur"}`;
       }
       if(focN!==null) setActiveTable(focN);
       if(qrs.includes("🔍 Restoran axtar")) setRestOpen(true);
-      setMsgs(m=>[...m,{role:"agent",text,qrs}]);
+      setMsgs(m=>[...m,{role:"agent",text,qrs,tableSnapshotId:attachTableId}]);
       setHist([...nh,{role:"assistant",content:raw}]);
       // Guliya səslə cavab verir
       const plainText = text.replace(/[🎊✅📅🗺️📸⬜💍💫🎂🏢🥂👇🔍]/g,"").replace(/\n/g," ").trim();
@@ -3936,6 +3937,17 @@ ${savedEvsList||"Yoxdur"}`;
                   {m.masaCards&&m.masaCards.map((t,ti)=>(
                     <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   ))}
+                  {m.tableSnapshotId!=null&&(()=>{
+                    const t = tables.find(x=>x.id===m.tableSnapshotId);
+                    if(!t) return null;
+                    return (
+                      <div style={{marginTop:9,display:"flex",justifyContent:"center",padding:12,borderRadius:16,
+                        background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
+                        border:"1px solid rgba(255,255,255,.5)"}}>
+                        <TableSVG table={t} size={130} clickable={false}/>
+                      </div>
+                    );
+                  })()}
                   {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(
                     <div className="qw">{m.qrs.map((q,qi)=><button key={qi} className="qb" onClick={()=>send(q)}>{q}</button>)}</div>
                   )}
@@ -3945,6 +3957,102 @@ ${savedEvsList||"Yoxdur"}`;
             {busy&&<div className="mw agent"><div className="av a">👩‍💼</div><div className="bb a tbb"><div className="ds"><span/><span/><span/></div></div></div>}
             <div ref={endRef}/>
           </div>
+          {chatWizard&&(()=>{
+            const t = tables.find(x=>x.id===chatWizard.tableId);
+            if(!t){ return null; }
+            const oc = occ(t);
+            const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<t.seats)?hall.plannedSeatsPerTable:t.seats;
+            const full = oc>=effectiveCap;
+            function finishAdd(){
+              const uc = chatWizard.gender==="ushaq" ? 0 : 0; // uşaq ayrıca say sahəsi yoxdur, gender="ushaq" özü uşaq kimi 1 nəfər sayılır
+              const g = {
+                id:Date.now()+Math.random(), name:chatWizard.name.trim(),
+                phone:chatWizard.phone.trim()?("+994"+chatWizard.phone.trim()):"",
+                count:parseInt(chatWizard.count)||1,
+                gender:chatWizard.gender==="ushaq"?"":chatWizard.gender,
+                ushaqCount: chatWizard.gender==="ushaq" ? (parseInt(chatWizard.count)||1) : 0,
+                invited:false, side:t.side||"", tableId:t.id
+              };
+              const addCount = chatWizard.gender==="ushaq" ? 0 : (parseInt(chatWizard.count)||1);
+              const totalAdd = addCount + g.ushaqCount;
+              if(oc+totalAdd>effectiveCap){
+                setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.`,qrs:[]}]);
+                setChatWizard(null);
+                return;
+              }
+              const next = applyGuests([g], tabRef.current);
+              setTables(next);
+              setChatWizard(null);
+              const newOc = oc+totalAdd;
+              setMsgs(m=>[...m,{role:"agent",
+                text:`✅ ${g.name} əlavə olundu! Masa ${t.id}: ${newOc}/${effectiveCap} dolu.\n\nNövbəti qonağı əlavə edək?`,
+                qrs:newOc<effectiveCap?["➕ Növbəti qonaq","✓ Bəsdir"]:["✓ Bəsdir"],
+                tableSnapshotId:t.id}]);
+            }
+            return (
+              <div style={{margin:"0 12px 8px",padding:"12px 13px",borderRadius:18,
+                background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(18px) saturate(150%)",
+                border:"1px solid rgba(255,255,255,.55)",display:"flex",flexDirection:"column",gap:9}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id} — qonaq əlavə et ({oc}/{effectiveCap})</div>
+                  <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
+                    style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
+                      borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                    📍 Özüm yerləşdirim
+                  </button>
+                </div>
+
+                {full ? (
+                  <div style={{fontSize:11,color:"#C1382A"}}>Bu masa artıq doludur. Başqa masa seçin.</div>
+                ) : chatWizard.step==="name" ? (
+                  <>
+                    <input autoFocus value={chatWizard.name} onChange={e=>setChatWizard(w=>({...w,name:e.target.value}))}
+                      placeholder="Ad Soyad" onKeyDown={e=>{if(e.key==="Enter"&&chatWizard.name.trim())setChatWizard(w=>({...w,step:"phone"}));}}
+                      style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.55)",background:"rgba(255,255,255,.55)",fontSize:12,outline:"none",color:"#211A16"}}/>
+                    <button disabled={!chatWizard.name.trim()} onClick={()=>setChatWizard(w=>({...w,step:"phone"}))}
+                      style={{padding:"9px",borderRadius:12,border:"none",background:chatWizard.name.trim()?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                        color:chatWizard.name.trim()?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,cursor:chatWizard.name.trim()?"pointer":"default"}}>Növbəti →</button>
+                  </>
+                ) : chatWizard.step==="phone" ? (
+                  <>
+                    <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.55)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,overflow:"hidden"}}>
+                      <span style={{padding:"0 8px",fontSize:12,color:"rgba(33,26,22,.55)",fontWeight:600}}>+994</span>
+                      <input autoFocus value={chatWizard.phone} onChange={e=>setChatWizard(w=>({...w,phone:e.target.value.replace(/[^\d\s\-]/g,"")}))}
+                        placeholder="XX XXX XX XX (istəyə bağlı)" style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",outline:"none",fontSize:12,color:"#211A16"}}/>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
+                        style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Keç</button>
+                      <button onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
+                        style={{flex:2,padding:"9px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Növbəti →</button>
+                    </div>
+                  </>
+                ) : chatWizard.step==="gender" ? (
+                  <div style={{display:"flex",gap:6}}>
+                    {[["kishi","👨 Kişi","#5B84B0"],["qadin","👩 Qadın","#C9668A"],["ushaq","👧 Uşaq","#D4AF5A"]].map(([val,lbl,sc])=>(
+                      <button key={val} onClick={()=>setChatWizard(w=>({...w,gender:val,step:"count"}))}
+                        style={{flex:1,padding:"10px 4px",borderRadius:12,border:"1px solid "+sc+"55",background:sc+"1A",color:sc,fontSize:11,fontWeight:700,cursor:"pointer"}}>{lbl}</button>
+                    ))}
+                  </div>
+                ) : chatWizard.step==="count" ? (
+                  <>
+                    <div style={{fontSize:10.5,color:"rgba(33,26,22,.6)"}}>
+                      {chatWizard.gender==="qadin"?"Özü ilə birlikdə neçə nəfər gələcək?":"Neçə nəfər?"}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:14}}>
+                      <button onClick={()=>setChatWizard(w=>({...w,count:String(Math.max(1,(parseInt(w.count)||1)-1))}))}
+                        style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(193,56,42,.14)",color:"#C1382A",fontSize:16,fontWeight:700,cursor:"pointer"}}>−</button>
+                      <span style={{fontSize:18,fontWeight:800,color:"#211A16",minWidth:24,textAlign:"center"}}>{chatWizard.count}</span>
+                      <button onClick={()=>setChatWizard(w=>({...w,count:String((parseInt(w.count)||1)+1)}))}
+                        style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(76,154,110,.16)",color:"#4C9A6E",fontSize:16,fontWeight:700,cursor:"pointer"}}>+</button>
+                    </div>
+                    <button onClick={finishAdd}
+                      style={{padding:"10px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Əlavə et</button>
+                  </>
+                ) : null}
+              </div>
+            );
+          })()}
           {["toy_date","nishan_date","adgunu_date","korp_date"].includes(obStep)&&(
             <div style={{margin:"0 12px 8px",padding:"11px 12px",borderRadius:16,
               background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(16px)",
