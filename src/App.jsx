@@ -1056,8 +1056,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                       sx:e.touches[0].clientX,sy:e.touches[0].clientY,
                       offX:touchX-curX, offY:touchY-curY
                     };
-                    // Long press — yalnız 1 barmaq, zoom yoxdursa
-                    if(!editMode && e.touches.length===1 && zoomRef.current<=1.05){
+                    // Long press — yalnız 1 barmaq (istənilən miqyasda işləyir)
+                    if(!editMode && e.touches.length===1){
                       longPressTimer.current=setTimeout(function(){
                         setLongPressSelected(function(prev){
                           var s=new Set(prev);
@@ -1742,13 +1742,13 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)>=exTbl.seats?"#4C9A6E":"#211A16"}}>
+                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
                     <span style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>
-                      {((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)}/{exTbl.seats} nəfər
+                      {occ(exTbl||{guests:[]})}/{exTbl.seats} nəfər
                     </span>
                   </div>
                 </div>
@@ -1950,7 +1950,7 @@ function Bar({val,tot,color}){
 
 function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
-  const total = guests.reduce((s,g)=>s+(g.count||1),0);
+  const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
   const seats = tables.reduce((s,t)=>s+t.seats,0);
   const kishi = guests.filter(g=>g.gender==="kishi").reduce((s,g)=>s+(g.count||1),0);
   const qadin = guests.filter(g=>g.gender==="qadin").reduce((s,g)=>s+(g.count||1),0);
@@ -2620,6 +2620,7 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
   const [existingVenues, setExistingVenues] = useState([]); // [{name, halls:[names]}]
+  const [showExistingVenues, setShowExistingVenues] = useState(false);
   useEffect(function(){
     sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
       if(!rows) return;
@@ -2766,13 +2767,19 @@ function HallBuilderPanel({ onClose, onSaved }){
           <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Tutum" type="number"
             style={{width:74,padding:"9px 8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
         </div>
-        {existingVenues.length>0&&(
+        {existingVenues.length>0&&!venueName.trim()&&(
+          <button onClick={()=>setShowExistingVenues(s=>!s)}
+            style={{alignSelf:"flex-start",fontSize:9.5,color:"#5B84B0",background:"none",border:"none",cursor:"pointer",padding:"2px 0",textDecoration:"underline"}}>
+            {showExistingVenues?"▲ Gizlət":"▾ Mövcud restoranlardan seç ("+existingVenues.length+")"}
+          </button>
+        )}
+        {existingVenues.length>0&&showExistingVenues&&!venueName.trim()&&(
           <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
             {existingVenues.map(v=>(
-              <button key={v.name} onClick={()=>setVenueName(v.name)}
-                style={{padding:"4px 10px",borderRadius:12,border:"1px solid "+(venueName===v.name?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
-                  background:venueName===v.name?"rgba(193,56,42,.14)":"rgba(255,255,255,.3)",backdropFilter:"blur(6px)",
-                  color:venueName===v.name?"#C1382A":"#6B6259",fontSize:9.5,cursor:"pointer",whiteSpace:"nowrap"}}>
+              <button key={v.name} onClick={()=>{setVenueName(v.name);setShowExistingVenues(false);}}
+                style={{padding:"4px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",
+                  background:"rgba(255,255,255,.3)",backdropFilter:"blur(6px)",
+                  color:"#6B6259",fontSize:9.5,cursor:"pointer",whiteSpace:"nowrap"}}>
                 {v.name} ({v.halls.length})
               </button>
             ))}
@@ -2783,10 +2790,22 @@ function HallBuilderPanel({ onClose, onSaved }){
             Bu restoranda artıq: {existingVenues.find(v=>v.name.toLowerCase()===venueName.trim().toLowerCase()).halls.join(", ")} — yeni zal əlavə edirsiniz
           </div>
         )}
-        <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
-          📷 {photoUrl?"Şəkil yükləndi — dəyişmək üçün klik":"Zalın şəklini/planını yüklə (istəyə bağlı)"}
-          <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
-        </label>
+        {photoUrl ? (
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)"}}>
+            <img src={photoUrl} style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
+            <div style={{flex:1,fontSize:10,color:"rgba(33,26,22,.6)"}}>Zal şəkli (yalnız məlumat üçün — fon deyil)</div>
+            <label style={{padding:"6px 10px",borderRadius:10,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+              Dəyiş
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
+            </label>
+            <button onClick={()=>setPhotoUrl(null)} style={{padding:"6px 10px",borderRadius:10,background:"rgba(193,56,42,.12)",color:"#C1382A",fontSize:10,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+          </div>
+        ) : (
+          <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
+            📷 Zalın şəklini yüklə (yalnız məlumat üçün, istəyə bağlı)
+            <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
+          </label>
+        )}
         <input value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} placeholder="🎥 Zalın reklam videosu linki (YouTube/Instagram, istəyə bağlı)"
           style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:11,outline:"none",color:"#211A16"}}/>
       </div>
@@ -2802,7 +2821,7 @@ function HallBuilderPanel({ onClose, onSaved }){
 
       <div style={{padding:"7px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
         <div style={{fontSize:10,color:"#6B6259",flex:1}}>
-          {mode==="wall"&&"Boş yerə klikləyib nöqtələr qoyun. Sonra 2 nöqtəyə ardıcıl toxunub xətlə birləşdirin (yaşıl = seçili)"}
+          {mode==="wall"&&"Boş yerə klikləyib nöqtə qoyun. 2 nöqtəyə ardıcıl toxunub birləşdirin (yaşıl=seçili). Səhv nöqtəni seçib üstündəki 🗑 ilə silin"}
           {mode==="column"&&"Sütunun yerinə klikləyin — divardan ayrı, öz nişanı ilə görünür"}
           {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
           {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
@@ -2821,8 +2840,6 @@ function HallBuilderPanel({ onClose, onSaved }){
         onTouchMove={dragMove} onTouchEnd={dragEnd}
         onMouseMove={dragMove} onMouseUp={dragEnd}
         style={{flex:1,margin:"6px 14px",borderRadius:20,position:"relative",overflow:"hidden",
-        backgroundImage:photoUrl?`url(${photoUrl})`:"none",
-        backgroundSize:"contain",backgroundPosition:"center",backgroundRepeat:"no-repeat",
         backgroundColor:"rgba(255,255,255,.4)",
         border:"1px solid rgba(255,255,255,.5)",cursor:"crosshair",touchAction:"none"}}>
 
@@ -2836,15 +2853,29 @@ function HallBuilderPanel({ onClose, onSaved }){
           </svg>
         )}
         {wallPoints.map((p)=>(
-          <div key={p.id}
-            onTouchStart={e=>dragStart("wall",p.id,e)} onMouseDown={e=>dragStart("wall",p.id,e)}
-            onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) pointTap(p.id); }}
-            style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",
-            width:selectedPoint===p.id?20:16,height:selectedPoint===p.id?20:16,borderRadius:"50%",
-            background:selectedPoint===p.id?"#4C9A6E":"#C1382A",
-            border:"2px solid #fff",cursor:"grab",zIndex:5,
-            boxShadow:selectedPoint===p.id?"0 0 0 4px rgba(76,154,110,.3), 0 2px 5px rgba(0,0,0,.3)":"0 2px 5px rgba(0,0,0,.3)",
-            transition:"width .15s,height .15s"}}/>
+          <div key={p.id} style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",zIndex:5}}>
+            <div
+              onTouchStart={e=>dragStart("wall",p.id,e)} onMouseDown={e=>dragStart("wall",p.id,e)}
+              onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) pointTap(p.id); }}
+              style={{
+              width:selectedPoint===p.id?20:16,height:selectedPoint===p.id?20:16,borderRadius:"50%",
+              background:selectedPoint===p.id?"#4C9A6E":"#C1382A",
+              border:"2px solid #fff",cursor:"grab",
+              boxShadow:selectedPoint===p.id?"0 0 0 4px rgba(76,154,110,.3), 0 2px 5px rgba(0,0,0,.3)":"0 2px 5px rgba(0,0,0,.3)",
+              transition:"width .15s,height .15s"}}/>
+            {selectedPoint===p.id&&(
+              <button onClick={e=>{
+                  e.stopPropagation();
+                  setWallEdges(edges=>edges.filter(ed=>ed.from!==p.id&&ed.to!==p.id));
+                  setWallPoints(pts=>pts.filter(x=>x.id!==p.id));
+                  setSelectedPoint(null);
+                }}
+                style={{position:"absolute",top:-26,left:"50%",transform:"translateX(-50%)",
+                width:22,height:22,borderRadius:"50%",background:"#C1382A",color:"#fff",border:"2px solid #fff",
+                fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",
+                boxShadow:"0 2px 6px rgba(0,0,0,.35)",zIndex:9}}>🗑</button>
+            )}
+          </div>
         ))}
 
         {zones.map(z=>(
