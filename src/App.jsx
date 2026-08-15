@@ -2592,6 +2592,8 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [zones, setZones] = useState([]);
   const [tables, setTables] = useState([]);
   const [columns, setColumns] = useState([]);
+  const [tableEditId, setTableEditId] = useState(null);
+  const [videoUrl, setVideoUrl] = useState("");
   const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
@@ -2642,6 +2644,7 @@ function HallBuilderPanel({ onClose, onSaved }){
     else if(mode==="table"){
       const id = tables.length? Math.max(...tables.map(t=>t.id))+1 : 1;
       setTables(t=>[...t,{id,x:raw.x,y:raw.y,seats:8,label:""}]);
+      setTableEditId(id);
     }
     else if(mode==="column"){
       const id = columns.length? Math.max(...columns.map(c=>c.id))+1 : 1;
@@ -2713,7 +2716,7 @@ function HallBuilderPanel({ onClose, onSaved }){
       await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
-        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, has_layout:true
+        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
       if(onSaved) onSaved();
@@ -2762,6 +2765,8 @@ function HallBuilderPanel({ onClose, onSaved }){
           📷 {photoUrl?"Şəkil yükləndi — dəyişmək üçün klik":"Zalın şəklini/planını yüklə (istəyə bağlı)"}
           <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
         </label>
+        <input value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} placeholder="🎥 Zalın reklam videosu linki (YouTube/Instagram, istəyə bağlı)"
+          style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:11,outline:"none",color:"#211A16"}}/>
       </div>
 
       <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
@@ -2835,11 +2840,13 @@ function HallBuilderPanel({ onClose, onSaved }){
         {tables.map(t=>(
           <div key={t.id}
             onTouchStart={e=>dragStart("table",t.id,e)} onMouseDown={e=>dragStart("table",t.id,e)}
+            onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) setTableEditId(t.id); }}
             style={{position:"absolute",left:t.x+"%",top:t.y+"%",transform:"translate(-50%,-50%)",
-            width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,.9)",border:"2px solid #D4AF5A",
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#8A6B1E",
+            width:38,height:38,borderRadius:"50%",background:"rgba(255,255,255,.9)",border:"2px solid #D4AF5A",
+            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#8A6B1E",
             cursor:"grab",zIndex:6,boxShadow:"0 2px 6px rgba(0,0,0,.2)"}}>
-            {t.id}
+            <span style={{fontSize:10,fontWeight:800,lineHeight:1}}>{t.id}</span>
+            <span style={{fontSize:7,fontWeight:600,opacity:.75,lineHeight:1,marginTop:1}}>{t.seats}n</span>
             <span onClick={e=>{e.stopPropagation();setTables(tt=>tt.filter(x=>x.id!==t.id));}}
               style={{position:"absolute",top:-7,right:-7,width:17,height:17,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
           </div>
@@ -2870,6 +2877,39 @@ function HallBuilderPanel({ onClose, onSaved }){
           </div>
         </div>
       )}
+
+      {tableEditId!==null && (()=>{
+        const t = tables.find(x=>x.id===tableEditId);
+        if(!t) return null;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setTableEditId(null)}>
+            <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(155deg,rgba(255,255,255,.9),rgba(255,255,255,.7))",backdropFilter:"blur(20px)",borderRadius:20,padding:18,width:"100%",maxWidth:280,border:"1px solid rgba(255,255,255,.6)"}}>
+              <div style={{fontSize:13,fontWeight:700,marginBottom:4,color:"#211A16"}}>Masa {t.id}</div>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:12}}>Masada neçə nəfər oturacaq?</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:12}}>
+                {[6,8,10,12].map(n=>(
+                  <button key={n} onClick={()=>setTables(tt=>tt.map(x=>x.id===t.id?{...x,seats:n}:x))}
+                    style={{padding:"10px 0",borderRadius:12,border:"1px solid "+(t.seats===n?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+                      background:t.seats===n?"rgba(193,56,42,.14)":"rgba(255,255,255,.5)",
+                      color:t.seats===n?"#C1382A":"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>{n}</button>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:12}}>
+                <span style={{fontSize:11,color:"rgba(33,26,22,.5)"}}>Digər:</span>
+                <input type="number" value={t.seats} onChange={e=>{
+                  const v=parseInt(e.target.value)||1;
+                  setTables(tt=>tt.map(x=>x.id===t.id?{...x,seats:v}:x));
+                }} style={{width:60,padding:"6px 9px",borderRadius:10,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",fontSize:12,outline:"none",color:"#211A16"}}/>
+              </div>
+              <input value={t.label} onChange={e=>setTables(tt=>tt.map(x=>x.id===t.id?{...x,label:e.target.value}:x))}
+                placeholder="Masa adı (istəyə bağlı, məs: VIP)"
+                style={{width:"100%",padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",fontSize:12,outline:"none",color:"#211A16",boxSizing:"border-box",marginBottom:12}}/>
+              <button onClick={()=>setTableEditId(null)}
+                style={{width:"100%",padding:"11px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Tamam</button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:6}}>
         <button onClick={()=>{
@@ -3291,11 +3331,12 @@ export default function App(){
   function pickCustomHall(rest, hallObj){
     const h = {
       _venueName: rest.name, name: hallObj.name,
-      totalGuests: hallObj.capacity, _step:"done",
+      totalGuests: null, _step:"customTotal",
       _hallElements: hallObj.elements||[],
       _wallPath: hallObj.wall_path||[],
       _wallEdges: hallObj.wall_edges||[],
       _columns: hallObj.columns||[],
+      _videoUrl: hallObj.video_url||null,
       planImageUrl: hallObj.photo_url||null
     };
     const customTables = (hallObj.layout||[]).map(t=>({
@@ -3306,9 +3347,9 @@ export default function App(){
     setTables(customTables);
     setLayoutMode("ready");
     setRestOpen(false);
-    const evLabel = evType==="nishan"?"Nişana":evType==="adgunu"?"Tədbirə":evType==="korporativ"?"Tədbirə":"Toya";
-    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🗺️ Real zal sxemi yükləndi (${customTables.length} masa)!\n\nZalın sxeminə baxa bilərsiniz.`;
-    setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+    const totalCap = customTables.reduce((s,t)=>s+t.seats,0);
+    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🎉 Əla, zal sxemi hazırdır! ${customTables.length} masa qoyulub (ümumi tutum: ${totalCap} nəfər).\n\nİndi struktura əsasən dəqiqləşdirək — ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
+    setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
     setHist(hh=>[...hh,{role:"assistant",content:msg}]);
   }
 
@@ -3534,6 +3575,22 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="total"){
       if(/^\d+$/.test(txt)){ const n=parseInt(txt); if(n>=1){ confirmTotal(n); setBusy(false); return; } }
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa yalnız rəqəm yazın (məs: 120)",qrs:[]}]);
+      setBusy(false); return;
+    }
+    // Custom (Zal Builder) hal — masalar artıq hazırdır, yalnız ümumi qonaq sayı lazımdır
+    if(hall && hall._step==="customTotal"){
+      if(/^\d+$/.test(txt)){
+        const n=parseInt(txt);
+        if(n>=1){
+          setHall(h=>({...h, totalGuests:n, _step:"done"}));
+          pushPanel("schema"); setSchemaOpen(true);
+          const msg = `${n} nəfər qeyd edildi! ✅\n\nİndi zal sxeminə baxıb masaları doldura bilərsiniz — hər masanın öz tutumu artıq təyin olunub.`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+          setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+          setBusy(false); return;
+        }
+      }
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa yalnız rəqəm yazın (məs: 150)",qrs:[]}]);
       setBusy(false); return;
     }
     // Hall seats step — stolda neçə nəfər
@@ -4014,6 +4071,14 @@ ${savedEvsList||"Yoxdur"}`;
                 )}
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                {hall&&hall._videoUrl&&(
+                  <button onClick={()=>window.open(hall._videoUrl,"_blank")}
+                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
+                      background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
+                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                    🎥 Zalın videosu
+                  </button>
+                )}
                 {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
                   <button onClick={()=>setRealPhotoOpen(true)}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
