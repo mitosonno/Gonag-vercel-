@@ -335,8 +335,8 @@ const DEMO_HALL_2 = {
 };
 
 // ─────────────────────────────────────────────
-function sideColor(s){ return s==="Oğlan evi"?"#7aade8":s==="Qız evi"?"#e87aad":"#c9a84c"; }
-function sideBg(s){ return s==="Oğlan evi"?"rgba(122,173,232,.18)":s==="Qız evi"?"rgba(232,122,173,.18)":"rgba(201,168,76,.12)"; }
+function sideColor(s){ return s==="Oğlan evi"?"#B23A2E":s==="Qız evi"?"#C9A84C":"#6B6259"; }
+function sideBg(s){ return s==="Oğlan evi"?"rgba(178,58,46,.1)":s==="Qız evi"?"rgba(201,168,76,.14)":"rgba(107,98,89,.08)"; }
 
 function parseLine(line){
   const parts = line.split(/[,|;]+/).map(s=>s.trim()).filter(Boolean);
@@ -408,7 +408,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
             else if(g && onGuestClick) onGuestClick(g);
           }}>
             <circle cx={sx} cy={sy} r={slotR}
-              fill={isEmpty ? "rgba(8,6,4,.6)" : sc+"33"}
+              fill={isEmpty ? "rgba(255,255,255,.9)" : sc+"33"}
               stroke={sc}
               strokeWidth={isEmpty?"1":"1.8"}
               opacity={isEmpty?0.5:1}
@@ -420,7 +420,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
               const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
               const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
               const name=g.name.split(" ")[0].substring(0,7);
-              return <text key={"lbl"} x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#f2e8d0" fontWeight="700"
+              return <text key={"lbl"} x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#211A16" fontWeight="700"
                 style={{textShadow:"0 1px 3px #000"}}>{name}</text>;
             })()}
           </g>
@@ -487,7 +487,7 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
     }}>
       <div onClick={e=>e.stopPropagation()} style={{
         width:"100%",maxWidth:320,
-        background:"linear-gradient(160deg,#1e1608,#120e04)",
+        background:"linear-gradient(160deg,#FFFFFF,#FFFFFF)",
         border:"1.5px solid rgba(201,168,76,.45)",
         borderRadius:18,
         padding:"20px 18px 22px",
@@ -504,8 +504,8 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
             )}
           </div>
           <button onClick={onClose} style={{
-            width:28,height:28,borderRadius:"50%",border:"1px solid rgba(255,255,255,.1)",
-            background:"rgba(255,255,255,.06)",color:"#9a8060",fontSize:14,
+            width:28,height:28,borderRadius:"50%",border:"1px solid rgba(33,26,22,.1)",
+            background:"rgba(33,26,22,.06)",color:"#6B6259",fontSize:14,
             cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"
           }}>✕</button>
         </div>
@@ -524,9 +524,9 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
             style={{
               display:"block",width:"100%",boxSizing:"border-box",
               padding:"11px 14px",
-              background:"rgba(255,255,255,.07)",
+              background:"rgba(33,26,22,.07)",
               border:"1.5px solid rgba(201,168,76,.3)",
-              borderRadius:11,color:"#f2e8d0",fontSize:14,
+              borderRadius:11,color:"#211A16",fontSize:14,
               outline:"none",fontFamily:"'DM Sans',sans-serif",
               transition:"border-color .2s"
             }}
@@ -560,8 +560,8 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
                     padding:"10px 8px",borderRadius:10,fontSize:12,fontWeight:active?700:500,
                     cursor:"pointer",
                     border:"1.5px solid "+(active?sc:sc+"33"),
-                    background:active?sc+"22":"rgba(255,255,255,.03)",
-                    color:active?sc:"rgba(255,255,255,.4)",
+                    background:active?sc+"22":"rgba(33,26,22,.03)",
+                    color:active?sc:"rgba(33,26,22,.4)",
                     display:"flex",alignItems:"center",justifyContent:"center",gap:5,
                     transition:"all .15s"
                   }}>
@@ -604,7 +604,7 @@ function HallPlanSVG({ hallName, venueName, width, height }){
     <svg width={W} height={H} style={{position:"absolute",top:0,left:0,pointerEvents:"none",zIndex:1}}>
       {/* Zal divarları */}
       <rect x={8} y={8} width={W-16} height={H-16} rx={14}
-        fill="rgba(30,20,8,0.75)" stroke="rgba(201,168,76,.5)" strokeWidth="2"/>
+        fill="rgba(255,255,255,.85)" stroke="rgba(201,168,76,.5)" strokeWidth="2"/>
 
       {/* SƏHNƏ - yuxarıda */}
       <rect x={W*0.15} y={16} width={W*0.7} height={H*0.09} rx={6}
@@ -887,7 +887,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
         width:"100%", height:canvasH+"px",
         position:"relative", overflow:"hidden",
         borderRadius:14, border:"2px solid rgba(201,168,76,.25)",
-        background:"linear-gradient(160deg,#0a0800,#120f02)",
+        background:"linear-gradient(160deg,#F7F4EE,#FFFFFF)",
         boxShadow:"inset 0 0 40px rgba(0,0,0,.4), inset 0 0 0 10px rgba(201,168,76,.04)",
         touchAction:"pan-y", userSelect:"none"
       }}>
@@ -1087,60 +1087,57 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
                     fontSize:hasHallElements?Math.max(11,S*0.38):Math.max(8,S*0.18),
                     fontWeight:700,
-                    color:hasHallElements?"rgba(255,225,130,1)":"rgba(201,168,76,.9)",
-                    textShadow:hasHallElements?"0 1px 4px rgba(0,0,0,.9)":"none",
+                    color:"#211A16",
+                    textShadow:"none",
                     whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2}}>
                     {isExtra?"":t.id}
                   </div>
 
                   {(()=>{
                     const r = S/2;
-                    const chairR = r + S*0.18; // stulların mərkəzdən məsafəsi
-                    const chairW = Math.max(4, S*0.13);
-                    const chairH = Math.max(3, S*0.09);
+                    const seatR = r + S*0.16;
                     const seats = t.seats||8;
-                    // İndikator rəngi: 0%=qızıl, 50%=narıncı, 100%=yaşıl
-                    const indColor = fu?"#50c878":pct>0.5?"#f5a623":pct>0?"#f5d060":"#e8c060";
-                    const strokeColor = longPressSelected.has(t.id)?"#ff4444":fpOpen?"#fff":fu?"#50c878":side==="Oğlan evi"?"#7aade8":side==="Qız evi"?"#e87aad":indColor;
-                    const fillBg = longPressSelected.has(t.id)?"#3a0a0a":side==="Oğlan evi"?"#1e3a55":side==="Qız evi"?"#4a1e35":fu?"#0f3a20":"#3a2c0a";
-                    const totalSvgSize = S + S*0.5;
+                    const stateColor = fu?"#4C7A5E":side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#8A8296";
+                    const ringColor = longPressSelected.has(t.id)?"#B23A2E":fpOpen?"#211A16":stateColor;
+                    const totalSvgSize = S + S*0.62;
                     const cx = totalSvgSize/2;
                     const cy = totalSvgSize/2;
                     return (
                       <svg width={totalSvgSize} height={totalSvgSize} style={{display:"block",pointerEvents:"none",overflow:"visible"}}>
-                        {/* Stullar */}
+                        {/* Nar dənələri — hər qonaq bir dənə */}
                         {Array.from({length:seats}).map((_,i)=>{
                           const angle = (2*Math.PI/seats)*i - Math.PI/2;
-                          const sx = cx + chairR*Math.cos(angle);
-                          const sy = cy + chairR*Math.sin(angle);
+                          const sx = cx + seatR*Math.cos(angle);
+                          const sy = cy + seatR*Math.sin(angle);
                           const filled = i < oc;
-                          const chairColor = filled ? "#4ade80" : (side==="Oğlan evi"?"#93c5fd":side==="Qız evi"?"#f9a8d4":"#fcd34d");
+                          const seedColor = filled ? stateColor : "none";
+                          const seedW = Math.max(3, S*0.13), seedH = Math.max(4.5, S*0.19);
                           return (
-                            <rect key={i}
-                              x={sx - chairW/2} y={sy - chairH/2}
-                              width={chairW} height={chairH}
-                              rx={Math.max(1,chairH*0.4)}
-                              fill={chairColor}
-                              opacity={filled?0.95:0.3}
+                            <ellipse key={i}
+                              cx={sx} cy={sy} rx={seedW/2} ry={seedH/2}
+                              fill={seedColor}
+                              stroke={filled?"none":"#D8D0C2"}
+                              strokeWidth={filled?0:1.1}
+                              opacity={filled?0.92:1}
                               transform={`rotate(${(angle*180/Math.PI)+90} ${sx} ${sy})`}
                             />
                           );
                         })}
-                        {/* Masa dairəsi */}
-                        <circle cx={cx} cy={cy} r={r-2} fill={fillBg} stroke={strokeColor} strokeWidth="2.5"
-                          style={{filter:"drop-shadow(0 0 3px "+strokeColor+"88)"}}/>
-                        {/* Qonaq sayı — ağ, görünür */}
+                        {/* Masa dairəsi — ağ, incə haşiyə */}
+                        <circle cx={cx} cy={cy} r={r-2} fill="#FFFFFF" stroke={ringColor} strokeWidth="2"
+                          style={{filter:"drop-shadow(0 1px 3px rgba(33,26,22,.15))"}}/>
+                        {/* Qonaq sayı — tünd mürəkkəb rəngi */}
                         <text x={cx} y={side&&side!=="Ümumi"?cy-S*0.1:cy}
                           textAnchor="middle" dominantBaseline="middle"
-                          fontSize={S*0.28} fontWeight="700"
-                          fill="#ffffff">
+                          fontSize={S*0.26} fontWeight="700"
+                          fill="#211A16">
                           {isExtra?"E":oc}
                         </text>
                         {/* Tərəf yazısı */}
                         {side&&side!=="Ümumi"&&(
                           <text x={cx} y={cy+S*0.2} textAnchor="middle" dominantBaseline="middle"
-                            fontSize={Math.max(8,S*0.14)} fontWeight="600"
-                            fill={side==="Oğlan evi"?"#7aade8":"#e87aad"}>
+                            fontSize={Math.max(8,S*0.13)} fontWeight="600"
+                            fill={stateColor}>
                             {side==="Oğlan evi"?"Oğlan":"Qız"}
                           </text>
                         )}
@@ -1152,7 +1149,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   {t.label&&t.label!=="__extra__"&&(
                     <div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",
                       fontSize:Math.max(7,S*0.16),fontWeight:600,
-                      color:side==="Oğlan evi"?"#7aade8":side==="Qız evi"?"#e87aad":"rgba(201,168,76,.8)",
+                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#6B6259",
                       whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2,marginTop:2}}>
                       {t.label}
                     </div>
@@ -1164,7 +1161,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     style={{position:"absolute",top:-6,right:-6,
                       width:22,height:22,
                       borderRadius:"50%",
-                      background:"rgba(201,168,76,.9)",color:"#080604",
+                      background:"rgba(201,168,76,.9)",color:"#F7F4EE",
                       fontSize:11,display:"flex",
                       alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
                       boxShadow:"0 1px 4px rgba(0,0,0,.6)",
@@ -1181,7 +1178,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
           {/* Legend */}
           <div style={{position:"absolute",bottom:4,left:6,display:"flex",gap:5,flexWrap:"wrap",pointerEvents:"none"}}>
             {[["#7aade8","Oğlan"],["#e87aad","Qız"],["#50c878","Dolu"],["#b57aff","Extra"],["#ff4444","Yönəlt"]].map(([c,l])=>(
-              <span key={l} style={{display:"flex",alignItems:"center",gap:2,fontSize:7,color:"rgba(255,255,255,.4)"}}>
+              <span key={l} style={{display:"flex",alignItems:"center",gap:2,fontSize:7,color:"rgba(33,26,22,.4)"}}>
                 <span style={{width:5,height:5,borderRadius:"50%",background:c,display:"inline-block"}}/>
                 {l}
               </span>
@@ -1193,7 +1190,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       {/* LONG PRESS PANEL — fixed overlay, overflow:hidden-dən təsirlənmir */}
       {showLongPressPanel&&longPressSelected.size>0&&(
         <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:300,
-          background:"rgba(8,6,4,.97)",borderTop:"1px solid rgba(255,60,60,.3)",
+          background:"rgba(255,255,255,.98)",borderTop:"1px solid rgba(255,60,60,.3)",
           borderRadius:"16px 16px 0 0",padding:"16px 16px 32px",
           boxShadow:"0 -4px 24px rgba(0,0,0,.6)"}}>
           {longPressResult?(
@@ -1201,7 +1198,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               <div style={{fontSize:12,color:"#ff6666",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
               <div style={{background:"rgba(0,0,0,.5)",borderRadius:10,padding:"10px",textAlign:"center",marginBottom:10}}>
                 <div style={{fontSize:24,fontWeight:900,color:"#ff9999",letterSpacing:4,fontFamily:"monospace"}}>{longPressResult.code}</div>
-                <div style={{fontSize:9,color:"rgba(255,255,255,.4)",marginTop:3}}>{longPressResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
+                <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:3}}>{longPressResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
               </div>
               <div style={{fontSize:10,color:"rgba(255,200,200,.6)",marginBottom:10,lineHeight:1.5}}>
                 {"Həmin adam GONAG.AZ-da \"Yönəlt kodunu daxil et\" bölməsindən "+longPressResult.code+" yazır → yalnız bu masaları görür → doldurur → data sxeminizə əlavə olunur."}
@@ -1220,7 +1217,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   📋
                 </button>
                 <button onClick={function(){setShowLongPressPanel(false);setLongPressSelected(new Set());setLongPressResult(null);}}
-                  style={{padding:"9px 10px",borderRadius:9,border:"none",background:"transparent",color:"rgba(255,255,255,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
+                  style={{padding:"9px 10px",borderRadius:9,border:"none",background:"transparent",color:"rgba(33,26,22,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
               </div>
             </div>
           ):(
@@ -1230,7 +1227,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   {"🔴 "+longPressSelected.size+" masa seçildi — diger şəxsə yönəlt"}
                 </div>
                 <button onClick={function(){setLongPressSelected(new Set());setShowLongPressPanel(false);}}
-                  style={{background:"none",border:"none",color:"rgba(255,255,255,.3)",fontSize:13,cursor:"pointer"}}>✕</button>
+                  style={{background:"none",border:"none",color:"rgba(33,26,22,.3)",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:10}}>
                 {Array.from(longPressSelected).map(function(id){
@@ -1311,15 +1308,15 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   function saveEdit(){ if(!eName.trim()) return; onEdit(g.id,exTbl.id,{name:eName.trim(),phone:ePhone.trim(),count:parseInt(eCount)||1}); onClose(); }
 
   return (
-    <div style={{position:"relative",margin:"10px 0",background:"linear-gradient(145deg,#201a10,#141008)",border:"1.5px solid rgba(245,208,96,.45)",borderRadius:14,padding:"13px 15px",zIndex:30,minWidth:230,boxShadow:"0 10px 40px rgba(0,0,0,.7)"}}>
+    <div style={{position:"relative",margin:"10px 0",background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(245,208,96,.45)",borderRadius:14,padding:"13px 15px",zIndex:30,minWidth:230,boxShadow:"0 10px 40px rgba(0,0,0,.7)"}}>
       <button onClick={onClose}
-        style={{position:"absolute",top:7,right:8,width:22,height:22,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.07)",color:"#9a8060",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+        style={{position:"absolute",top:7,right:8,width:22,height:22,borderRadius:"50%",border:"none",background:"rgba(33,26,22,.07)",color:"#6B6259",fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
 
       {/* Guest header */}
       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
         <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,background:sc+"22",border:"1.5px solid "+sc+"66",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:sc}}>{g.name[0]}</div>
         <div>
-          <div style={{fontSize:14,fontWeight:700,color:"#f2e8d0"}}>{g.name}</div>
+          <div style={{fontSize:14,fontWeight:700,color:"#211A16"}}>{g.name}</div>
           <div style={{fontSize:10,marginTop:2,display:"flex",alignItems:"center",gap:5}}>
             <span style={{padding:"1px 6px",borderRadius:5,fontSize:9,fontWeight:700,background:sbg,color:sc}}>{g.side||"Umumi"}</span>
             {g.phone&&<span style={{color:"rgba(201,168,76,.45)"}}>{g.phone}</span>}
@@ -1343,14 +1340,14 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
         <div>
           <div style={{fontSize:10,color:"rgba(201,168,76,.5)",marginBottom:7,fontWeight:700,letterSpacing:.8}}>MELUMATLARı DEYİŞ</div>
           <input value={eName} onChange={e=>setEName(e.target.value)} placeholder="Adı Soyadı" autoFocus
-            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ep-inp")&&document.getElementById("ep-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.3)",borderRadius:9,color:"#f2e8d0",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
+            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ep-inp")&&document.getElementById("ep-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.3)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
           <input id="ep-inp" value={ePhone} onChange={e=>setEPhone(e.target.value)} placeholder="Mobil nömrə"
-            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ec-inp")&&document.getElementById("ec-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#f2e8d0",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
+            onKeyDown={e=>e.key==="Enter"&&document.getElementById("ec-inp")&&document.getElementById("ec-inp").focus()} style={{width:"100%",marginBottom:6,padding:"8px 11px",boxSizing:"border-box",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
           <div style={{display:"flex",gap:6,marginBottom:2}}>
-            <input id="ec-inp" type="number" min="1" max="20" value={eCount} onChange={e=>setECount(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit()} style={{width:52,padding:"8px 6px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#f2e8d0",fontSize:14,fontWeight:700,outline:"none",textAlign:"center"}}/>
+            <input id="ec-inp" type="number" min="1" max="20" value={eCount} onChange={e=>setECount(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit()} style={{width:52,padding:"8px 6px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:9,color:"#211A16",fontSize:14,fontWeight:700,outline:"none",textAlign:"center"}}/>
             <button onClick={saveEdit}
               style={{flex:1,padding:"8px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Saxla</button>
-            <button onClick={()=>setMode("menu")} style={{padding:"8px 11px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#9a8060",fontSize:12,cursor:"pointer"}}>Geri</button>
+            <button onClick={()=>setMode("menu")} style={{padding:"8px 11px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Geri</button>
           </div>
         </div>
       )}
@@ -1359,7 +1356,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
       {mode==="conflict" && conflictTbl && (
         <div>
           <div style={{fontSize:12,color:"#e8b87a",marginBottom:10,lineHeight:1.5}}>
-            ⚠️ Masa <strong style={{color:"#f2e8d0"}}>{conflictTbl.label||conflictTbl.id}</strong> doludur!<br/>
+            ⚠️ Masa <strong style={{color:"#211A16"}}>{conflictTbl.label||conflictTbl.id}</strong> doludur!<br/>
             <span style={{fontSize:11,color:"rgba(201,168,76,.6)"}}>
               {((conflictTbl&&conflictTbl.guests)||[]).reduce((s,x)=>s+(x.count||1),0)}/{conflictTbl.seats} yer tutulub
             </span>
@@ -1381,7 +1378,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
             }} style={{padding:"9px",borderRadius:9,border:"1px solid rgba(80,200,120,.35)",background:"rgba(80,200,120,.08)",color:"#78e896",fontSize:12,cursor:"pointer",fontWeight:600,textAlign:"left"}}>
               ➕ Masa yerini artır — köçür
             </button>
-            <button onClick={()=>setMode("move")} style={{padding:"7px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#9a8060",fontSize:12,cursor:"pointer"}}>← Geri</button>
+            <button onClick={()=>setMode("move")} style={{padding:"7px",borderRadius:9,border:"1px solid rgba(201,168,76,.15)",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>← Geri</button>
           </div>
         </div>
       )}
@@ -1402,7 +1399,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
                 const guestCount=g.count||1;
                 if(tgtOcc+guestCount>tgt.seats){ setConflictTbl(tgt); setMode("conflict"); }
                 else { onMove(g.id,exTbl.id,n); onClose(); }
-              }}} style={{flex:1,padding:"8px 10px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.32)",borderRadius:9,color:"#f2e8d0",fontSize:15,fontWeight:700,outline:"none",textAlign:"center"}}/>
+              }}} style={{flex:1,padding:"8px 10px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.32)",borderRadius:9,color:"#211A16",fontSize:15,fontWeight:700,outline:"none",textAlign:"center"}}/>
             <button
               style={{padding:"8px 14px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:14,cursor:"pointer",fontWeight:700}} onClick={()=>{
                 const n=+popupMoveTgt;
@@ -1417,7 +1414,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
                   onMove(g.id,exTbl.id,n); onClose();
                 }
               }}>✓</button>
-            <button onClick={()=>setMode("menu")} style={{padding:"8px 10px",borderRadius:9,border:"none",background:"rgba(255,255,255,.06)",color:"#9a8060",fontSize:13,cursor:"pointer"}}>✕</button>
+            <button onClick={()=>setMode("menu")} style={{padding:"8px 10px",borderRadius:9,border:"none",background:"rgba(33,26,22,.06)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
           </div>
         </div>
       )}
@@ -1502,10 +1499,10 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
             style={{padding:"6px 10px",borderRadius:9,
               border:"1px solid "+(shareMode?"rgba(122,173,232,.5)":"rgba(201,168,76,.25)"),
               background:shareMode?"rgba(122,173,232,.12)":"transparent",
-              color:shareMode?"#7aade8":"#9a8060",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+              color:shareMode?"#7aade8":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             📤 Yönəlt
           </button>
-          <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"6px 12px",borderRadius:9,border:"1px solid "+(editMode?"rgba(80,200,120,.45)":"rgba(201,168,76,.3)"),background:editMode?"rgba(80,200,120,.12)":"transparent",color:editMode?"#78e896":"#9a8060",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+          <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"6px 12px",borderRadius:9,border:"1px solid "+(editMode?"rgba(80,200,120,.45)":"rgba(201,168,76,.3)"),background:editMode?"rgba(80,200,120,.12)":"transparent",color:editMode?"#78e896":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             {editMode?"✓ Bitir":"✏️ Düzəlt"}
           </button>
         </div>
@@ -1520,7 +1517,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{fontSize:12,color:"#7aade8",fontWeight:700,marginBottom:8}}>✅ Yönəltmə kodu hazırdır!</div>
               <div style={{background:"rgba(0,0,0,.4)",borderRadius:10,padding:"12px",textAlign:"center",marginBottom:10}}>
                 <div style={{fontSize:26,fontWeight:900,color:"#f5d060",letterSpacing:4,fontFamily:"monospace"}}>{shareResult.code}</div>
-                <div style={{fontSize:9,color:"rgba(255,255,255,.4)",marginTop:4}}>{shareResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
+                <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:4}}>{shareResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
@@ -1536,7 +1533,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   📋
                 </button>
                 <button onClick={function(){setShareResult(null);setShareSelected(new Set());setShareMode(false);}}
-                  style={{padding:"8px 10px",borderRadius:8,border:"none",background:"transparent",color:"rgba(255,255,255,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
+                  style={{padding:"8px 10px",borderRadius:8,border:"none",background:"transparent",color:"rgba(33,26,22,.3)",fontSize:11,cursor:"pointer"}}>✕</button>
               </div>
             </div>
           ):(
@@ -1591,7 +1588,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               )}
               <button onClick={function(){setShareMode(false);setShareSelected(new Set());}}
                 style={{width:"100%",marginTop:5,padding:"6px",borderRadius:8,border:"none",
-                  background:"transparent",color:"rgba(255,255,255,.25)",fontSize:10,cursor:"pointer"}}>
+                  background:"transparent",color:"rgba(33,26,22,.25)",fontSize:10,cursor:"pointer"}}>
                 Ləğv et
               </button>
             </div>
@@ -1600,7 +1597,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
       )}
 
       {/* Progress */}
-      <div style={{height:3,background:"rgba(255,255,255,.06)",borderRadius:2,marginBottom:12,overflow:"hidden"}}>
+      <div style={{height:3,background:"rgba(33,26,22,.06)",borderRadius:2,marginBottom:12,overflow:"hidden"}}>
         <div style={{height:"100%",width:(pct||0)+"%",background:"linear-gradient(90deg,#c9a84c,#f5d060)",borderRadius:2}}/>
       </div>
 
@@ -1635,9 +1632,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{display:"flex",gap:5,flex:1,alignItems:"center"}}>
                 <input value={lblVal} onChange={e=>setLblVal(e.target.value)} autoFocus
                   onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal);setEditLbl(false);}}} placeholder="Masanın adı..."
-                  style={{flex:1,padding:"6px 10px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(245,208,96,.4)",borderRadius:9,color:"#f2e8d0",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
+                  style={{flex:1,padding:"6px 10px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(245,208,96,.4)",borderRadius:9,color:"#211A16",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none"}}/>
                 <button onClick={()=>{onLabel(expandedId,lblVal);setEditLbl(false);}} style={{padding:"6px 12px",borderRadius:9,border:"none",background:"rgba(80,200,120,.22)",color:"#78e896",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
-                <button onClick={()=>setEditLbl(false)} style={{padding:"6px 10px",borderRadius:9,border:"none",background:"rgba(255,255,255,.06)",color:"#9a8060",fontSize:13,cursor:"pointer"}}>✕</button>
+                <button onClick={()=>setEditLbl(false)} style={{padding:"6px 10px",borderRadius:9,border:"none",background:"rgba(33,26,22,.06)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
             )}
             {!editLbl&&(
@@ -1672,23 +1669,23 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           </div>
 
           {slotInput&&(
-            <div style={{marginTop:8,background:"rgba(20,14,4,.97)",border:"1px solid rgba(201,168,76,.3)",borderRadius:12,padding:"10px 12px"}}>
+            <div style={{marginTop:8,background:"rgba(255,255,255,.98)",border:"1px solid rgba(201,168,76,.3)",borderRadius:12,padding:"10px 12px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <span style={{fontSize:11,fontWeight:700,color:"#c9a84c"}}>{"Masa "+expandedId+" — Qonaq əlavə et"}</span>
                 <button onClick={()=>{setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);}}
-                  style={{background:"none",border:"none",color:"#9a8060",fontSize:14,cursor:"pointer",padding:"0 2px"}}>✕</button>
+                  style={{background:"none",border:"none",color:"#6B6259",fontSize:14,cursor:"pointer",padding:"0 2px"}}>✕</button>
               </div>
 
               {/* Ad Soyad */}
               <input ref={slotRef} value={slotName} onChange={e=>setSlotName(e.target.value)}
                 placeholder="Ad Soyad"
                 style={{display:"block",width:"100%",boxSizing:"border-box",padding:"7px 10px",marginBottom:7,
-                  background:"rgba(255,255,255,.07)",border:"1px solid rgba(201,168,76,.3)",
-                  borderRadius:8,color:"#f2e8d0",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
+                  background:"rgba(33,26,22,.07)",border:"1px solid rgba(201,168,76,.3)",
+                  borderRadius:8,color:"#211A16",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif"}}/>
 
               {/* Telefon nömrəsi */}
               <div style={{display:"flex",gap:6,marginBottom:4,alignItems:"center"}}>
-                <div style={{flex:1,display:"flex",alignItems:"center",background:"rgba(255,255,255,.07)",
+                <div style={{flex:1,display:"flex",alignItems:"center",background:"rgba(33,26,22,.07)",
                   border:"1px solid rgba(201,168,76,.25)",borderRadius:8,overflow:"hidden"}}>
                   <span style={{padding:"0 7px",fontSize:12,color:"rgba(201,168,76,.7)",flexShrink:0,fontWeight:600}}>+994</span>
                   <input
@@ -1701,7 +1698,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                     placeholder="XX XXX XX XX"
                     inputMode="tel"
                     style={{flex:1,padding:"7px 4px",background:"transparent",border:"none",
-                      color:"#f2e8d0",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif",minWidth:0}}/>
+                      color:"#211A16",fontSize:12,outline:"none",fontFamily:"'DM Sans',sans-serif",minWidth:0}}/>
                   {slotPhone&&(
                     <button onClick={()=>setSlotPhone("")}
                       style={{background:"none",border:"none",color:"rgba(201,168,76,.4)",fontSize:11,cursor:"pointer",padding:"0 7px",flexShrink:0}}>✕</button>
@@ -1726,9 +1723,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 {[["👨 Kişi","kishi","#7aade8"],["👩 Qadın","qadin","#e87aad"]].map(([lbl,val,sc])=>(
                   <button key={val} onClick={()=>setSlotGender(g=>g===val?"":val)}
                     style={{flex:1,padding:"5px",borderRadius:7,fontSize:11,fontWeight:700,cursor:"pointer",
-                      border:"1.5px solid "+(slotGender===val?sc:"rgba(255,255,255,.08)"),
-                      background:slotGender===val?sc+"22":"rgba(255,255,255,.03)",
-                      color:slotGender===val?sc:"rgba(255,255,255,.3)"}}>
+                      border:"1.5px solid "+(slotGender===val?sc:"rgba(33,26,22,.08)"),
+                      background:slotGender===val?sc+"22":"rgba(33,26,22,.03)",
+                      color:slotGender===val?sc:"rgba(33,26,22,.3)"}}>
                     {lbl}
                   </button>
                 ))}
@@ -1744,7 +1741,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   ()=>setSlotExtras(xs=>{const n=((xs.find(x=>x.type==="usher")||{count:0}).count)+1;return [{type:"usher",count:n}];})
                 ]].map(([lbl,sc,val,dec,inc])=>(
                   <div key={lbl} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-                    background:"rgba(255,255,255,.04)",border:"1px solid "+sc+"33",borderRadius:7,padding:"5px 8px"}}>
+                    background:"rgba(33,26,22,.04)",border:"1px solid "+sc+"33",borderRadius:7,padding:"5px 8px"}}>
                     <span style={{fontSize:9,color:sc+"88"}}>{lbl}</span>
                     <button onClick={dec} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"22",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>−</button>
                     <span style={{fontSize:13,fontWeight:800,color:sc,minWidth:16,textAlign:"center"}}>{val}</span>
@@ -1789,7 +1786,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   <div key={g.id} onClick={()=>guestClick(g)} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:"rgba(201,168,76,.04)",border:"1px solid rgba(201,168,76,.08)",borderRadius:8,cursor:"pointer"}}>
                     <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,background:sc+"22",border:"1px solid "+sc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:sc}}>{g.name[0]}</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"#f2e8d0",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</div>
+                      <div style={{fontSize:12,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{g.name}</div>
                       <div style={{fontSize:9,color:"rgba(201,168,76,.5)",marginTop:1}}>
                         {g.count>1&&g.count+" nəfər"}{g.side&&" · "+g.side}
                       </div>
@@ -1822,7 +1819,7 @@ function RestCard({ rest, onPick }){
             <div key={h.id} onClick={()=>onPick(rest,h)} style={{padding:"8px 10px",borderRadius:8,marginBottom:6,cursor:"pointer",
               background:h.hasLayout?"rgba(80,200,120,.08)":"rgba(201,168,76,.07)",
               border:"1px solid "+(h.hasLayout?"rgba(80,200,120,.25)":"rgba(201,168,76,.15)")}}>
-              <div style={{color:"#f2e8d0",fontSize:13,fontWeight:600}}>
+              <div style={{color:"#211A16",fontSize:13,fontWeight:600}}>
                 {h.name}
                 {h.hasLayout&&<span style={{marginLeft:6,fontSize:10,color:"#50c878",fontWeight:700}}>🗺️ Hazır plan</span>}
               </div>
@@ -1840,10 +1837,10 @@ function Bar({val,tot,color}){
   const w = tot>0?Math.round(val/tot*100):0;
   return (
     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-      <div style={{flex:1,height:6,background:"rgba(255,255,255,.07)",borderRadius:3,overflow:"hidden"}}>
+      <div style={{flex:1,height:6,background:"rgba(33,26,22,.07)",borderRadius:3,overflow:"hidden"}}>
         <div style={{height:"100%",width:w+"%",background:color,borderRadius:3,transition:"width .4s"}}/>
       </div>
-      <div style={{fontSize:11,color:"rgba(242,232,208,.6)",minWidth:28,textAlign:"right"}}>{val}</div>
+      <div style={{fontSize:11,color:"rgba(33,26,22,.6)",minWidth:28,textAlign:"right"}}>{val}</div>
     </div>
   );
 }
@@ -1874,22 +1871,22 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
   const gold="#c9a84c";
   const statCard = (label,val,color,icon)=>(
-    <div style={{background:"rgba(255,255,255,.03)",border:"1px solid "+color+"33",borderRadius:12,padding:"12px",textAlign:"center"}}>
+    <div style={{background:"rgba(33,26,22,.03)",border:"1px solid "+color+"33",borderRadius:12,padding:"12px",textAlign:"center"}}>
       <div style={{fontSize:22}}>{icon}</div>
       <div style={{fontSize:24,fontWeight:800,color,marginTop:4}}>{val}</div>
-      <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginTop:2}}>{label}</div>
+      <div style={{fontSize:10,color:"rgba(33,26,22,.35)",marginTop:2}}>{label}</div>
     </div>
   );
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.8)"}} onClick={onClose}>
-      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#080604",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"92vh",background:"#F7F4EE",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 6px",flexShrink:0}}>
           <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
           <div style={{fontFamily:"'Playfair Display',serif",color:gold,fontSize:15}}>📊 Statistika</div>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:18,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}}>✕</button>
         </div>
 
         <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
@@ -1920,14 +1917,14 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(80,200,120,.25)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#50c878"}}>{attending.length}</div>
-                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="attending"?"▲":"▼"}</span>
+                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="attending"?"▲":"▼"}</span>
               </div>
             </div>
             {expand==="attending"&&(
               <div style={{padding:"8px 12px",background:"rgba(80,200,120,.04)",borderRadius:8,marginBottom:8,border:"1px solid rgba(80,200,120,.12)"}}>
-                {attending.length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                {attending.length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 attending.map((g,i)=>(
-                  <div key={i} style={{fontSize:12,color:"#f2e8d0",padding:"4px 0",borderBottom:i<attending.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
+                  <div key={i} style={{fontSize:12,color:"#211A16",padding:"4px 0",borderBottom:i<attending.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
                     ✓ {g.name}{g.count>1?` (${g.count}n)`:""}
                   </div>
                 ))}
@@ -1943,15 +1940,15 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(255,80,80,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#ff8888"}}>{notAttending.length}</div>
-                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="not_attending"?"▲":"▼"}</span>
+                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="not_attending"?"▲":"▼"}</span>
               </div>
             </div>
             {expand==="not_attending"&&(
               <div style={{padding:"8px 12px",background:"rgba(255,80,80,.03)",borderRadius:8,marginBottom:8,border:"1px solid rgba(255,80,80,.1)"}}>
-                {notAttending.length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                {notAttending.length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 notAttending.map((g,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<notAttending.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
-                    <span style={{fontSize:12,color:"#f2e8d0"}}>✗ {g.name}{g.count>1?` (${g.count}n)`:""}</span>
+                  <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<notAttending.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
+                    <span style={{fontSize:12,color:"#211A16"}}>✗ {g.name}{g.count>1?` (${g.count}n)`:""}</span>
                     {g.phone&&(
                       <button onClick={e=>{e.stopPropagation();openSms(g);}}
                         style={{padding:"3px 8px",borderRadius:8,border:"1px solid rgba(37,211,102,.3)",background:"rgba(37,211,102,.08)",color:"#25d366",fontSize:10,cursor:"pointer"}}>
@@ -1972,14 +1969,14 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(201,168,76,.2)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:gold}}>{pending.length+noPhone.length}</div>
-                <span style={{color:"rgba(255,255,255,.3)",fontSize:12}}>{expand==="pending"?"▲":"▼"}</span>
+                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="pending"?"▲":"▼"}</span>
               </div>
             </div>
             {expand==="pending"&&(
               <div style={{padding:"8px 12px",background:"rgba(201,168,76,.03)",borderRadius:8,marginTop:4,border:"1px solid rgba(201,168,76,.1)"}}>
-                {[...pending,...noPhone].length===0?<div style={{fontSize:12,color:"rgba(255,255,255,.3)"}}>Hələ yoxdur</div>:
+                {[...pending,...noPhone].length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 [...pending,...noPhone].map((g,i)=>(
-                  <div key={i} style={{fontSize:12,color:"rgba(255,255,255,.5)",padding:"4px 0",borderBottom:i<pending.length+noPhone.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
+                  <div key={i} style={{fontSize:12,color:"rgba(33,26,22,.5)",padding:"4px 0",borderBottom:i<pending.length+noPhone.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
                     ⏳ {g.name}{g.count>1?` (${g.count}n)`:""}
                     {!g.phone&&<span style={{fontSize:9,color:"rgba(255,80,80,.5)",marginLeft:6}}>nömrəsiz</span>}
                   </div>
@@ -1993,11 +1990,11 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
       {/* SMS Pəncərəsi */}
       {smsGuest&&(
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.7)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSmsGuest(null)}>
-          <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
+          <div style={{width:"100%",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:13,color:gold,fontWeight:700,marginBottom:4}}>💌 {smsGuest.name}-ə tebrik</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:12}}>Gəlmirəm dedi — tebrik mesajı göndər</div>
+            <div style={{fontSize:11,color:"rgba(33,26,22,.35)",marginBottom:12}}>Gəlmirəm dedi — tebrik mesajı göndər</div>
             <textarea value={smsText} onChange={e=>setSmsText(e.target.value)} rows={4}
-              style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none"}}/>
+              style={{width:"100%",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#211A16",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none"}}/>
             <button onClick={()=>{
               const phone=(smsGuest.phone||"").replace(/\D/g,"");
               if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(smsText),"_blank");
@@ -2017,10 +2014,10 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
   const [confirmId, setConfirmId] = useState(null);
   if(!events||events.length===0) return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.6)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
-      <div style={{background:"linear-gradient(145deg,#1a1208,#0f0a04)",border:"1px solid rgba(201,168,76,.25)",borderRadius:20,padding:"32px 24px",textAlign:"center",maxWidth:320,width:"90%"}} onClick={e=>e.stopPropagation()}>
+      <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1px solid rgba(201,168,76,.25)",borderRadius:20,padding:"32px 24px",textAlign:"center",maxWidth:320,width:"90%"}} onClick={e=>e.stopPropagation()}>
         <div style={{fontSize:40,marginBottom:12}}>🎊</div>
         <div style={{fontSize:16,fontWeight:700,color:"#c9a84c",marginBottom:8}}>Hələ məclis yoxdur</div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,.35)",marginBottom:20}}>Gul Agent ilə yeni məclis yaradın</div>
+        <div style={{fontSize:12,color:"rgba(33,26,22,.35)",marginBottom:20}}>Gul Agent ilə yeni məclis yaradın</div>
         <button onClick={onClose} style={{padding:"10px 28px",borderRadius:12,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>Bağla</button>
       </div>
     </div>
@@ -2032,7 +2029,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.6)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}} onClick={onClose}>
-      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"linear-gradient(180deg,#1a1208,#0a0603)",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+      <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"linear-gradient(180deg,#FFFFFF,#F7F4EE)",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
 
         {/* Handle */}
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
@@ -2043,15 +2040,15 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 18px 14px"}}>
           <div>
             <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:"#c9a84c",fontWeight:700}}>Məclislərim</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginTop:2}}>{events.length} məclis</div>
+            <div style={{fontSize:11,color:"rgba(33,26,22,.3)",marginTop:2}}>{events.length} məclis</div>
           </div>
-          <button onClick={onClose} style={{width:34,height:34,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:15,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{width:34,height:34,borderRadius:"50%",border:"none",background:"rgba(33,26,22,.08)",color:"#fff",fontSize:15,cursor:"pointer"}}>✕</button>
         </div>
 
         {/* List */}
         <div style={{flex:1,overflowY:"auto",padding:"0 14px 16px",WebkitOverflowScrolling:"touch",touchAction:"pan-y"}}>
           {events.map((ev,i)=>(
-            <div key={ev.id} style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,padding:"14px 16px",marginBottom:10,position:"relative"}}>
+            <div key={ev.id} style={{background:"rgba(33,26,22,.04)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,padding:"14px 16px",marginBottom:10,position:"relative"}}>
 
               {/* Status badge */}
               <div style={{position:"absolute",top:12,right:12,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"18",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 8px"}}>
@@ -2062,7 +2059,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,paddingRight:90}}>
                 <div style={{fontSize:28}}>{typeIcon(ev.evType)}</div>
                 <div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#f2e8d0"}}>
+                  <div style={{fontSize:15,fontWeight:700,color:"#211A16"}}>
                     {ev.evType==="toy"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
                     {ev.evType==="toy"&&(!ev.obData||!ev.obData.boy)?"💍 Toy — davam edir":""}
                     {ev.evType==="nishan"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
@@ -2090,10 +2087,10 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                 return (
                   <div style={{marginBottom:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>Masa dolulugu</span>
+                      <span style={{fontSize:10,color:"rgba(33,26,22,.3)"}}>Masa dolulugu</span>
                       <span style={{fontSize:10,color:"#c9a84c",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
                     </div>
-                    <div style={{height:5,background:"rgba(255,255,255,.07)",borderRadius:3,overflow:"hidden"}}>
+                    <div style={{height:5,background:"rgba(33,26,22,.07)",borderRadius:3,overflow:"hidden"}}>
                       <div style={{height:"100%",width:pct+"%",background:pct>=100?"#50c878":"linear-gradient(90deg,#c9a84c,#f5d060)",borderRadius:3}}/>
                     </div>
                   </div>
@@ -2111,7 +2108,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                     <button onClick={()=>{onDelete(ev.id, ev.dbId);setConfirmId(null);}}
                       style={{padding:"6px 10px",borderRadius:8,border:"none",background:"rgba(220,80,80,.3)",color:"#ff6b6b",fontSize:11,fontWeight:700,cursor:"pointer"}}>Hə, sil</button>
                     <button onClick={()=>setConfirmId(null)}
-                      style={{padding:"6px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.2)",background:"transparent",color:"#9a8060",fontSize:11,cursor:"pointer"}}>Yox</button>
+                      style={{padding:"6px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.2)",background:"transparent",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Yox</button>
                   </div>
                 ):(
                   <button onClick={()=>setConfirmId(ev.id)}
@@ -2330,32 +2327,32 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
   return (
     <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(0,0,0,.97)",display:"flex",flexDirection:"column"}}>
       {/* Header */}
-      <div style={{background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"11px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+      <div style={{background:"#FFFFFF",borderBottom:"1px solid rgba(201,168,76,.2)",padding:"11px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
         <span style={{fontSize:14,fontWeight:700,color:"#c9a84c"}}>🎊 Dəvətnamə PNG</span>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>setCardSettingsOpen&&setCardSettingsOpen(v=>!v)}
             style={{padding:"5px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,cursor:"pointer"}}>
             🎁 Kart
           </button>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
         </div>
       </div>
       {/* Kart nömrəsi */}
       {cardSettingsOpen&&(
         <div style={{padding:"10px 16px",background:"rgba(201,168,76,.04)",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
-          <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:6}}>🎁 Hədiyyə kart nömrəsi (qonaq linkdə görəcək):</div>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.35)",marginBottom:6}}>🎁 Hədiyyə kart nömrəsi (qonaq linkdə görəcək):</div>
           <input value={cardNumber||""} onChange={e=>setCardNumber&&setCardNumber(e.target.value)}
             placeholder="Məs: 4169 7388 1234 5678"
-            style={{width:"100%",padding:"8px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
+            style={{width:"100%",padding:"8px 12px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,color:"#211A16",fontSize:13,outline:"none",fontFamily:"monospace",boxSizing:"border-box"}}/>
         </div>
       )}
 
       {/* Şablon seçimi */}
-      <div style={{padding:"8px 14px",background:"#0a0700",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
+      <div style={{padding:"8px 14px",background:"#FFFFFF",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
         <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
           {DEVETNAME_SHABLONLAR.map(s=>(
             <button key={s.id} onClick={()=>setShablon(s)}
-              style={{padding:"5px 11px",borderRadius:18,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.12)"),background:shablon.id===s.id?"rgba(201,168,76,.1)":"transparent",color:shablon.id===s.id?s.accent:"rgba(255,255,255,.3)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+              style={{padding:"5px 11px",borderRadius:18,border:"1px solid "+(shablon.id===s.id?s.accent:"rgba(33,26,22,.12)"),background:shablon.id===s.id?"rgba(201,168,76,.1)":"transparent",color:shablon.id===s.id?s.accent:"rgba(33,26,22,.3)",fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
               {s.ad}
             </button>
           ))}
@@ -2368,7 +2365,7 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
           <div style={{display:"flex",gap:5,overflowX:"auto"}}>
             {tables2use.map((t,i)=>(
               <button key={t.id} onClick={()=>setActiveTblIdx(i)}
-                style={{padding:"4px 10px",borderRadius:14,border:"1px solid "+(activeTblIdx===i?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:activeTblIdx===i?"rgba(201,168,76,.15)":"transparent",color:activeTblIdx===i?"#c9a84c":"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                style={{padding:"4px 10px",borderRadius:14,border:"1px solid "+(activeTblIdx===i?"rgba(201,168,76,.6)":"rgba(33,26,22,.1)"),background:activeTblIdx===i?"rgba(201,168,76,.15)":"transparent",color:activeTblIdx===i?"#c9a84c":"rgba(33,26,22,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                 Masa {t.id} ({(t.guests||[]).length})
               </button>
             ))}
@@ -2379,19 +2376,19 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       {/* Ana hissə: qonaq siyahısı + preview */}
       <div style={{display:"flex",flex:1,overflow:"hidden",minHeight:0}}>
         {/* Sol — qonaq siyahısı */}
-        <div style={{width:"40%",borderRight:"1px solid rgba(201,168,76,.08)",overflowY:"auto",background:"#070502"}}>
-          <div style={{padding:"7px 10px",fontSize:9,color:"rgba(255,255,255,.25)"}}>Preview üçün seç:</div>
-          {guests.length===0&&<div style={{padding:"16px",fontSize:12,color:"rgba(255,255,255,.3)",textAlign:"center"}}>Qonaq yoxdur</div>}
+        <div style={{width:"40%",borderRight:"1px solid rgba(201,168,76,.08)",overflowY:"auto",background:"#FFFFFF"}}>
+          <div style={{padding:"7px 10px",fontSize:9,color:"rgba(33,26,22,.25)"}}>Preview üçün seç:</div>
+          {guests.length===0&&<div style={{padding:"16px",fontSize:12,color:"rgba(33,26,22,.3)",textAlign:"center"}}>Qonaq yoxdur</div>}
           {guests.map((g,i)=>{
             const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"#c9a84c";
             const hasPhone=!!(g.phone||"").replace(/\D/g,"");
             return (
               <div key={g.id||i} onClick={()=>setSelIdx(i)}
-                style={{padding:"9px 10px",cursor:"pointer",borderBottom:"1px solid rgba(255,255,255,.04)",background:selIdx===i?"rgba(201,168,76,.1)":"transparent"}}>
+                style={{padding:"9px 10px",cursor:"pointer",borderBottom:"1px solid rgba(33,26,22,.04)",background:selIdx===i?"rgba(201,168,76,.1)":"transparent"}}>
                 <div style={{display:"flex",alignItems:"center",gap:7}}>
                   <div style={{width:26,height:26,borderRadius:"50%",background:sc+"22",border:"1px solid "+sc+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:sc,flexShrink:0}}>{g.name[0]||"?"}</div>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:11,fontWeight:600,color:"#f2e8d0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#211A16",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
                     <div style={{fontSize:9,color:hasPhone?"rgba(37,211,102,.5)":"rgba(255,80,80,.4)"}}>{hasPhone?"📱":"yox"}</div>
                   </div>
                 </div>
@@ -2407,13 +2404,13 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
         </div>
 
         {/* Sağ — canvas preview */}
-        <div style={{flex:1,overflowY:"auto",background:"#060402",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"10px 6px"}}>
+        <div style={{flex:1,overflowY:"auto",background:"#F7F4EE",display:"flex",justifyContent:"center",alignItems:"flex-start",padding:"10px 6px"}}>
           <canvas ref={canvasRef} style={{width:"100%",maxWidth:260,borderRadius:10,display:"block"}}/>
         </div>
       </div>
 
       {/* Footer — hamısına göndər */}
-      <div style={{padding:"10px 14px 30px",background:"#0a0700",borderTop:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
+      <div style={{padding:"10px 14px 30px",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.1)",flexShrink:0}}>
         {sending?(
           <div style={{textAlign:"center",padding:"10px"}}>
             <div style={{fontSize:13,color:"#25d366",fontWeight:700}}>📤 {sentCount}/{guests.filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} göndərilir...</div>
@@ -2471,7 +2468,7 @@ function MasaDevetCard({ tbl, ev, hall, setDevetPNGOpen }){
           return (
             <div key={gi} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",borderBottom:"1px solid rgba(201,168,76,.08)"}}>
               <span style={{fontSize:13}}>{g.gender==="kishi"?"👨":g.gender==="qadin"?"👩":"👤"}</span>
-              <span style={{fontSize:12,color:"#f2e8d0",flex:1}}>{g.name}</span>
+              <span style={{fontSize:12,color:"#211A16",flex:1}}>{g.name}</span>
               {g.count>1&&<span style={{fontSize:10,color:"rgba(201,168,76,.5)"}}>{g.count+" nəfər"}</span>}
             </div>
           );
@@ -3377,7 +3374,7 @@ ${savedEvsList||"Yoxdur"}`;
     if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
 
-  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:#F7F4EE;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FFFFFF;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#B23A2E;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:#FBEFED;border-radius:20px;border:1px solid #E7E1D6;}\n.dot{width:7px;height:7px;border-radius:50%;background:#B23A2E;animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(178,58,46,.35)}70%{box-shadow:0 0 0 7px rgba(178,58,46,0)}100%{box-shadow:0 0 0 0 rgba(178,58,46,0)}}\n.pn{font-size:11px;color:#B23A2E;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:8px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:#F7F4EE;}\n.menu3{width:32px;height:32px;border-radius:50%;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:#F7F4EE;}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #E7E1D6;background:#F7F4EE;}\n.schema-panel{flex:1;overflow:hidden;background:#F7F4EE;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:#D8D0C2;}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:#B23A2E;border:1px solid #B23A2E;}\n.av.u{background:#EDE8DC;}\n.bb{padding:9px 12px;border-radius:14px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{background:#FFFFFF;border:1px solid #E7E1D6;color:#211A16;border-radius:14px 14px 14px 3px;}\n.bb.u{background:#211A16;color:#F7F4EE;margin-left:auto;border-radius:14px 14px 3px 14px;}\n.qw{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}\n.qb{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:11px;cursor:pointer;font-weight:500;}\n.qb:hover{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#B23A2E;animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:8px 12px;display:flex;gap:6px;border-top:1px solid #E7E1D6;flex-shrink:0;}\n.inp{flex:1;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;padding:9px 14px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:#B23A2E;}\n.sndb{padding:9px 14px;background:#B23A2E;border:1px solid #B23A2E;border-radius:20px;color:#FFFFFF;font-size:15px;cursor:pointer;}\n.sndb:hover{background:#983026;}\n.sndb:disabled{opacity:.3;cursor:not-allowed;}\n.qbar{display:flex;gap:5px;padding:7px 12px;border-top:1px solid #E7E1D6;flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#6B6259;font-size:11px;cursor:pointer;font-weight:500;}\n.qbn:hover{border-color:#B23A2E;color:#B23A2E;}\n.qbn.on{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.cnt{display:inline-block;margin-left:4px;background:#C9A84C;color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.6);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid #E7E1D6;}\n.rsi{width:100%;background:#F7F4EE;border:1px solid #E7E1D6;border-radius:10px;padding:8px 12px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:7px 14px;border-radius:10px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:#F7F4EE;}\n.pbar-bg{height:4px;background:#E7E1D6;border-radius:2px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:#B23A2E;border-radius:2px;transition:width .5s;}
+  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:#F7F4EE;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FFFFFF;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#B23A2E;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;background:#FBEFED;border-radius:20px;border:1px solid #E7E1D6;}\n.dot{width:7px;height:7px;border-radius:50%;background:#B23A2E;animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(178,58,46,.35)}70%{box-shadow:0 0 0 7px rgba(178,58,46,0)}100%{box-shadow:0 0 0 0 rgba(178,58,46,0)}}\n.pn{font-size:11px;color:#B23A2E;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:8px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:#F7F4EE;}\n.menu3{width:32px;height:32px;border-radius:50%;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:#F7F4EE;}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #E7E1D6;background:#F7F4EE;}\n.schema-panel{flex:1;overflow:hidden;background:#F7F4EE;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid #E7E1D6;flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:#D8D0C2;}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:#B23A2E;border:1px solid #B23A2E;}\n.av.u{background:#EDE8DC;}\n.bb{padding:9px 12px;border-radius:14px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{background:#FFFFFF;border:1px solid #E7E1D6;color:#211A16;border-radius:14px 14px 14px 3px;}\n.bb.u{background:#211A16;color:#F7F4EE;margin-left:auto;border-radius:14px 14px 3px 14px;}\n.qw{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}\n.qb{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:11px;cursor:pointer;font-weight:500;}\n.qb:hover{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#B23A2E;animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:8px 12px;display:flex;gap:6px;border-top:1px solid #E7E1D6;flex-shrink:0;}\n.inp{flex:1;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;padding:9px 14px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:#B23A2E;}\n.sndb{width:38px;height:38px;padding:0;background:#B23A2E;border:1px solid #B23A2E;border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}\n.sndb:hover{background:#983026;}\n.sndb:disabled{opacity:.3;cursor:not-allowed;}\n.qbar{display:flex;gap:5px;padding:7px 12px;border-top:1px solid #E7E1D6;flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:6px 12px;border-radius:16px;border:1px solid #E7E1D6;background:#FFFFFF;color:#6B6259;font-size:11px;cursor:pointer;font-weight:500;}\n.qbn:hover{border-color:#B23A2E;color:#B23A2E;}\n.qbn.on{border-color:#B23A2E;color:#B23A2E;background:#FBEFED;}\n.cnt{display:inline-block;margin-left:4px;background:#C9A84C;color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.6);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{background:#FFFFFF;border:1px solid #E7E1D6;border-radius:20px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid #E7E1D6;}\n.rsi{width:100%;background:#F7F4EE;border:1px solid #E7E1D6;border-radius:10px;padding:8px 12px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:7px 14px;border-radius:10px;border:1px solid #E7E1D6;background:#FFFFFF;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:#F7F4EE;}\n.pbar-bg{height:4px;background:#E7E1D6;border-radius:2px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:#B23A2E;border-radius:2px;transition:width .5s;}
 @keyframes tpulse{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-50%) scale(1.3)}65%{transform:translate(-50%,-50%) scale(0.92)}100%{transform:translate(-50%,-50%) scale(1)}}
 .tpulse{animation:tpulse 0.65s ease;}
 .lp-selected{filter:drop-shadow(0 0 8px rgba(178,58,46,0.9));}
@@ -3395,7 +3392,7 @@ ${savedEvsList||"Yoxdur"}`;
             <div className="pill"><div className="dot"/><span className="pn">Gul Agent</span></div>
             <button className="menu3" onClick={()=>{ pushPanel("meclis"); setMeclisOpen(true); }} style={{position:"relative"}} title="Menyu">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-              {savedEvents.length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#C9A84C",color:"#FFFFFF",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{savedEvents.length}</span>}
+              {savedEvents.length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#c9a84c",color:"#FFFFFF",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{savedEvents.length}</span>}
             </button>
           </div>
         </div>
@@ -3424,19 +3421,26 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div className="ir">
             <button onClick={toggleVoice} style={{
-              width:40,height:40,borderRadius:"50%",border:"2px solid",flexShrink:0,
-              borderColor:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(201,168,76,.4)",
-              background:isListening?"rgba(80,200,120,.2)":isSpeaking?"rgba(201,168,76,.2)":"rgba(201,168,76,.08)",
-              color:isListening?"#50c878":isSpeaking?"#c9a84c":"rgba(201,168,76,.7)",
-              fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-              transition:"all .2s",
-              boxShadow:isListening?"0 0 12px rgba(80,200,120,.5)":isSpeaking?"0 0 12px rgba(201,168,76,.4)":"none"
+              width:38,height:38,borderRadius:"50%",border:"1px solid",flexShrink:0,
+              borderColor:isListening?"#4C7A5E":isSpeaking?"#B23A2E":"#E7E1D6",
+              background:isListening?"#E3EEE6":isSpeaking?"#FBEFED":"#FFFFFF",
+              color:isListening?"#4C7A5E":isSpeaking?"#B23A2E":"#211A16",
+              cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+              transition:"all .2s"
             }}>
-              {isListening?"🔴":isSpeaking?"🔊":"🎙️"}
+              {isListening?(
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#4C7A5E"><circle cx="12" cy="12" r="7"/></svg>
+              ):isSpeaking?(
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B23A2E" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+              ):(
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>
+              )}
             </button>
             <input ref={inpRef} className="inp" placeholder="Yazın..." value={input}
               onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input);}}} disabled={busy}/>
-            <button className="sndb" onClick={()=>send(input)} disabled={!input.trim()||busy}>➤</button>
+            <button className="sndb" onClick={()=>send(input)} disabled={!input.trim()||busy}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" style={{display:"block"}}><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
           </div>
           <div className="qbar">
             {hasS&&<button className="qbn on" onClick={()=>{
@@ -3506,7 +3510,7 @@ ${savedEvsList||"Yoxdur"}`;
             {hall._venueName} — {hall.name}
           </div>
           <div style={{position:"absolute",bottom:24,left:0,right:0,textAlign:"center",
-            color:"rgba(255,255,255,.3)",fontSize:11}}>
+            color:"rgba(33,26,22,.3)",fontSize:11}}>
             Bağlamaq üçün toxun
           </div>
         </div>
@@ -3550,7 +3554,7 @@ ${savedEvsList||"Yoxdur"}`;
 
       {schemaOpen&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:100}} onClick={()=>tryCloseSchema()}>
-          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"#0a0603",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"#F7F4EE",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
             {/* Handle */}
             <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
               <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
@@ -3574,7 +3578,7 @@ ${savedEvsList||"Yoxdur"}`;
                     📸 Real şəkil
                   </button>
                 )}
-                <button style={{background:"transparent",border:"none",color:"#9a8060",fontSize:18,cursor:"pointer"}} onClick={()=>tryCloseSchema()}>✕</button>
+                <button style={{background:"transparent",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}} onClick={()=>tryCloseSchema()}>✕</button>
               </div>
             </div>
 
@@ -3633,7 +3637,7 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.85)",zIndex:60,
                 display:"flex",alignItems:"center",justifyContent:"center",
                 borderRadius:"20px 20px 0 0"}} onClick={function(e){e.stopPropagation();}}>
-                <div style={{background:"linear-gradient(145deg,#1e1608,#140f05)",
+                <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",
                   border:"1.5px solid rgba(232,184,122,.35)",borderRadius:16,
                   padding:"20px",width:"82%",maxWidth:280}}>
                   <div style={{fontSize:24,textAlign:"center",marginBottom:8}}>⚠️</div>
@@ -3641,7 +3645,7 @@ ${savedEvsList||"Yoxdur"}`;
                     color:"#e8b87a",textAlign:"center",marginBottom:8}}>
                     Masalar boşdur
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,.6)",textAlign:"center",
+                  <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",
                     lineHeight:1.6,marginBottom:16}}>
                     Hələ heç bir qonaq əlavə edilməyib. Əmin olduqda çıxa bilərsiniz.
                   </div>
@@ -3650,15 +3654,15 @@ ${savedEvsList||"Yoxdur"}`;
                       setSchemaEmptyExit(false);
                     }} style={{padding:"11px",borderRadius:10,border:"none",
                       background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",
-                      color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                      color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                       ← Qayıt, qonaq əlavə edim
                     </button>
                     <button onClick={function(){
                       setSchemaEmptyExit(false);
                       setSchemaOpen(false);
                     }} style={{padding:"10px",borderRadius:10,
-                      border:"1px solid rgba(255,255,255,.15)",background:"rgba(255,255,255,.05)",
-                      color:"rgba(255,255,255,.45)",fontSize:12,cursor:"pointer"}}>
+                      border:"1px solid rgba(33,26,22,.15)",background:"rgba(33,26,22,.05)",
+                      color:"rgba(33,26,22,.45)",fontSize:12,cursor:"pointer"}}>
                       Sonra əlavə edəcəm, çıxım
                     </button>
                   </div>
@@ -3671,7 +3675,7 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.85)",zIndex:60,
                 display:"flex",alignItems:"center",justifyContent:"center",
                 borderRadius:"20px 20px 0 0"}} onClick={function(e){e.stopPropagation();}}>
-                <div style={{background:"linear-gradient(145deg,#1e1608,#140f05)",
+                <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",
                   border:"1.5px solid rgba(201,168,76,.4)",borderRadius:16,
                   padding:"20px",width:"82%",maxWidth:280}}>
                   <div style={{fontSize:22,textAlign:"center",marginBottom:8}}>💾</div>
@@ -3679,7 +3683,7 @@ ${savedEvsList||"Yoxdur"}`;
                     color:"#c9a84c",textAlign:"center",marginBottom:8}}>
                     Dəyişikliklər saxlanmayıb
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,.6)",textAlign:"center",
+                  <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",
                     lineHeight:1.6,marginBottom:16}}>
                     Qonaqlar yadda saxlanılsın?
                   </div>
@@ -3691,7 +3695,7 @@ ${savedEvsList||"Yoxdur"}`;
                       setSchemaOpen(false);
                     }} style={{padding:"11px",borderRadius:10,border:"none",
                       background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",
-                      color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                      color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                       Bəli, saxla və çıx
                     </button>
                     <button onClick={function(){
@@ -3705,7 +3709,7 @@ ${savedEvsList||"Yoxdur"}`;
                     </button>
                     <button onClick={function(){setSchemaUnsaved(false);}}
                       style={{padding:"8px",borderRadius:10,border:"none",
-                        background:"transparent",color:"rgba(255,255,255,.3)",
+                        background:"transparent",color:"rgba(33,26,22,.3)",
                         fontSize:11,cursor:"pointer"}}>
                       Ləğv et
                     </button>
@@ -3731,7 +3735,7 @@ ${savedEvsList||"Yoxdur"}`;
                 pushPanel("notinv"); setNotInvitedDrawerOpen(true);
               }} style={{padding:"10px",borderRadius:10,border:"none",width:"100%",
                 background:"linear-gradient(90deg,rgba(201,168,76,.4),rgba(201,168,76,.2))",
-                color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                 📨 Dəvətnamələri göndər
               </button>
               <div style={{fontSize:9,color:"rgba(201,168,76,.35)",marginTop:5}}>
@@ -3745,24 +3749,24 @@ ${savedEvsList||"Yoxdur"}`;
       {/* GUEST DRAWER */}
       {guestOpen&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:100}} onClick={()=>setGuestOpen(false)}>
-          <div style={{position:"absolute",right:0,top:0,bottom:0,width:340,background:"#0a0603",borderLeft:"1px solid rgba(201,168,76,.15)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+          <div style={{position:"absolute",right:0,top:0,bottom:0,width:340,background:"#F7F4EE",borderLeft:"1px solid rgba(201,168,76,.15)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
             <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(201,168,76,.12)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:15}}>👥 Qonaqlar</div>
               <button className="dcl" onClick={()=>setGuestOpen(false)}>✕</button>
             </div>
             <div style={{flex:1,overflowY:"auto",padding:14}}>
               {glog.length===0?(
-                <div style={{textAlign:"center",color:"#5a4a30",fontSize:13,padding:30}}>Hələ qonaq yoxdur</div>
+                <div style={{textAlign:"center",color:"#6B6259",fontSize:13,padding:30}}>Hələ qonaq yoxdur</div>
               ):glog.map((g,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",borderRadius:8,marginBottom:4,border:"1px solid rgba(201,168,76,.1)",background:"rgba(201,168,76,.04)"}}>
                   <div>
-                    <div style={{fontSize:13,color:"#f2e8d0"}}>{g.name}</div>
-                    <div style={{fontSize:10,color:"#9a8060",marginTop:2}}>
+                    <div style={{fontSize:13,color:"#211A16"}}>{g.name}</div>
+                    <div style={{fontSize:10,color:"#6B6259",marginTop:2}}>
                       Stol {g.tbl||g.tableId} · {g.count||1}n
                       {g.side&&<span style={{marginLeft:5,padding:"1px 6px",borderRadius:6,fontSize:9,background:sideBg(g.side),color:sideColor(g.side)}}>{g.side}</span>}
                     </div>
                   </div>
-                  {g.phone&&<div style={{fontSize:11,color:"#9a8060"}}>{g.phone}</div>}
+                  {g.phone&&<div style={{fontSize:11,color:"#6B6259"}}>{g.phone}</div>}
                 </div>
               ))}
             </div>
@@ -3775,7 +3779,7 @@ ${savedEvsList||"Yoxdur"}`;
         const invitedTables=tables.filter(t=>t.guests.some(g=>g.invited));
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:150}} onClick={closeTopPanel}>
-            <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"#0a0603",
+            <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"88vh",background:"#F7F4EE",
               borderTop:"2px solid rgba(80,200,120,.3)",borderRadius:"20px 20px 0 0",
               display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
               <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
@@ -3786,7 +3790,7 @@ ${savedEvsList||"Yoxdur"}`;
                   <div style={{fontFamily:"'Playfair Display',serif",fontSize:16,color:"#50c878",fontWeight:700}}>✓ Dəvət Göndərilən</div>
                   <div style={{fontSize:11,color:"rgba(80,200,120,.5)",marginTop:2}}>{tables.flatMap(t=>t.guests).filter(g=>g.invited).length} qonaq · {invitedTables.length} masa</div>
                 </div>
-                <button onClick={closeTopPanel} style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(255,255,255,.08)",color:"#fff",fontSize:14,cursor:"pointer"}}>✕</button>
+                <button onClick={closeTopPanel} style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(33,26,22,.08)",color:"#fff",fontSize:14,cursor:"pointer"}}>✕</button>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"0 14px 24px",WebkitOverflowScrolling:"touch"}}>
                 {invitedTables.length===0?(
@@ -3800,7 +3804,7 @@ ${savedEvsList||"Yoxdur"}`;
                       <div style={{padding:"10px 14px",borderBottom:"1px solid rgba(80,200,120,.1)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <span style={{fontSize:13,fontWeight:700,color:"#50c878"}}>№{t.id}</span>
-                          {t.label&&t.label!=="__extra__"&&<span style={{fontSize:12,color:"rgba(255,255,255,.6)"}}>{t.label}</span>}
+                          {t.label&&t.label!=="__extra__"&&<span style={{fontSize:12,color:"rgba(33,26,22,.6)"}}>{t.label}</span>}
                           {t.side&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:10,background:sc+"22",color:sc}}>{t.side}</span>}
                         </div>
                         <span style={{fontSize:10,color:"rgba(80,200,120,.6)"}}>✓ {invG.length}/{t.guests.length}</span>
@@ -3808,11 +3812,11 @@ ${savedEvsList||"Yoxdur"}`;
                       {/* Qonaqlar */}
                       <div style={{padding:"8px 14px"}}>
                         {invG.map(g=>(
-                          <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
+                          <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"1px solid rgba(33,26,22,.04)"}}>
                             <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,background:"rgba(80,200,120,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"#50c878"}}>{g.name[0]}</div>
                             <div style={{flex:1}}>
-                              <div style={{fontSize:12,color:"#f2e8d0"}}>{g.name}</div>
-                              {g.phone&&<div style={{fontSize:9,color:"rgba(255,255,255,.35)"}}>{g.phone}</div>}
+                              <div style={{fontSize:12,color:"#211A16"}}>{g.name}</div>
+                              {g.phone&&<div style={{fontSize:9,color:"rgba(33,26,22,.35)"}}>{g.phone}</div>}
                             </div>
                             <span style={{fontSize:9,color:"#50c878"}}>✓</span>
                           </div>
@@ -3845,10 +3849,10 @@ ${savedEvsList||"Yoxdur"}`;
       {/* Dəyişiklik saxlama soruşma modal */}
       {unsavedConfirm&&(
         <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.85)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
-          <div style={{background:"linear-gradient(145deg,#1e1608,#140f05)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:16,padding:"24px 20px",width:"100%",maxWidth:300}}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:16,padding:"24px 20px",width:"100%",maxWidth:300}}>
             <div style={{fontSize:28,textAlign:"center",marginBottom:10}}>💾</div>
             <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,color:"#c9a84c",textAlign:"center",marginBottom:8}}>Dəyişikliklər saxlanmayıb</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Çıxmadan əvvəl saxlamaq istəyirsiniz?</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Çıxmadan əvvəl saxlamaq istəyirsiniz?</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               <button onClick={()=>{
                 saveCurrentEvent({tables:tabRef.current});
@@ -3856,7 +3860,7 @@ ${savedEvsList||"Yoxdur"}`;
                 setUnsavedConfirm(null);
                 const top=panelStack[panelStack.length-1];
                 _doClosePanel(top);
-              }} style={{padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#f2e8d0",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              }} style={{padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                 💾 Bəli, saxla və çıx
               </button>
               <button onClick={()=>{
@@ -3868,7 +3872,7 @@ ${savedEvsList||"Yoxdur"}`;
                 Yox, çıx
               </button>
               <button onClick={()=>setUnsavedConfirm(null)}
-                style={{padding:"10px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>
+                style={{padding:"10px",borderRadius:10,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:12,cursor:"pointer"}}>
                 İptal — qal
               </button>
             </div>
@@ -3968,7 +3972,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
         left: boxLeft,
         right: boxRight,
         width:"75%", maxWidth:240,
-        background:"linear-gradient(145deg,#1e1608,#140f05)",
+        background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",
         border:"1.5px solid rgba(245,208,96,.55)",
         borderRadius:12,padding:"10px 11px",
         boxShadow:"0 6px 28px rgba(0,0,0,.8)",
@@ -3990,14 +3994,14 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
           <div style={{fontFamily:"'Playfair Display',serif",fontSize:12,fontWeight:700,
             color:"#f5d060",lineHeight:1.3}}>{s.title}</div>
         </div>
-        <div style={{fontSize:10.5,color:"rgba(255,255,255,.6)",lineHeight:1.5,marginBottom:9}}>
+        <div style={{fontSize:10.5,color:"rgba(33,26,22,.6)",lineHeight:1.5,marginBottom:9}}>
           {s.desc}
         </div>
 
         {/* Buttons */}
         <div style={{display:"flex",gap:5,alignItems:"center"}}>
           <button onClick={onSkip} style={{padding:"5px 6px",borderRadius:7,border:"none",
-            background:"transparent",color:"rgba(255,255,255,.22)",fontSize:9,cursor:"pointer"}}>
+            background:"transparent",color:"rgba(33,26,22,.22)",fontSize:9,cursor:"pointer"}}>
             Keç
           </button>
           {step>1&&(
@@ -4142,32 +4146,32 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
 
   // ── ANA EKRAN ──────────────────────────────────
   return(
-    <div style={{position:"fixed",inset:0,zIndex:200,background:"#080604",display:"flex",flexDirection:"column"}}>
+    <div style={{position:"fixed",inset:0,zIndex:200,background:"#F7F4EE",display:"flex",flexDirection:"column"}}>
       {/* Header */}
       <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(201,168,76,.15)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"rgba(201,168,76,.04)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {panel!=="home"&&<button onClick={()=>{setPanel("home");setStep("select");setSingleStep("list");setSingleGuest(null);}} style={{background:"none",border:"none",color:"#9a8060",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
+          {panel!=="home"&&<button onClick={()=>{setPanel("home");setStep("select");setSingleStep("list");setSingleGuest(null);}} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Playfair Display',serif",color:gold,fontSize:15}}>
             {panel==="home"?"📨 Dəvətnamə":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
           </div>
         </div>
-        <button onClick={onClose} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+        <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
       </div>
 
       {/* HOME */}
       {panel==="home"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:12,padding:"24px 16px"}}>
           <button onClick={()=>setPanel("bulk")}
-            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.06)",textAlign:"left",cursor:"pointer",color:"#f2e8d0"}}>
+            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(201,168,76,.3)",background:"rgba(201,168,76,.06)",textAlign:"left",cursor:"pointer",color:"#211A16"}}>
             <div style={{fontSize:24,marginBottom:8}}>📨</div>
             <div style={{fontSize:15,fontWeight:700,color:gold,marginBottom:4}}>Dəvətnamələri göndər</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.4)"}}>Masaları seç → şablon → hamısına birdəfəlik göndər</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.4)"}}>Masaları seç → şablon → hamısına birdəfəlik göndər</div>
           </button>
           <button onClick={()=>setPanel("single")}
-            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(122,173,232,.25)",background:"rgba(122,173,232,.06)",textAlign:"left",cursor:"pointer",color:"#f2e8d0"}}>
+            style={{padding:"20px 16px",borderRadius:14,border:"1px solid rgba(122,173,232,.25)",background:"rgba(122,173,232,.06)",textAlign:"left",cursor:"pointer",color:"#211A16"}}>
             <div style={{fontSize:24,marginBottom:8}}>👤</div>
             <div style={{fontSize:15,fontWeight:700,color:"#7aade8",marginBottom:4}}>Tək-tək göndər</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.4)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.4)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
           </button>
         </div>
       )}
@@ -4177,7 +4181,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
         <>
           <div style={{padding:"8px 14px",borderBottom:"1px solid rgba(201,168,76,.06)",display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
             <button onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:gold,fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
-            <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
+            <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.35)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
             <span style={{marginLeft:"auto",fontSize:11,color:"rgba(201,168,76,.5)"}}>{selTbls.size}/{notInvTables.length}</span>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
@@ -4198,7 +4202,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
                         const sx=cx+30+chairR*Math.cos(angle), sy=cy+20+chairR*Math.sin(angle);
                         const g=gSlots[i];
                         const f=i<filled;
-                        const cc=f?"#4ade80":"rgba(255,255,255,.15)";
+                        const cc=f?"#4ade80":"rgba(33,26,22,.15)";
                         // Ad pozisiyası
                         const nameR=chairR+22;
                         const nx=cx+30+nameR*Math.cos(angle), ny=cy+20+nameR*Math.sin(angle);
@@ -4210,12 +4214,12 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
                           </g>
                         );
                       })}
-                      <circle cx={cx+30} cy={cy+20} r={r-2} fill={allSent?"#0f3a20":"#1a1200"} stroke={sel?"#c9a84c":"rgba(201,168,76,.3)"} strokeWidth={sel?2.5:1.5}/>
+                      <circle cx={cx+30} cy={cy+20} r={r-2} fill={allSent?"#0f3a20":"#FBEFED"} stroke={sel?"#c9a84c":"rgba(201,168,76,.3)"} strokeWidth={sel?2.5:1.5}/>
                       <text x={cx+30} y={cy+20-4} textAnchor="middle" fill={gold} fontSize={S*0.24} fontWeight="800">{t.id}</text>
                       <text x={cx+30} y={cy+20+12} textAnchor="middle" fill="rgba(201,168,76,.4)" fontSize="9">{filled}/{seats}</text>
                     </svg>
                     {sel&&<div style={{position:"absolute",top:0,right:8,width:18,height:18,borderRadius:"50%",background:"#50c878",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff"}}>✓</div>}
-                    <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(255,255,255,.3)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
+                    <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(33,26,22,.3)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
                     <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(80,200,120,.5)":pulse?"rgba(255,180,50,.65)":"rgba(255,180,50,.25)",transition:"color .5s"}}>{allSent?"Göndərilib ✓":"Göndərilməyib"}</div>
                   </div>
                 );
@@ -4224,7 +4228,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.06)"}}>
             <button onClick={()=>selTbls.size>0&&setStep("shablon")} disabled={selTbls.size===0}
-              style={{width:"100%",padding:"14px",borderRadius:11,border:"none",background:selTbls.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(255,255,255,.05)",color:selTbls.size>0?"#0a0700":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default"}}>
+              style={{width:"100%",padding:"14px",borderRadius:11,border:"none",background:selTbls.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(33,26,22,.05)",color:selTbls.size>0?"#FFFFFF":"rgba(33,26,22,.2)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default"}}>
               Şablon seç → ({selTbls.size} masa)
             </button>
           </div>
@@ -4235,21 +4239,21 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       {panel==="bulk"&&step==="shablon"&&(
         <>
           <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.3)",marginBottom:12}}>Şablona klik et — preview açılır:</div>
+            <div style={{fontSize:11,color:"rgba(33,26,22,.3)",marginBottom:12}}>Şablona klik et — preview açılır:</div>
             {DEVETNAME_SHABLONLAR.map((s,i)=>(
               <div key={s.id} onClick={()=>{setShablon(s);setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))||notInvTables[0]);setStep("preview");}}
-                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(shablon.id===s.id?s.accent:"rgba(255,255,255,.08)"),background:shablon.id===s.id?"rgba(201,168,76,.05)":"rgba(255,255,255,.01)",cursor:"pointer",marginBottom:10}}>
+                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(shablon.id===s.id?s.accent:"rgba(33,26,22,.08)"),background:shablon.id===s.id?"rgba(201,168,76,.05)":"rgba(33,26,22,.01)",cursor:"pointer",marginBottom:10}}>
                 <canvas ref={shabRefs[i]} style={{width:60,height:90,borderRadius:8,flexShrink:0,display:"block"}}/>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:700,color:s.accent}}>{s.ad}</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,.3)",marginTop:3}}>Klik et — preview göster</div>
+                  <div style={{fontSize:10,color:"rgba(33,26,22,.3)",marginTop:3}}>Klik et — preview göster</div>
                 </div>
                 {shablon.id===s.id&&<div style={{color:"#50c878",fontSize:18}}>✓</div>}
               </div>
             ))}
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-            <button onClick={()=>setStep("select")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+            <button onClick={()=>setStep("select")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
           </div>
         </>
       )}
@@ -4261,7 +4265,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
             <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
               {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
                 <button key={t.id} onClick={()=>setPreviewTbl(t)}
-                  style={{padding:"5px 12px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:previewTbl.id===t.id?"rgba(201,168,76,.15)":"transparent",color:previewTbl.id===t.id?gold:"rgba(255,255,255,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                  style={{padding:"5px 12px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(201,168,76,.6)":"rgba(33,26,22,.1)"),background:previewTbl.id===t.id?"rgba(201,168,76,.15)":"transparent",color:previewTbl.id===t.id?gold:"rgba(33,26,22,.35)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                   Masa {t.id}
                 </button>
               ))}
@@ -4273,19 +4277,19 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
           <div style={{padding:"10px 14px 16px",flexShrink:0}}>
             <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:8}}>✍️ Kimdən?</div>
             <input value={senderName} onChange={e=>setSenderName(e.target.value)} placeholder="Adınız (məs: Aytən)"
-              style={{width:"100%",padding:"9px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}/>
+              style={{width:"100%",padding:"9px 12px",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:8,color:"#211A16",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}/>
             <div style={{display:"flex",gap:6,marginBottom:12}}>
               {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
                 <button key={t} onClick={()=>setSenderTitle(t)}
-                  style={{flex:1,padding:"6px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?gold:"rgba(255,255,255,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                  style={{flex:1,padding:"6px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(33,26,22,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?gold:"rgba(33,26,22,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                   {e} {t}
                 </button>
               ))}
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>🔄 Şablon dəyiş</button>
+              <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:12,cursor:"pointer"}}>🔄 Şablon dəyiş</button>
               <button onClick={()=>setStep("confirm")}
-                style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#0a0700",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+                style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer"}}>
                 Göndər → ({selTbls.size})
               </button>
             </div>
@@ -4299,8 +4303,8 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
         <>
           <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px"}}>
             <div style={{fontSize:48,marginBottom:16}}>📨</div>
-            <div style={{fontSize:16,fontWeight:700,color:"#f2e8d0",marginBottom:8,textAlign:"center"}}>{selTbls.size} masa üçün göndərilsin?</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,.35)",textAlign:"center",lineHeight:1.7,marginBottom:16}}>
+            <div style={{fontSize:16,fontWeight:700,color:"#211A16",marginBottom:8,textAlign:"center"}}>{selTbls.size} masa üçün göndərilsin?</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.35)",textAlign:"center",lineHeight:1.7,marginBottom:16}}>
               {notInvTables.filter(t=>selTbls.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa
               {senderName&&" · "+senderName+" "+senderTitle}
             </div>
@@ -4311,7 +4315,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
             </div>
           </div>
           <div style={{padding:"10px 14px 36px",flexShrink:0,display:"flex",gap:10}}>
-            <button onClick={()=>setStep("preview")} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:13,cursor:"pointer"}}>← Geri</button>
+            <button onClick={()=>setStep("preview")} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:13,cursor:"pointer"}}>← Geri</button>
             <button onClick={sendBulk}
               style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
               ✅ Bəli, göndər!
@@ -4330,11 +4334,11 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
                 const sent=g.invited;
                 const phone=(g.phone||"").replace(/\D/g,"");
                 return(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:sent?"rgba(80,200,120,.04)":"rgba(255,255,255,.02)",border:"1px solid "+(sent?"rgba(80,200,120,.15)":"rgba(201,168,76,.08)"),marginBottom:6,opacity:sent?.6:1}}>
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:sent?"rgba(80,200,120,.04)":"rgba(33,26,22,.02)",border:"1px solid "+(sent?"rgba(80,200,120,.15)":"rgba(201,168,76,.08)"),marginBottom:6,opacity:sent?.6:1}}>
                     <div style={{width:32,height:32,borderRadius:"50%",background:"rgba(201,168,76,.12)",border:"1px solid rgba(201,168,76,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:gold,flexShrink:0}}>{g.name[0]||"?"}</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,color:"#f2e8d0",fontWeight:600}}>{g.name}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,.35)"}}>{g.count>1?g.count+" nəfər · ":""}{phone?"+"+phone:"nömrə yoxdur"}</div>
+                      <div style={{fontSize:13,color:"#211A16",fontWeight:600}}>{g.name}</div>
+                      <div style={{fontSize:10,color:"rgba(33,26,22,.35)"}}>{g.count>1?g.count+" nəfər · ":""}{phone?"+"+phone:"nömrə yoxdur"}</div>
                     </div>
                     {sent?(
                       <div style={{fontSize:11,color:"rgba(80,200,120,.6)",fontWeight:600}}>✓ Göndərilib</div>
@@ -4358,13 +4362,13 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       {panel==="single"&&singleStep==="shablon"&&singleGuest&&(
         <>
           <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(201,168,76,.08)",flexShrink:0}}>
-            <div style={{fontSize:13,fontWeight:700,color:"#f2e8d0"}}>{singleGuest.guest.name}</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,.35)"}}>Masa № {singleGuest.tbl.id}</div>
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16"}}>{singleGuest.guest.name}</div>
+            <div style={{fontSize:11,color:"rgba(33,26,22,.35)"}}>Masa № {singleGuest.tbl.id}</div>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
             {DEVETNAME_SHABLONLAR.map((s,i)=>(
               <div key={s.id} onClick={()=>{setSingleShablon(s);setSingleStep("preview");}}
-                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(singleShablon.id===s.id?s.accent:"rgba(255,255,255,.08)"),background:singleShablon.id===s.id?"rgba(201,168,76,.05)":"rgba(255,255,255,.01)",cursor:"pointer",marginBottom:10}}>
+                style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(singleShablon.id===s.id?s.accent:"rgba(33,26,22,.08)"),background:singleShablon.id===s.id?"rgba(201,168,76,.05)":"rgba(33,26,22,.01)",cursor:"pointer",marginBottom:10}}>
                 <div style={{width:40,height:56,borderRadius:6,background:s.bg,border:"1px solid "+s.accent+"44",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎊</div>
                 <div style={{fontSize:13,fontWeight:700,color:s.accent}}>{s.ad}</div>
                 {singleShablon.id===s.id&&<div style={{marginLeft:"auto",color:"#50c878",fontSize:16}}>✓</div>}
@@ -4372,7 +4376,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
             ))}
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0}}>
-            <button onClick={()=>setSingleStep("list")} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+            <button onClick={()=>setSingleStep("list")} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
           </div>
         </>
       )}
@@ -4384,7 +4388,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
             <canvas ref={singleCanvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-            <button onClick={()=>setSingleStep("shablon")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>🔄 Dəyişdir</button>
+            <button onClick={()=>setSingleStep("shablon")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.4)",fontSize:12,cursor:"pointer"}}>🔄 Dəyişdir</button>
             <button onClick={sendSingle}
               style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
               ✅ Göndər
@@ -4402,7 +4406,7 @@ function LayoutPickerModal({ hall, onConfirm, onClose }){
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:200,display:"flex",alignItems:"flex-end"}}
       onClick={onClose}>
-      <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.25)",
+      <div style={{width:"100%",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.25)",
         borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}}
         onClick={e=>e.stopPropagation()}>
         <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
@@ -4418,14 +4422,14 @@ function LayoutPickerModal({ hall, onConfirm, onClose }){
               style={{padding:"14px 16px",borderRadius:12,border:"1px solid rgba(80,200,120,.4)",
                 background:"rgba(80,200,120,.08)",cursor:"pointer",textAlign:"left",width:"100%"}}>
               <div style={{color:"#50c878",fontSize:14,fontWeight:700,marginBottom:3}}>🗺️ Hazır Plan</div>
-              <div style={{color:"rgba(255,255,255,.45)",fontSize:11}}>Sistemdəki hazır zal sxemi — masalar real yerlərdə</div>
+              <div style={{color:"rgba(33,26,22,.45)",fontSize:11}}>Sistemdəki hazır zal sxemi — masalar real yerlərdə</div>
             </button>
           )}
           <button onClick={()=>onConfirm("custom",null)}
             style={{padding:"14px 16px",borderRadius:12,border:"1px solid rgba(150,150,150,.2)",
               background:"rgba(150,150,150,.05)",cursor:"pointer",textAlign:"left",width:"100%"}}>
-            <div style={{color:"rgba(255,255,255,.7)",fontSize:14,fontWeight:700,marginBottom:3}}>⬜ Özüm Qurarım</div>
-            <div style={{color:"rgba(255,255,255,.35)",fontSize:11}}>Boş sxem — masaları özünüz əlavə edib yerləşdirin</div>
+            <div style={{color:"rgba(33,26,22,.7)",fontSize:14,fontWeight:700,marginBottom:3}}>⬜ Özüm Qurarım</div>
+            <div style={{color:"rgba(33,26,22,.35)",fontSize:11}}>Boş sxem — masaları özünüz əlavə edib yerləşdirin</div>
           </button>
         </div>
       </div>
