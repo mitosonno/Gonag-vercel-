@@ -427,12 +427,18 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
           </g>
         );
       })}
-      {/* Center label */}
-      <text x={cx} y={cy-(size>100?6:4)} textAnchor="middle" dominantBaseline="middle"
-        fontSize={size>100?11:8} fill={tc} fontWeight="800">
-        {table.label==="__extra__"?"Extra":table.label?table.label.substring(0,8):String(table.id)}
+      {/* Center label — nömrə həmişə görünür, ad varsa altında kiçik */}
+      <text x={cx} y={cy-(size>100?9:5)} textAnchor="middle" dominantBaseline="middle"
+        fontSize={size>100?13:9} fill={tc} fontWeight="800">
+        {table.label==="__extra__"?"Extra":String(table.id)}
       </text>
-      <text x={cx} y={cy+(size>100?10:7)} textAnchor="middle" dominantBaseline="middle"
+      {table.label&&table.label!=="__extra__"&&(
+        <text x={cx} y={cy+(size>100?7:5)} textAnchor="middle" dominantBaseline="middle"
+          fontSize={size>100?7.5:6} fill={tc} opacity="0.75">
+          {table.label.substring(0,10)}
+        </text>
+      )}
+      <text x={cx} y={cy+(size>100?21:11)} textAnchor="middle" dominantBaseline="middle"
         fontSize={size>100?9:6} fill={full?"#50c878":"rgba(201,168,76,.6)"}>
         {totalOcc}/{table.seats}
       </text>
@@ -3629,16 +3635,16 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="customSeats"){
       if(txt==="Masanın öz tutumu"){
         setHall(h=>({...h, _step:"done"}));
-        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nHansı masadan başlayaq?`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
       if(["6","8","10","12"].includes(txt)){
         const n=parseInt(txt);
         setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nHansı masadan başlayaq?`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
@@ -3646,8 +3652,8 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         const n=parseInt(txt);
         if(n>=1&&n<=30){
           setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nZal sxeminə baxıb masaları doldura bilərsiniz.`;
-          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nHansı masadan başlayaq?`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
         }
@@ -3939,13 +3945,35 @@ ${savedEvsList||"Yoxdur"}`;
                   {m.masaCards&&m.masaCards.map((t,ti)=>(
                     <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   ))}
+                  {m.hallOverview&&tables.length>0&&(
+                    <div style={{marginTop:9,padding:12,borderRadius:16,
+                      background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
+                      border:"1px solid rgba(255,255,255,.5)",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                      {tables.map(t=>{
+                        const to=occ(t), tfull=to>=t.seats;
+                        return (
+                          <div key={t.id} onClick={()=>{
+                              if(tfull) return;
+                              setActiveTable(t.id);
+                              setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+                            }}
+                            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:tfull?"default":"pointer",opacity:tfull?0.55:1}}>
+                            <TableSVG table={t} size={52} clickable={false}/>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                   {m.tableSnapshotId!=null&&(()=>{
                     const t = tables.find(x=>x.id===m.tableSnapshotId);
                     if(!t) return null;
                     return (
-                      <div style={{marginTop:9,display:"flex",justifyContent:"center",padding:12,borderRadius:16,
+                      <div style={{marginTop:9,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:12,borderRadius:16,
                         background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
                         border:"1px solid rgba(255,255,255,.5)"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>
+                          Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""}
+                        </div>
                         <TableSVG table={t} size={130} clickable={false}/>
                       </div>
                     );
@@ -3981,8 +4009,7 @@ ${savedEvsList||"Yoxdur"}`;
                 setChatWizard(null);
                 return;
               }
-              const next = applyGuests([g], tabRef.current);
-              setTables(next);
+              setTables(ts=>ts.map(x=>x.id===t.id?{...x,guests:[...x.guests,g]}:x));
               setChatWizard(null);
               const newOc = oc+totalAdd;
               setMsgs(m=>[...m,{role:"agent",
@@ -4026,14 +4053,13 @@ ${savedEvsList||"Yoxdur"}`;
                     <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.55)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,overflow:"hidden"}}>
                       <span style={{padding:"0 8px",fontSize:12,color:"rgba(33,26,22,.55)",fontWeight:600}}>+994</span>
                       <input autoFocus value={chatWizard.phone} onChange={e=>setChatWizard(w=>({...w,phone:e.target.value.replace(/[^\d\s\-]/g,"")}))}
-                        placeholder="XX XXX XX XX (istəyə bağlı)" style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",outline:"none",fontSize:12,color:"#211A16"}}/>
+                        placeholder="XX XXX XX XX" style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",outline:"none",fontSize:12,color:"#211A16"}}/>
                     </div>
-                    <div style={{display:"flex",gap:6}}>
-                      <button onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
-                        style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Keç</button>
-                      <button onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
-                        style={{flex:2,padding:"9px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>Növbəti →</button>
-                    </div>
+                    <button disabled={chatWizard.phone.replace(/\D/g,"").length<7} onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
+                      style={{padding:"9px",borderRadius:12,border:"none",
+                        background:chatWizard.phone.replace(/\D/g,"").length>=7?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                        color:chatWizard.phone.replace(/\D/g,"").length>=7?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,
+                        cursor:chatWizard.phone.replace(/\D/g,"").length>=7?"pointer":"default"}}>Növbəti →</button>
                   </>
                 ) : chatWizard.step==="gender" ? (
                   <div style={{display:"flex",gap:6}}>
