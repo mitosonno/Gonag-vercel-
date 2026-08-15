@@ -875,14 +875,14 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   return (
     <div style={{position:"relative",width:"100%"}}>
       {/* Zoom controls */}
-      <div style={{position:"absolute",top:4,right:4,zIndex:40,display:"flex",gap:1,alignItems:"center",
-        background:"rgba(0,0,0,.45)",borderRadius:5,padding:"2px 4px",pointerEvents:"auto"}}>
-        <span style={{fontSize:8,color:"rgba(201,168,76,.45)",minWidth:22,textAlign:"center"}}>{Math.round(zoom*100)+"%"}</span>
+      <div style={{position:"absolute",top:6,right:6,zIndex:40,display:"flex",gap:2,alignItems:"center",
+        background:"rgba(255,255,255,.5)",backdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,.5)",borderRadius:12,padding:"3px 6px",pointerEvents:"auto"}}>
+        <span style={{fontSize:8,color:"rgba(33,26,22,.55)",minWidth:22,textAlign:"center",fontFamily:"'IBM Plex Mono',monospace"}}>{Math.round(zoom*100)+"%"}</span>
         <button onClick={function(){
           zoomRef.current=1; panXRef.current=0; panYRef.current=0;
           setZoom(1);
           if(containerRef.current) containerRef.current.style.transform="translate(0px,0px) scale(1)";
-        }} style={{width:20,height:16,borderRadius:3,border:"none",background:"transparent",color:"rgba(201,168,76,.5)",fontSize:9,cursor:"pointer",padding:0,lineHeight:1}}>↺</button>
+        }} style={{width:20,height:16,borderRadius:6,border:"none",background:"transparent",color:"#C1382A",fontSize:9,cursor:"pointer",padding:0,lineHeight:1}}>↺</button>
       </div>
 
       {/* Outer wrapper — sabit, overflow hidden */}
@@ -1174,10 +1174,11 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     style={{position:"absolute",top:-6,right:-6,
                       width:22,height:22,
                       borderRadius:"50%",
-                      background:"rgba(201,168,76,.9)",color:"#F7F4EE",
+                      background:"linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55))",backdropFilter:"blur(6px)",
+                      border:"1px solid rgba(255,255,255,.6)",color:"#C1382A",
                       fontSize:11,display:"flex",
                       alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
-                      boxShadow:"0 1px 4px rgba(0,0,0,.6)",
+                      boxShadow:"0 2px 6px rgba(60,40,20,.25)",
                       touchAction:"manipulation",
                       transform:`scale(${1/zoom})`,transformOrigin:"top right"}}>✏</div>}
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
@@ -3570,27 +3571,27 @@ ${savedEvsList||"Yoxdur"}`;
 
 
       {schemaOpen&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:100}} onClick={()=>tryCloseSchema()}>
-          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"#F7F4EE",borderTop:"1px solid rgba(201,168,76,.2)",borderRadius:"20px 20px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.4)",backdropFilter:"blur(8px)",zIndex:100}} onClick={()=>tryCloseSchema()}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"linear-gradient(180deg,rgba(255,255,255,.8),rgba(245,238,224,.65))",backdropFilter:"blur(26px) saturate(160%)",WebkitBackdropFilter:"blur(26px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset",borderRadius:"26px 26px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
             {/* Handle */}
             <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
-              <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)"}}/>
+              <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 10px"}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:16}}>🗺️ Masa Sxemi</div>
+                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:17,fontWeight:600}}>🗺️ Masa Sxemi</div>
                 {schemaTutStep===-1&&(
                   <button onClick={()=>setSchemaTutStep(1)}
-                    style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(201,168,76,.4)",
-                      background:"rgba(201,168,76,.1)",color:"#c9a84c",fontSize:11,cursor:"pointer",
+                    style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
+                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,cursor:"pointer",
                       display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>?</button>
                 )}
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
                   <button onClick={()=>setRealPhotoOpen(true)}
-                    style={{padding:"4px 10px",borderRadius:8,border:"1px solid rgba(201,168,76,.35)",
-                      background:"rgba(201,168,76,.1)",color:"#c9a84c",fontSize:11,
+                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
+                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#211A16",fontSize:11,
                       fontWeight:700,cursor:"pointer"}}>
                     📸 Real şəkil
                   </button>
@@ -3739,7 +3740,7 @@ ${savedEvsList||"Yoxdur"}`;
             )}
 
             {/* Alt — Dəvətnamələri göndər */}
-            <div style={{padding:"8px 16px 16px",borderTop:"1px solid rgba(201,168,76,.08)",textAlign:"center"}}>
+            <div style={{padding:"10px 16px 18px",borderTop:"1px solid rgba(255,255,255,.4)",textAlign:"center"}}>
               <button onClick={function(){
                 setSchemaChanged(false);
                 setSchemaOpen(false);
@@ -3750,12 +3751,12 @@ ${savedEvsList||"Yoxdur"}`;
                   text:"Saxlanıldı! "+totG+" qonaq, "+tblCount+" masa dolu.",
                   qrs:[]}];});
                 pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-              }} style={{padding:"10px",borderRadius:10,border:"none",width:"100%",
-                background:"linear-gradient(90deg,rgba(201,168,76,.4),rgba(201,168,76,.2))",
-                color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              }} style={{padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",width:"100%",
+                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",
+                color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
                 📨 Dəvətnamələri göndər
               </button>
-              <div style={{fontSize:9,color:"rgba(201,168,76,.35)",marginTop:5}}>
+              <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:6}}>
                 Siz həmişə qonaq masasını redaktə edə bilərsiniz
               </div>
             </div>
