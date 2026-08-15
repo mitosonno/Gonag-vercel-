@@ -2797,6 +2797,9 @@ export default function App(){
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceRecogRef = useRef(null);
   const voiceActiveRef = useRef(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
   const [hist, setHist] = useState([]);
   const [ev, setEv] = useState({});
   const [evType, setEvType] = useState("");
@@ -3590,103 +3593,80 @@ ${savedEvsList||"Yoxdur"}`;
     inpRef.current&&inpRef.current.focus();
   }
 
-  function gulivaSpeak(text){
-    if(!text) return;
-    // Android Chrome-da speechSynthesis user gesture tələb edir
-    // Voices yüklənməyibsə — yenidən cəhd et
-    const doSpeak = ()=>{
-      if(!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang="az-AZ"; u.rate=1.0; u.pitch=1.1; u.volume=1;
-      const vs=window.speechSynthesis.getVoices();
-      // Əvvəlcə Azərbaycan, sonra Türk, sonra Rus, sonra default
-      const v=vs.find(x=>x.lang.startsWith("az"))
-        ||vs.find(x=>x.lang.startsWith("tr"))
-        ||vs.find(x=>x.lang.startsWith("ru"))
-        ||vs.find(x=>x.lang.startsWith("en")&&x.name.toLowerCase().includes("female"))
-        ||vs[0];
-      if(v) u.voice=v;
+  async function gulivaSpeak(text){
+    if(!text || !text.trim()) return;
+    try{
       setIsSpeaking(true);
-      u.onend=()=>{
+      const res = await fetch("/api/tts",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({text, voice:"nova"})
+      });
+      if(!res.ok){ setIsSpeaking(false); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if(audioPlayerRef.current){ try{ audioPlayerRef.current.pause(); }catch(e){} }
+      const audio = new Audio(url);
+      audioPlayerRef.current = audio;
+      audio.onended = ()=>{
         setIsSpeaking(false);
-        setTimeout(()=>{
-          if(voiceActiveRef.current && !isListening) startVoice();
-        },400);
+        URL.revokeObjectURL(url);
       };
-      u.onerror=()=>{ setIsSpeaking(false); };
-      window.speechSynthesis.speak(u);
-      // Android workaround — səs başlamırsa resume et
-      setTimeout(()=>{
-        if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-      },100);
-    };
-    const vs=window.speechSynthesis.getVoices();
-    if(vs.length>0){ doSpeak(); }
-    else{
-      window.speechSynthesis.onvoiceschanged=()=>{ doSpeak(); };
-      // 500ms gözlə, əgər voices gəlmədisə yenə cəhd et
-      setTimeout(doSpeak, 500);
-    }
+      audio.onerror = ()=>{ setIsSpeaking(false); };
+      await audio.play();
+    }catch(e){ setIsSpeaking(false); }
   }
 
   function toggleVoice(){
-    if(isSpeaking){ window.speechSynthesis&&window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    if(isSpeaking){
+      if(audioPlayerRef.current){ try{ audioPlayerRef.current.pause(); }catch(e){} }
+      setIsSpeaking(false);
+      return;
+    }
     if(isListening){ stopVoice(); return; }
     startVoice();
   }
 
-  function startVoice(){
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){ alert("Mikrofon bu brauzerdə işləmir. Chrome istifadə edin."); return; }
-    const r=new SR();
-    r.lang="az-AZ"; r.interimResults=false; r.continuous=true;
-    r.onstart=()=>setIsListening(true);
-    r.onresult=e=>{
-      // Yalnız son nəticəni al
-      const result = e.results[e.results.length-1];
-      if(!result.isFinal) return;
-      const t=result[0].transcript.trim();
-      if(!t) return;
-      const lower=t.toLowerCase();
-      // "Guliya dur/dayans/stop" — dayandır
-      if(lower.includes("dur")||lower.includes("dayans")||lower.includes("stop")){
-        gulivaSpeak("Dayandım. Lazım olanda yenidən çağırın.");
-        stopVoice();
-        return;
-      }
-      // "Guliya" açar sözü təkrar aktivləşmə
-      if((lower==="guliya"||lower==="güliya")&&lower.length<10){
-        gulivaSpeak("Bəli, buyurun!");
-        return;
-      }
-      send(t);
-    };
-    r.onerror=e=>{
-      if(e.error==="not-allowed"){ gulivaSpeak("Mikrofon icazəsi lazımdır."); setIsListening(false); return; }
-      // Digər xətalarda yenidən başla
-      if(voiceActiveRef.current && e.error!=="aborted"){
-        setTimeout(()=>{ if(voiceActiveRef.current) startVoice(); },1000);
-      }
-    };
-    r.onend=()=>{
-      setIsListening(false);
-      // Guliya danışmırsa və aktiv rejim varsa — yenidən başla
-      if(voiceActiveRef.current){
-        setTimeout(()=>{
-          if(voiceActiveRef.current) startVoice();
-        },500);
-      }
-    };
-    voiceRecogRef.current=r;
-    voiceActiveRef.current=true;
-    try{ r.start(); }catch(e){}
+  async function startVoice(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const rec = new MediaRecorder(stream, {mimeType});
+      audioChunksRef.current = [];
+      rec.ondataavailable = e=>{ if(e.data && e.data.size>0) audioChunksRef.current.push(e.data); };
+      rec.onstop = async ()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        setIsListening(false);
+        if(audioChunksRef.current.length===0) return;
+        const blob = new Blob(audioChunksRef.current, {type:mimeType});
+        if(blob.size < 800) return; // çox qısa — səs yoxdur
+        const reader = new FileReader();
+        reader.onloadend = async ()=>{
+          const base64 = reader.result.split(",")[1];
+          try{
+            const res = await fetch("/api/stt",{
+              method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({audioBase64:base64, mimeType})
+            });
+            const data = await res.json();
+            const text = (data.text||"").trim();
+            if(text) send(text);
+          }catch(e){}
+        };
+        reader.readAsDataURL(blob);
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setIsListening(true);
+    }catch(e){
+      alert("Mikrofon icazəsi lazımdır 🙏");
+    }
   }
 
   function stopVoice(){
-    voiceActiveRef.current=false;
+    if(mediaRecorderRef.current && mediaRecorderRef.current.state!=="inactive"){
+      try{ mediaRecorderRef.current.stop(); }catch(e){}
+    }
     setIsListening(false);
-    if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
 
   const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%);}\n.glass,.tb,.pill,.tt,.menu3,.bb.a,.qb,.qbn,.ir .inp,.sndb,.rsp,.back-btn,.ev-card,.gcard,.rsvp-row,.dev-opt,.stat-card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 8px 22px -8px rgba(60,40,20,.22);position:relative;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin:14px 12px 0;border-radius:22px;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#C1382A;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;}\n.dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 8px rgba(193,56,42,.65);animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,.35)}70%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 7px rgba(193,56,42,0)}100%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,0)}}\n.pn{font-size:11px;color:#211A16;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:16px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.menu3{width:32px;height:32px;border-radius:50%;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.4);background:transparent;}\n.schema-panel{flex:1;overflow:hidden;background:transparent;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(150,120,80,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 10px rgba(193,56,42,.5);border:none;}\n.av.u{background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25));backdrop-filter:blur(10px);}\n.bb{padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{color:#211A16;border-radius:18px 18px 18px 5px;}\n.bb.u{background:linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);color:#F5EEE0;margin-left:auto;border-radius:18px 18px 5px 18px;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 26px -10px rgba(0,0,0,.5);}\n.qw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}\n.qb{padding:7px 13px;border-radius:18px;color:#211A16;font-size:11.5px;cursor:pointer;font-weight:600;}\n.qb:hover{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#C1382A;box-shadow:0 0 4px rgba(193,56,42,.6);animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:10px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.inp{flex:1;background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:10px 16px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:rgba(193,56,42,.5);}\n.sndb{width:38px;height:38px;padding:0;background:linear-gradient(155deg,#FF6B52,#C1382A);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -2px rgba(193,56,42,.55),0 1px 0 rgba(255,255,255,.3) inset;}\n.sndb:hover{filter:brightness(1.08);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}\n.qbar{display:flex;gap:6px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.4);flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:7px 13px;border-radius:18px;color:#6B6259;font-size:11px;cursor:pointer;font-weight:600;}\n.qbn:hover{border-color:rgba(193,56,42,.4);color:#C1382A;}\n.qbn.on{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.cnt{display:inline-block;margin-left:4px;background:linear-gradient(155deg,#EFC988,#D4AF5A);color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;box-shadow:0 0 4px rgba(212,175,90,.5);}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.45);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{border-radius:26px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.4);}\n.rsi{width:100%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:9px 13px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:8px 15px;border-radius:14px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.pbar-bg{height:5px;background:rgba(150,120,80,.15);border-radius:3px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#FF9B85,#C1382A);border-radius:3px;transition:width .5s;box-shadow:0 0 6px rgba(193,56,42,.4);}\n.glass::before,.tb::before,.pill::before,.tt::before,.bb.a::before,.qb::before,.qbn::before,.inp::before,.rsp::before,.ev-card::before,.gcard::before,.rsvp-row::before,.dev-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.55) 0%,transparent 30%,transparent 70%,rgba(255,255,255,.2) 100%);pointer-events:none;}
