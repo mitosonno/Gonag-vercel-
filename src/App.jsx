@@ -3484,6 +3484,17 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
       setBusy(false); return;
     }
+    if(txt==="💬 Chat-da əlavə et"){
+      const firstOpen = tabRef.current.find(t=>occ(t)<t.seats);
+      if(firstOpen){
+        setActiveTable(firstOpen.id);
+        setChatWizard({tableId:firstOpen.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:`Yaxşı, Masa ${firstOpen.id} ilə başlayaq 👇`,qrs:[]}]);
+      } else {
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Bütün masalar doludur! 🎉",qrs:[]}]);
+      }
+      setBusy(false); return;
+    }
 
     // ═══ ONBOARDING STATE MACHINE — tamamilə client-side ═══
     function obReply(msg, qrs=[]){
@@ -3635,16 +3646,16 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="customSeats"){
       if(txt==="Masanın öz tutumu"){
         setHall(h=>({...h, _step:"done"}));
-        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nHansı masadan başlayaq?`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
+        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
       if(["6","8","10","12"].includes(txt)){
         const n=parseInt(txt);
         setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nHansı masadan başlayaq?`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
+        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
@@ -3652,8 +3663,8 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         const n=parseInt(txt);
         if(n>=1&&n<=30){
           setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nHansı masadan başlayaq?`;
-          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"],hallOverview:true}]);
+          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
         }
