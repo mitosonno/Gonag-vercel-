@@ -976,9 +976,9 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
 
             {/* Custom zal divar konturu — Zal Builder-də çəkilmiş */}
             {hall&&hall._wallPath&&hall._wallPath.length>2&&(
-              <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
-                <polygon points={hall._wallPath.map(p=>p.x+"%,"+p.y+"%").join(" ")}
-                  fill="rgba(255,255,255,.15)" stroke="rgba(150,120,80,.4)" strokeWidth="1.5"/>
+              <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
+                <polygon points={hall._wallPath.map(p=>p.x+","+p.y).join(" ")}
+                  fill="rgba(255,255,255,.15)" stroke="rgba(150,120,80,.4)" strokeWidth="0.4"/>
               </svg>
             )}
 
@@ -2579,6 +2579,19 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
+  const [existingVenues, setExistingVenues] = useState([]); // [{name, halls:[names]}]
+  useEffect(function(){
+    sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
+      if(!rows) return;
+      const byV = {};
+      rows.forEach(h=>{
+        if(!h.venue_name) return;
+        if(!byV[h.venue_name]) byV[h.venue_name]=[];
+        byV[h.venue_name].push(h.name);
+      });
+      setExistingVenues(Object.entries(byV).map(([name,halls])=>({name,halls})));
+    });
+  },[]);
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
   const movedRef = useRef(false);
@@ -2706,6 +2719,23 @@ function HallBuilderPanel({ onClose, onSaved }){
           <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Tutum" type="number"
             style={{width:74,padding:"9px 8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
         </div>
+        {existingVenues.length>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+            {existingVenues.map(v=>(
+              <button key={v.name} onClick={()=>setVenueName(v.name)}
+                style={{padding:"4px 10px",borderRadius:12,border:"1px solid "+(venueName===v.name?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+                  background:venueName===v.name?"rgba(193,56,42,.14)":"rgba(255,255,255,.3)",backdropFilter:"blur(6px)",
+                  color:venueName===v.name?"#C1382A":"#6B6259",fontSize:9.5,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {v.name} ({v.halls.length})
+              </button>
+            ))}
+          </div>
+        )}
+        {venueName.trim() && existingVenues.find(v=>v.name.toLowerCase()===venueName.trim().toLowerCase()) && (
+          <div style={{fontSize:9.5,color:"rgba(76,154,110,.9)",background:"rgba(76,154,110,.1)",padding:"6px 10px",borderRadius:10}}>
+            Bu restoranda artıq: {existingVenues.find(v=>v.name.toLowerCase()===venueName.trim().toLowerCase()).halls.join(", ")} — yeni zal əlavə edirsiniz
+          </div>
+        )}
         <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
           📷 {photoUrl?"Şəkil yükləndi — dəyişmək üçün klik":"Zalın şəklini/planını yüklə (istəyə bağlı)"}
           <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
@@ -2748,8 +2778,8 @@ function HallBuilderPanel({ onClose, onSaved }){
         border:"1px solid rgba(255,255,255,.5)",cursor:"crosshair",touchAction:"none"}}>
 
         {wallPoints.length>1 && (
-          <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
-            <polygon points={polyPoints} fill="rgba(193,56,42,.1)" stroke="#C1382A" strokeWidth="2"/>
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
+            <polygon points={wallPoints.map(p=>p.x+","+p.y).join(" ")} fill="rgba(193,56,42,.1)" stroke="#C1382A" strokeWidth="0.6"/>
           </svg>
         )}
         {wallPoints.map((p,i)=>(
@@ -2811,14 +2841,19 @@ function HallBuilderPanel({ onClose, onSaved }){
         </div>
       )}
 
-      <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:8}}>
+      <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:6}}>
         <button onClick={()=>{
           if(mode==="wall") setWallPoints(p=>p.slice(0,-1));
           else if(mode==="column") setColumns(c=>c.slice(0,-1));
           else if(mode==="zone") setZones(z=>z.slice(0,-1));
           else if(mode==="table") setTables(t=>t.slice(0,-1));
         }}
-          style={{padding:"12px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>↺ Sonuncunu sil</button>
+          style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:10.5,cursor:"pointer",whiteSpace:"nowrap"}}>↺ Sonuncu</button>
+        <button onClick={()=>{
+          if(!confirm("Bütün zal (divarlar, sütunlar, zonalar, masalar) sıfırlansın?")) return;
+          setWallPoints([]); setColumns([]); setZones([]); setTables([]); setPhotoUrl(null);
+        }}
+          style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(193,56,42,.35)",background:"rgba(193,56,42,.1)",backdropFilter:"blur(8px)",color:"#C1382A",fontSize:10.5,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>🗑 Sıfırla</button>
         <button onClick={saveHall} disabled={saving}
           style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",
             background:"linear-gradient(155deg,#5EB889,#3d8259)",backdropFilter:"blur(8px)",
