@@ -363,7 +363,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
   const slotR = size>100 ? 10 : 7;
 
   // Ring color based on fill level
-  const tc = full ? "#50c878" : pct > 0.7 ? "#f5a623" : pct > 0 ? "#c9a84c" : "rgba(201,168,76,.35)";
+  const tc = full ? "#4C7A5E" : pct > 0.7 ? "#C9A84C" : pct > 0 ? "#B23A2E" : "#B8AC9C";
 
   function slotColor(g, isUshaq){
     if(isUshaq) return "#f5d060";
@@ -408,12 +408,12 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
             else if(g && onGuestClick) onGuestClick(g);
           }}>
             <circle cx={sx} cy={sy} r={slotR}
-              fill={isEmpty ? "rgba(255,255,255,.9)" : sc+"33"}
+              fill={isEmpty ? "#FFFFFF" : sc+"33"}
               stroke={sc}
-              strokeWidth={isEmpty?"1":"1.8"}
-              opacity={isEmpty?0.5:1}
+              strokeWidth={isEmpty?"1.6":"1.8"}
+              opacity={isEmpty?0.8:1}
             />
-            {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="rgba(201,168,76,.4)" fontWeight="700">+</text>}
+            {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
             {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
             {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
             {g&&(()=>{
@@ -887,7 +887,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
         width:"100%", height:canvasH+"px",
         position:"relative", overflow:"hidden",
         borderRadius:14, border:"2px solid rgba(201,168,76,.25)",
-        background:"linear-gradient(160deg,#F7F4EE,#FFFFFF)",
+        background:"#EDE8DC",
         boxShadow:"inset 0 0 40px rgba(0,0,0,.4), inset 0 0 0 10px rgba(201,168,76,.04)",
         touchAction:"pan-y", userSelect:"none"
       }}>
@@ -1097,7 +1097,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     const r = S/2;
                     const seatR = r + S*0.16;
                     const seats = t.seats||8;
-                    const stateColor = fu?"#4C7A5E":side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#8A8296";
+                    const stateColor = fu?"#4C7A5E":side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#8A6FA8";
                     const ringColor = longPressSelected.has(t.id)?"#B23A2E":fpOpen?"#211A16":stateColor;
                     const totalSvgSize = S + S*0.62;
                     const cx = totalSvgSize/2;
@@ -1110,22 +1110,21 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                           const sx = cx + seatR*Math.cos(angle);
                           const sy = cy + seatR*Math.sin(angle);
                           const filled = i < oc;
-                          const seedColor = filled ? stateColor : "none";
-                          const seedW = Math.max(3, S*0.13), seedH = Math.max(4.5, S*0.19);
+                          const seedW = Math.max(3.5, S*0.15), seedH = Math.max(5, S*0.21);
                           return (
                             <ellipse key={i}
                               cx={sx} cy={sy} rx={seedW/2} ry={seedH/2}
-                              fill={seedColor}
-                              stroke={filled?"none":"#D8D0C2"}
-                              strokeWidth={filled?0:1.1}
-                              opacity={filled?0.92:1}
+                              fill={filled?stateColor:"#FFFFFF"}
+                              stroke={stateColor}
+                              strokeWidth={filled?0.5:1.6}
+                              opacity={filled?1:0.55}
                               transform={`rotate(${(angle*180/Math.PI)+90} ${sx} ${sy})`}
                             />
                           );
                         })}
                         {/* Masa dairəsi — ağ, incə haşiyə */}
-                        <circle cx={cx} cy={cy} r={r-2} fill="#FFFFFF" stroke={ringColor} strokeWidth="2"
-                          style={{filter:"drop-shadow(0 1px 3px rgba(33,26,22,.15))"}}/>
+                        <circle cx={cx} cy={cy} r={r-2} fill="#FFFFFF" stroke={ringColor} strokeWidth="2.5"
+                          style={{filter:"drop-shadow(0 1px 4px rgba(33,26,22,.22))"}}/>
                         {/* Qonaq sayı — tünd mürəkkəb rəngi */}
                         <text x={cx} y={side&&side!=="Ümumi"?cy-S*0.1:cy}
                           textAnchor="middle" dominantBaseline="middle"
