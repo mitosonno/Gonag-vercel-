@@ -2377,15 +2377,17 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       const rsvpLink=code?baseUrl+"/rsvp/"+code:baseUrl;
       const phone=(g.phone||"").replace(/\D/g,"");
       const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+      // Pəncərəni DƏRHAL açırıq (async işlərdən əvvəl) ki, brauzer blok etməsin
+      const waWin = phone ? window.open("about:blank","_blank") : null;
       const c=makeCanvas(g.name);
       await new Promise(resolve=>{
-        c.toBlob(async(blob)=>{
+        c.toBlob((blob)=>{
           if(blob){
             const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
             a.href=URL.createObjectURL(blob); a.click();
-            await new Promise(r=>setTimeout(r,700));
           }
-          if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+          if(phone && waWin) waWin.location.href="https://wa.me/"+phone+"?text="+encodeURIComponent(msg);
+          else if(waWin) waWin.close();
           resolve();
         },"image/png");
       });
@@ -2396,23 +2398,25 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
   }
 
   async function sendOneWA(g){
+    const phone=(g.phone||"").replace(/\D/g,"");
+    // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (hələ heç bir await olmadan) — klikin sinxron içində
+    const waWin = window.open("about:blank","_blank");
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
-    const phone=(g.phone||"").replace(/\D/g,"");
     const code = await createRsvp(g, activeTbl);
     const baseUrl = window.location.origin;
     const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
-    // Şəkli endirib, HƏMİŞƏ birbaşa o adamın WhatsApp söhbətinə keçirik
+    // Şəkli endirib, əvvəlcədən açılmış pəncərəni WhatsApp linkinə yönləndiririk
     const c = makeCanvas(g.name);
-    c.toBlob(async (blob)=>{
+    c.toBlob((blob)=>{
       if(blob){
         const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
         a.href=URL.createObjectURL(blob); a.click();
-        await new Promise(r=>setTimeout(r,600));
       }
-      if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
-      else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+      const link = phone ? "https://wa.me/"+phone+"?text="+encodeURIComponent(msg) : "https://wa.me/?text="+encodeURIComponent(msg);
+      if(waWin) waWin.location.href=link;
+      else window.open(link,"_blank");
     },"image/png");
   }
 
@@ -4849,23 +4853,21 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     return code;
   }
 
-  async function shareMsg(phone, msg, canvas){
+  async function shareMsg(phone, msg, canvas, preOpenedWin){
     return new Promise(resolve=>{
-      canvas.toBlob(async(blob)=>{
-        // Şəkli əvvəlcə yaddaşa endiririk (adı ilə, kimin olduğu aydın olsun)
+      canvas.toBlob((blob)=>{
         if(blob){
           try{
             const a=document.createElement("a");
             a.download="devetname-"+(phone||"qonaq")+".png";
             a.href=URL.createObjectURL(blob);
             a.click();
-            await new Promise(r=>setTimeout(r,500));
           }catch(e){}
         }
-        // Sonra HƏMİŞƏ birbaşa o nömrənin WhatsApp söhbətinə keçirik —
-        // ümumi paylaşma menyusu istifadə etmirik, çünki orada səhv kontakt seçilə bilər
-        if(phone){
-          window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        if(phone && preOpenedWin){
+          preOpenedWin.location.href="https://wa.me/"+phone+"?text="+encodeURIComponent(msg);
+        } else if(preOpenedWin){
+          preOpenedWin.close();
         }
         resolve();
       },"image/png");
@@ -4880,13 +4882,15 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       for(const g of (tbl.guests||[])){
         const phone=(g.phone||"").replace(/\D/g,"");
         if(!phone) continue;
+        // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (createRsvp-dəki await-dan öncə)
+        const waWin = window.open("about:blank","_blank");
         const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
-        await shareMsg(phone,msg,c);
+        await shareMsg(phone,msg,c,waWin);
         await new Promise(r=>setTimeout(r,800));
       }
     }
