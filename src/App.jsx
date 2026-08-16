@@ -4902,6 +4902,8 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     if(!singleGuest) return;
     const {guest,tbl}=singleGuest;
     const phone=(guest.phone||"").replace(/\D/g,"");
+    // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (createRsvp-in await-ından öncə)
+    const waWin = window.open("about:blank","_blank");
     const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
     const baseUrl=window.location.origin;
     const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
@@ -4910,7 +4912,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
     const c=document.createElement("canvas");
     drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
-    await shareMsg(phone,msg,c);
+    await shareMsg(phone,msg,c,waWin);
     onMarkSent&&onMarkSent([guest.id]);
     setSingleGuest(null);
     setSingleStep("list");
