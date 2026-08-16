@@ -897,10 +897,9 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       <div ref={wrapperRef} style={{
         width:"100%", height:canvasH+"px",
         position:"relative", overflow:"hidden",
-        borderRadius:28, border:"1px solid rgba(255,255,255,.5)",
-        background:"linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08))",
-        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
-        boxShadow:"inset 0 1px 0 rgba(255,255,255,.5), inset 0 -20px 40px -20px rgba(160,130,90,.15), 0 8px 24px -8px rgba(60,40,20,.2)",
+        borderRadius:28, border:"1px solid rgba(212,175,90,.35)",
+        background:"radial-gradient(ellipse at 50% 0%, #FFFDF7, #F5EFE0 60%, #EEE4CC)",
+        boxShadow:"inset 0 0 0 1px rgba(212,175,90,.2), 0 8px 24px -8px rgba(60,40,20,.2)",
         touchAction:"pan-y", userSelect:"none"
       }}>
         {/* Inner canvas — scale+pan burada */}
@@ -989,7 +988,15 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   var a=hall._wallPath.find(function(p){return p.id===ed.from;});
                   var b=hall._wallPath.find(function(p){return p.id===ed.to;});
                   if(!a||!b) return null;
-                  return <line key={idx} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgba(150,120,80,.5)" strokeWidth="0.4"/>;
+                  return (
+                    <g key={idx}>
+                      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C9A25E" strokeWidth="0.6" strokeLinecap="round"/>
+                      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#FFF9EC" strokeWidth="0.18" strokeLinecap="round"/>
+                    </g>
+                  );
+                })}
+                {hall._wallPath.map(function(p){
+                  return <circle key={p.id} cx={p.x} cy={p.y} r="0.35" fill="#C9A25E" opacity="0.6"/>;
                 })}
               </svg>
             )}
@@ -998,9 +1005,10 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
             {hall&&hall._columns&&hall._columns.map(function(c,idx){
               return (
                 <div key={idx} style={{position:"absolute",left:c.xPct+"%",top:c.yPct+"%",transform:"translate(-50%,-50%)",
-                  width:14,height:14,borderRadius:3,
-                  background:"repeating-linear-gradient(45deg,#8A7A6E,#8A7A6E 2px,#B8AC9C 2px,#B8AC9C 4px)",
-                  border:"1px solid rgba(90,78,69,.5)",zIndex:1,pointerEvents:"none"}}/>
+                  width:14,height:14,borderRadius:"50%",
+                  background:"radial-gradient(circle at 35% 30%, #F5EFE2, #D8CCA8)",
+                  border:"1px solid #B8A06A",boxShadow:"0 2px 5px -2px rgba(60,40,20,.3)",
+                  zIndex:1,pointerEvents:"none"}}/>
               );
             })}
 
@@ -1008,22 +1016,23 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
             {hasHallElements&&hall._hallElements.map(function(el,idx){
               var isDF=el.type==="danceFloor", isBG=el.type==="brideGroom",
                   isStage=el.type==="stage", isEnt=el.type==="entrance";
+              var bg = isDF?"linear-gradient(155deg,#F9DCE3,#F3C4D0)":isBG?"linear-gradient(155deg,#FFF7E0,#FDECC0)":isStage?"linear-gradient(155deg,#DCEBF9,#C4DDF3)":"linear-gradient(155deg,#E8F3E4,#D4EACB)";
+              var bd = isDF?"#E8A8BA":isBG?"#D4AF5A":isStage?"#A8C7E8":"#9FCB8A";
+              var tcol = isDF?"#B06B7E":isBG?"#8A6B1E":isStage?"#5B84B0":"#5A8F4A";
               return (
                 <div key={idx} style={{
                   position:"absolute",
                   left:el.xPct+"%", top:el.yPct+"%",
                   width:el.w+"%", height:el.h+"%",
                   transform:"translate(-50%,-50%)",
-                  background:isDF?"rgba(130,50,90,.15)":isBG?"rgba(201,168,76,.06)":isStage?"rgba(70,110,190,.07)":"rgba(70,190,110,.07)",
-                  border:isDF?"1.5px dashed rgba(200,100,150,.45)":isBG?"1px solid rgba(201,168,76,.3)":isStage?"1px solid rgba(100,140,220,.25)":"1px solid rgba(70,190,110,.3)",
-                  borderRadius:isDF?10:8,
-                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
+                  background:bg, border:"1px solid "+bd,
+                  borderRadius:12,
+                  boxShadow:"0 3px 10px -4px rgba(120,90,40,.25), inset 0 1px 0 rgba(255,255,255,.6)",
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
                   zIndex:2,pointerEvents:"none",userSelect:"none"
                 }}>
                   <span style={{fontSize:isDF?16:11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
-                  <span style={{fontSize:8,fontWeight:700,letterSpacing:0.5,lineHeight:1,
-                    color:isDF?"rgba(220,130,165,.8)":isBG?"rgba(255,210,100,.8)":isStage?"rgba(130,175,240,.7)":"rgba(70,190,110,.7)"
-                  }}>{el.label}</span>
+                  <span style={{fontSize:7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1,color:tcol}}>{el.label}</span>
                 </div>
               );
             })}
@@ -1128,63 +1137,53 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   </div>
 
                   {(()=>{
-                    const r = S/2;
-                    const seatR = r + S*0.16;
                     const seats = t.seats||8;
-                    const stateColor = fu?"#4C9A6E":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":"#8A6FA8";
-                    const stateGlow = fu?"#7ED6A5":side==="Oğlan evi"?"#FF9B85":side==="Qız evi"?"#EFC988":"#B99BD6";
-                    const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":stateColor;
-                    const totalSvgSize = S + S*0.62;
-                    const cx = totalSvgSize/2;
-                    const cy = totalSvgSize/2;
-                    const gid = "orb"+t.id;
+                    const isVip = (t.label||"").toLowerCase().includes("vip");
+                    const statusColor = fu?"#C1382A":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":oc>0?"#B99BD6":"#8FBF9A";
+                    const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":isVip?"#D4AF5A":"#C9A25E";
+                    const wrapSize = S*1.66;
                     return (
-                      <svg width={totalSvgSize} height={totalSvgSize} style={{display:"block",pointerEvents:"none",overflow:"visible"}}>
-                        <defs>
-                          <radialGradient id={gid} cx="35%" cy="30%">
-                            <stop offset="0%" stopColor={stateGlow}/>
-                            <stop offset="100%" stopColor={stateColor}/>
-                          </radialGradient>
-                        </defs>
-                        {/* Nar dənələri — hər qonaq bir dənə, şüşə parıltısı ilə */}
+                      <div style={{position:"relative",width:wrapSize,height:wrapSize,pointerEvents:"none"}}>
                         {Array.from({length:seats}).map((_,i)=>{
-                          const angle = (2*Math.PI/seats)*i - Math.PI/2;
-                          const sx = cx + seatR*Math.cos(angle);
-                          const sy = cy + seatR*Math.sin(angle);
-                          const filled = i < oc;
-                          const seedW = Math.max(3.5, S*0.15), seedH = Math.max(5, S*0.21);
+                          const angle=(i/seats)*Math.PI*2 - Math.PI/2;
+                          const cx=50+Math.cos(angle)*38, cy=50+Math.sin(angle)*38;
+                          const filled = i<oc;
                           return (
-                            <ellipse key={i}
-                              cx={sx} cy={sy} rx={seedW/2} ry={seedH/2}
-                              fill={filled?`url(#${gid})`:"rgba(255,255,255,.55)"}
-                              stroke={stateColor}
-                              strokeWidth={filled?0.4:1.5}
-                              opacity={filled?1:0.75}
-                              style={filled?{filter:`drop-shadow(0 0 2px ${stateColor}99)`}:undefined}
-                              transform={`rotate(${(angle*180/Math.PI)+90} ${sx} ${sy})`}
-                            />
+                            <div key={i} style={{
+                              position:"absolute",left:cx+"%",top:cy+"%",
+                              transform:`translate(-50%,-50%) rotate(${angle+Math.PI/2}rad)`,
+                              width:Math.max(3,S*0.15),height:Math.max(4.5,S*0.21),borderRadius:"3px 3px 6px 6px",
+                              background:filled?(isVip?"linear-gradient(180deg,#F3E2B0,#D4AF5A)":`linear-gradient(180deg,${statusColor}CC,${statusColor})`):"linear-gradient(180deg,#EDE6D5,#D8CFB5)",
+                              border:"0.5px solid rgba(150,120,60,.45)",
+                              opacity: filled?1:0.65,
+                              boxShadow: filled?`0 0 3px ${statusColor}88`:"none"
+                            }}/>
                           );
                         })}
-                        {/* Masa dairəsi — şüşə kürə */}
-                        <circle cx={cx} cy={cy} r={r-2} fill="rgba(255,255,255,.7)" stroke={ringColor} strokeWidth="2.5"
-                          style={{filter:`drop-shadow(0 2px 6px rgba(60,40,20,.25))`}}/>
-                        <circle cx={cx-(r-2)*0.32} cy={cy-(r-2)*0.35} r={(r-2)*0.34} fill="rgba(255,255,255,.65)"/>
-                        {/* Qonaq sayı — tünd mürəkkəb rəngi */}
-                        <text x={cx} y={side&&side!=="Ümumi"?cy-S*0.1:cy}
-                          textAnchor="middle" dominantBaseline="middle"
-                          fontSize={S*0.26} fontWeight="700"
-                          fill="#211A16">
-                          {isExtra?"E":oc}
-                        </text>
-                        {/* Tərəf yazısı */}
+                        <div style={{
+                          position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",
+                          width:S*0.62,height:S*0.62,borderRadius:"50%",
+                          background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F5EFE2)",
+                          border:"1.5px solid "+ringColor,
+                          boxShadow:"0 4px 10px -3px rgba(60,40,20,.35), inset 0 1px 3px rgba(255,255,255,.85)",
+                          display:"flex",alignItems:"center",justifyContent:"center"
+                        }}>
+                          <div style={{
+                            width:"60%",height:"60%",borderRadius:"50%",
+                            background:isVip?"linear-gradient(155deg,#D4AF5A,#B8923E)":"linear-gradient(155deg,#3D2E1F,#211A16)",
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            color:"#FFF9EC",fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:Math.max(9,S*0.26)
+                          }}>
+                            {isExtra?"E":oc}
+                          </div>
+                        </div>
                         {side&&side!=="Ümumi"&&(
-                          <text x={cx} y={cy+S*0.2} textAnchor="middle" dominantBaseline="middle"
-                            fontSize={Math.max(8,S*0.13)} fontWeight="600"
-                            fill={stateColor}>
+                          <div style={{position:"absolute",left:"50%",bottom:"6%",transform:"translateX(-50%)",
+                            fontSize:Math.max(7,S*0.12),fontWeight:700,color:statusColor,whiteSpace:"nowrap"}}>
                             {side==="Oğlan evi"?"Oğlan":"Qız"}
-                          </text>
+                          </div>
                         )}
-                      </svg>
+                      </div>
                     );
                   })()}
 
