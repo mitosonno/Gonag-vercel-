@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import Hall3D from "./Hall3D.jsx";
 
 const RESTAURANTS = [
   { id:0, name:"Gülüstan Sarayı", address:"Şəhriyar küç. 2, Bakı", halls:[{id:1,name:"Böyük Zal",cap:200,hasLayout:true},{id:2,name:"Kiçik Zal",cap:160,hasLayout:true}] },
@@ -3057,6 +3058,7 @@ export default function App(){
   const [agentSlotTable, setAgentSlotTable] = useState(null);
   const [restOpen, setRestOpen] = useState(false);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
+  const [hall3DOpen, setHall3DOpen] = useState(false);
   const [customHalls, setCustomHalls] = useState([]);
   useEffect(function(){
     if(!restOpen) return;
@@ -4294,6 +4296,10 @@ ${savedEvsList||"Yoxdur"}`;
         />
       )}
 
+      {hall3DOpen&&(
+        <Hall3D hall={hall} tables={tables} onClose={()=>setHall3DOpen(false)}/>
+      )}
+
       {/* SCHEMA BOTTOM DRAWER */}
       {/* STATİSTİKA */}
       {statsOpen&&(
@@ -4324,6 +4330,14 @@ ${savedEvsList||"Yoxdur"}`;
                 )}
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                {tables.length>0&&(
+                  <button onClick={()=>setHall3DOpen(true)}
+                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(76,154,110,.4)",
+                      background:"rgba(76,154,110,.14)",backdropFilter:"blur(6px)",color:"#4C9A6E",fontSize:11,
+                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                    🎬 Render et
+                  </button>
+                )}
                 {hall&&hall._videoUrl&&(
                   <button onClick={()=>window.open(hall._videoUrl,"_blank")}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
