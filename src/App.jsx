@@ -2380,14 +2380,12 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       const c=makeCanvas(g.name);
       await new Promise(resolve=>{
         c.toBlob(async(blob)=>{
-          if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-            try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
-          } else {
+          if(blob){
             const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
-            a.href=c.toDataURL("image/png"); a.click();
+            a.href=URL.createObjectURL(blob); a.click();
             await new Promise(r=>setTimeout(r,700));
-            if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
           }
+          if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
           resolve();
         },"image/png");
       });
@@ -2405,25 +2403,16 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
     const baseUrl = window.location.origin;
     const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
-    // Web Share API ilə şəkil + mətn birlikdə göndər
+    // Şəkli endirib, HƏMİŞƏ birbaşa o adamın WhatsApp söhbətinə keçirik
     const c = makeCanvas(g.name);
     c.toBlob(async (blob)=>{
-      if(blob && navigator.canShare && navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-        try{
-          await navigator.share({
-            files:[new File([blob],"devetname.png",{type:"image/png"})],
-            text: msg
-          });
-          return;
-        }catch(e){ /* istifadəçi ləğv etdi */ return; }
+      if(blob){
+        const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+        a.href=URL.createObjectURL(blob); a.click();
+        await new Promise(r=>setTimeout(r,600));
       }
-      // Web Share dəstəklənmirsə — PNG endir + WhatsApp aç
-      const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
-      a.href=c.toDataURL("image/png"); a.click();
-      setTimeout(()=>{
-        if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
-        else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-      },600);
+      if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+      else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
     },"image/png");
   }
 
@@ -4863,12 +4852,20 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
   async function shareMsg(phone, msg, canvas){
     return new Promise(resolve=>{
       canvas.toBlob(async(blob)=>{
-        if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-          try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
-        } else {
-          const a=document.createElement("a"); a.download="devetname.png"; a.href=canvas.toDataURL("image/png"); a.click();
-          await new Promise(r=>setTimeout(r,500));
-          if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+        // Şəkli əvvəlcə yaddaşa endiririk (adı ilə, kimin olduğu aydın olsun)
+        if(blob){
+          try{
+            const a=document.createElement("a");
+            a.download="devetname-"+(phone||"qonaq")+".png";
+            a.href=URL.createObjectURL(blob);
+            a.click();
+            await new Promise(r=>setTimeout(r,500));
+          }catch(e){}
+        }
+        // Sonra HƏMİŞƏ birbaşa o nömrənin WhatsApp söhbətinə keçirik —
+        // ümumi paylaşma menyusu istifadə etmirik, çünki orada səhv kontakt seçilə bilər
+        if(phone){
+          window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
         }
         resolve();
       },"image/png");
