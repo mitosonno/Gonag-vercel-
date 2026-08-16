@@ -97,6 +97,7 @@ export default function Hall3D({ hall, tables, onClose }){
         for(let cx=0; cx<cols; cx++){
           for(let cz=0; cz<rows; cz++){
             const tile = cache.floorTile.clone();
+            tile.rotation.x = -Math.PI/2; // model şaquli yaradılıb — üfüqi (yerə) çeviririk
             tile.position.set((cx-cols/2+0.5)*5, 0, (cz-rows/2+0.5)*5);
             scene.add(tile);
           }
@@ -115,6 +116,7 @@ export default function Hall3D({ hall, tables, onClose }){
           const len = Math.sqrt(dx*dx+dz*dz) || 0.1;
           const angle = Math.atan2(dz,dx);
           const wall = cache.wall.clone();
+          wall.rotation.x = Math.PI/2; // model üfüqi yaradılıb — şaquli (ayaq üstə) çeviririk
           const scaleX = len/3.05; // modular_wall.glb ~3.05m uzunluğunda
           wall.scale.set(scaleX, 1, 1);
           wall.position.set((ax+bx)/2, 0, (az+bz)/2);
@@ -134,6 +136,12 @@ export default function Hall3D({ hall, tables, onClose }){
             : null;
           if(key && cache[key]){
             const m = cache[key].clone();
+            // Bəzi modellər şaquli, bəziləri üfüqi yaradılıb — hərəsinə görə düzəldirik
+            if(key==="danceFloor" || key==="musicStage"){
+              m.rotation.x = -Math.PI/2;
+            } else if(key==="door"){
+              m.rotation.x = Math.PI/2;
+            }
             m.position.set(x,0,z);
             scene.add(m);
           }
