@@ -1126,16 +1126,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     opacity:allInvited?0.45:1,transition:"opacity .3s"}}
                   className={pulseId===t.id?"tpulse":longPressSelected.has(t.id)?"lp-selected":""}>
 
-                  {/* Masa nömrəsi — üstündə */}
-                  <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                    fontSize:hasHallElements?Math.max(11,S*0.38):Math.max(8,S*0.18),
-                    fontWeight:700,
-                    color:"#211A16",
-                    textShadow:"none",
-                    whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2}}>
-                    {isExtra?"":t.id}
-                  </div>
-
                   {(()=>{
                     const seats = t.seats||8;
                     const isVip = (t.label||"").toLowerCase().includes("vip");
@@ -1190,26 +1180,15 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   {/* Masa adı — altında */}
                   {t.label&&t.label!=="__extra__"&&(
                     <div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(7,S*0.16),fontWeight:600,
-                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#6B6259",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2,marginTop:2}}>
+                      fontSize:Math.max(9,S*0.19),fontWeight:700,
+                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
+                      background:"rgba(255,253,247,.9)",padding:"1px 7px",borderRadius:8,
+                      boxShadow:"0 1px 4px rgba(60,40,20,.2)",
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginTop:3}}>
                       {t.label}
                     </div>
                   )}
 
-                  {!editMode&&<div
-                    id={t.id===tables[0]?.id?"schema-edit-pencil":undefined}
-                    onClick={e=>{e.stopPropagation(); setFpPopupTbl(t); setFpPopup(p=>p===t.id?null:t.id);}}
-                    style={{position:"absolute",top:-6,right:-6,
-                      width:22,height:22,
-                      borderRadius:"50%",
-                      background:"linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55))",backdropFilter:"blur(6px)",
-                      border:"1px solid rgba(255,255,255,.6)",color:"#C1382A",
-                      fontSize:11,display:"flex",
-                      alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
-                      boxShadow:"0 2px 6px rgba(60,40,20,.25)",
-                      touchAction:"manipulation",
-                      transform:`scale(${1/zoom})`,transformOrigin:"top right"}}>✏</div>}
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
                     <div className="finger" style={{position:"absolute",top:0,left:"50%",
                       fontSize:22,zIndex:20,pointerEvents:"none",lineHeight:1}}>👆</div>
@@ -1482,6 +1461,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [slotCount, setSlotCount] = useState("1");
   const [slotGender, setSlotGender] = useState("");
   const [slotExtras, setSlotExtras] = useState([]);
+  const [slotAdding, setSlotAdding] = useState(false);
   const slotRef = useRef(null);
   const guestPanelRef = useRef(null);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -1728,23 +1708,24 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         <div ref={guestPanelRef} style={{marginTop:12,background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 8px 22px -8px rgba(60,40,20,.2)",borderRadius:22,padding:16}}>
 
           {/* Table header */}
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
             {editLbl&&(
               <div style={{display:"flex",gap:5,flex:1,alignItems:"center"}}>
                 <input value={lblVal} onChange={e=>setLblVal(e.target.value)} autoFocus
-                  onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal);setEditLbl(false);}}} placeholder="Masanın adı..."
+                  onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal,exTbl.side);setEditLbl(false);}}} placeholder="Masanın adı..."
                   style={{flex:1,padding:"7px 11px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,color:"#211A16",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none"}}/>
-                <button onClick={()=>{onLabel(expandedId,lblVal);setEditLbl(false);}} style={{padding:"7px 13px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
+                <button onClick={()=>{onLabel(expandedId,lblVal,exTbl.side);setEditLbl(false);}} style={{padding:"7px 13px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
                 <button onClick={()=>setEditLbl(false)} style={{padding:"7px 11px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
             )}
             {!editLbl&&(
               <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                <div style={{flex:1}} onClick={()=>{setLblVal(exTbl.label&&exTbl.label!=="__extra__"?exTbl.label:"");setEditLbl(true);}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}>
                     <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
+                    <span style={{fontSize:11,color:"#5B84B0"}}>✏️</span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
                     <span style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>
@@ -1755,6 +1736,22 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 <button onClick={()=>{setExpandedId(null);setPopup(null);}} style={{width:28,height:28,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
             )}
+          </div>
+
+          {/* Tərəf seçimi */}
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {[["Oğlan evi","#C1382A"],["Qız evi","#D4AF5A"],["Ümumi","#8A6FA8"]].map(([s,sc])=>{
+              const active = (exTbl.side||"Ümumi")===s || (s==="Ümumi"&&!exTbl.side);
+              return (
+                <button key={s} onClick={()=>onLabel(expandedId,exTbl.label,s==="Ümumi"?"":s)}
+                  style={{flex:1,padding:"7px 4px",borderRadius:12,fontSize:10.5,fontWeight:700,cursor:"pointer",
+                    border:"1px solid "+(active?sc+"66":"rgba(255,255,255,.5)"),
+                    background:active?sc+"1E":"rgba(255,255,255,.35)",
+                    color:active?sc:"rgba(33,26,22,.5)"}}>
+                  {s}
+                </button>
+              );
+            })}
           </div>
 
           {/* TableSVG */}
@@ -1853,19 +1850,23 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
               <button onClick={()=>{
                 if(!slotName.trim()) return;
+                if(slotAdding) return;
+                setSlotAdding(true);
                 const uc=(slotExtras.find(x=>x.type==="usher")||{count:0}).count;
                 const addCount=(parseInt(slotCount)||1)+uc;
                 const curOcc=occ(exTbl);
                 const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<exTbl.seats) ? hall.plannedSeatsPerTable : exTbl.seats;
                 if(curOcc+addCount > effectiveCap){
                   alert(`⚠️ Masa doludur!\n\nBu masa üçün ${effectiveCap} nəfər planlaşdırılıb (fiziki tutum ${exTbl.seats}), hazırda ${curOcc} dolu.\n${addCount} nəfər əlavə etmək mümkün deyil.\n\nNövbəti masanı doldurun.`);
+                  setSlotAdding(false);
                   return;
                 }
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||""});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);
-              }} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
-                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
-                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
+                setTimeout(()=>setSlotAdding(false),400);
+              }} disabled={slotAdding} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
+                background:slotAdding?"rgba(150,120,80,.3)":"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
+                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:slotAdding?"default":"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
                 ✓ Əlavə et
               </button>
             </div>
