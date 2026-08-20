@@ -1132,11 +1132,12 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   {/* Masa adı — üstdə, oturacaqlarla qarışmasın */}
                   {t.label&&t.label!=="__extra__"&&(
                     <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(9,S*0.19),fontWeight:700,
+                      fontSize:Math.max(11,S*0.24),fontWeight:800,
                       color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
-                      background:"rgba(255,253,247,.92)",padding:"2px 8px",borderRadius:8,
-                      boxShadow:"0 1px 4px rgba(60,40,20,.2)",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:4,zIndex:8}}>
+                      background:"rgba(255,253,247,.95)",padding:"3px 10px",borderRadius:9,
+                      border:"1px solid rgba(212,175,90,.3)",
+                      boxShadow:"0 2px 6px rgba(60,40,20,.22)",
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:5,zIndex:8}}>
                       {t.label}
                     </div>
                   )}
@@ -2629,6 +2630,10 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
   const [existingVenues, setExistingVenues] = useState([]); // [{name, halls:[names]}]
   const [showExistingVenues, setShowExistingVenues] = useState(false);
+  const [infoCollapsed, setInfoCollapsed] = useState(false);
+  useEffect(function(){
+    if(wallPoints.length>=2 && !infoCollapsed) setInfoCollapsed(true);
+  },[wallPoints.length]);
   useEffect(function(){
     sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
       if(!rows) return;
@@ -2779,7 +2784,14 @@ function HallBuilderPanel({ onClose, onSaved }){
         <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,color:"#6B6259",cursor:"pointer"}}>✕</button>
       </div>
 
-      <div style={{padding:"10px 14px",display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
+      <div style={{padding:"6px 14px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <button onClick={()=>setInfoCollapsed(c=>!c)}
+          style={{fontSize:10,color:"#6B6259",background:"none",border:"none",cursor:"pointer",padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>
+          {infoCollapsed?"▾ Zal məlumatları (ad, şəkil, video)":"▲ Gizlət — kətana daha çox yer aç"}
+        </button>
+      </div>
+      {!infoCollapsed&&(
+      <div style={{padding:"6px 14px 0",display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
         <div style={{display:"flex",gap:6}}>
           <input value={venueName} onChange={e=>setVenueName(e.target.value)} placeholder="Restoran adı"
             style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
@@ -2844,7 +2856,7 @@ function HallBuilderPanel({ onClose, onSaved }){
           </label>
         )}
       </div>
-
+      )}
       <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
         {[["wall","🧱 Divar"],["column","🟤 Sütun"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
           <button key={m} onClick={()=>setMode(m)}
@@ -4142,11 +4154,16 @@ ${savedEvsList||"Yoxdur"}`;
                 border:"1px solid rgba(255,255,255,.55)",display:"flex",flexDirection:"column",gap:9}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""} ({oc}/{effectiveCap})</div>
-                  <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
-                    style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
-                      borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
-                    📍 Özüm yerləşdirim
-                  </button>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
+                      style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
+                        borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                      📍 Özüm yerləşdirim
+                    </button>
+                    <button onClick={()=>setChatWizard(null)}
+                      style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",
+                        color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                  </div>
                 </div>
 
                 <input value={t.label&&t.label!=="__extra__"?t.label:""} placeholder="✏️ Masaya ad qoy (məs: VIP, Ailə) — istəyə bağlı"
