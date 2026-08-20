@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import Hall3D from "./Hall3D.jsx";
 
 const RESTAURANTS = [
   { id:0, name:"Gülüstan Sarayı", address:"Şəhriyar küç. 2, Bakı", halls:[{id:1,name:"Böyük Zal",cap:200,hasLayout:true},{id:2,name:"Kiçik Zal",cap:160,hasLayout:true}] },
@@ -1019,20 +1018,21 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               var bg = isDF?"linear-gradient(155deg,#F9DCE3,#F3C4D0)":isBG?"linear-gradient(155deg,#FFF7E0,#FDECC0)":isStage?"linear-gradient(155deg,#DCEBF9,#C4DDF3)":"linear-gradient(155deg,#E8F3E4,#D4EACB)";
               var bd = isDF?"#E8A8BA":isBG?"#D4AF5A":isStage?"#A8C7E8":"#9FCB8A";
               var tcol = isDF?"#B06B7E":isBG?"#8A6B1E":isStage?"#5B84B0":"#5A8F4A";
+              var dfSize = Math.min(el.w,el.h)*0.72; // Rəqs meydanı — kiçik, dairəvi
               return (
                 <div key={idx} style={{
                   position:"absolute",
                   left:el.xPct+"%", top:el.yPct+"%",
-                  width:el.w+"%", height:el.h+"%",
+                  width:isDF?dfSize+"%":el.w+"%", height:isDF?dfSize+"%":el.h+"%",
                   transform:"translate(-50%,-50%)",
                   background:bg, border:"1px solid "+bd,
-                  borderRadius:12,
+                  borderRadius:isDF?"50%":12,
                   boxShadow:"0 3px 10px -4px rgba(120,90,40,.25), inset 0 1px 0 rgba(255,255,255,.6)",
                   display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
                   zIndex:2,pointerEvents:"none",userSelect:"none"
                 }}>
                   <span style={{fontSize:isDF?16:11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
-                  <span style={{fontSize:7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1,color:tcol}}>{el.label}</span>
+                  <span style={{fontSize:7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1,color:tcol,textAlign:"center"}}>{el.label}</span>
                 </div>
               );
             })}
@@ -1951,6 +1951,7 @@ function Bar({val,tot,color}){
 
 function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
+  const ushaqSayi = guests.reduce((s,g)=>s+(g.ushaqCount||0),0);
   const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
   const seats = tables.reduce((s,t)=>s+t.seats,0);
   const kishi = guests.filter(g=>g.gender==="kishi").reduce((s,g)=>s+(g.count||1),0);
@@ -2005,7 +2006,8 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
             {statCard("Kişi",kishi,"#7aade8","👨")}
             {statCard("Qadın",qadin,"#e87aad","👩")}
-            {statCard("Digər",total-kishi-qadin,"rgba(201,168,76,.7)","👤")}
+            {statCard("Uşaq",ushaqSayi,"#D4AF5A","👧")}
+            {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)","👤")}
           </div>
 
           {/* RSVP Bölməsi */}
@@ -2639,6 +2641,19 @@ function HallBuilderPanel({ onClose, onSaved }){
     reader.readAsDataURL(file);
   }
 
+  function handleVideoUpload(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(file.size > 10*1024*1024){
+      alert("⚠️ Video çox böyükdür (maks. 10MB). Zəhmət olmasa daha kiçik/qısa video seçin, ya da telefon quraşdırmalarından sıxışdırın.");
+      e.target.value="";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => setVideoUrl(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
   function ptFromEvent(e){
     const rect = canvasRef.current.getBoundingClientRect();
     const cx = e.touches ? e.touches[0].clientX : e.clientX;
@@ -2800,8 +2815,22 @@ function HallBuilderPanel({ onClose, onSaved }){
             <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
           </label>
         )}
-        <input value={videoUrl} onChange={e=>setVideoUrl(e.target.value)} placeholder="🎥 Zalın reklam videosu linki (YouTube/Instagram, istəyə bağlı)"
-          style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:11,outline:"none",color:"#211A16"}}/>
+        {videoUrl ? (
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)"}}>
+            <video src={videoUrl} style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} muted/>
+            <div style={{flex:1,fontSize:10,color:"rgba(33,26,22,.6)"}}>Zalın videosu yüklənib</div>
+            <label style={{padding:"6px 10px",borderRadius:10,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+              Dəyiş
+              <input type="file" accept="video/*" onChange={handleVideoUpload} style={{display:"none"}}/>
+            </label>
+            <button onClick={()=>setVideoUrl("")} style={{padding:"6px 10px",borderRadius:10,background:"rgba(193,56,42,.12)",color:"#C1382A",fontSize:10,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+          </div>
+        ) : (
+          <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
+            🎥 Zalın real videosunu yüklə (maks. 10MB, istəyə bağlı)
+            <input type="file" accept="video/*" onChange={handleVideoUpload} style={{display:"none"}}/>
+          </label>
+        )}
       </div>
 
       <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
@@ -3028,6 +3057,7 @@ export default function App(){
   const [layoutMode, setLayoutMode] = useState(null); // "ready"|"photo"|"custom"
   const [layoutPickOpen, setLayoutPickOpen] = useState(false);
   const [realPhotoOpen, setRealPhotoOpen] = useState(false);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [hall, setHall] = useState(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
@@ -3058,7 +3088,6 @@ export default function App(){
   const [agentSlotTable, setAgentSlotTable] = useState(null);
   const [restOpen, setRestOpen] = useState(false);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
-  const [hall3DOpen, setHall3DOpen] = useState(false);
   const [customHalls, setCustomHalls] = useState([]);
   useEffect(function(){
     if(!restOpen) return;
@@ -4248,6 +4277,23 @@ ${savedEvsList||"Yoxdur"}`;
         </div>
       )}
 
+      {videoPlayerOpen&&hall&&hall._videoUrl&&(
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(20,15,10,.96)",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}
+          onClick={()=>setVideoPlayerOpen(false)}>
+          <div style={{position:"absolute",top:16,left:0,right:0,textAlign:"center",
+            color:"rgba(212,175,90,.8)",fontSize:12,letterSpacing:1}}>
+            {hall._venueName} — {hall.name}
+          </div>
+          <video src={hall._videoUrl} controls autoPlay playsInline
+            style={{maxWidth:"100%",maxHeight:"75vh",borderRadius:16,boxShadow:"0 20px 50px rgba(0,0,0,.5)"}}
+            onClick={e=>e.stopPropagation()}/>
+          <button onClick={()=>setVideoPlayerOpen(false)}
+            style={{position:"absolute",top:14,right:16,width:32,height:32,borderRadius:"50%",
+              background:"rgba(255,255,255,.15)",border:"none",color:"#F5EEE0",fontSize:16,cursor:"pointer"}}>✕</button>
+        </div>
+      )}
+
       {layoutPickOpen&&(
         <LayoutPickerModal
           hall={layoutPickOpen.hall||hall}
@@ -4296,10 +4342,6 @@ ${savedEvsList||"Yoxdur"}`;
         />
       )}
 
-      {hall3DOpen&&(
-        <Hall3D hall={hall} tables={tables} onClose={()=>setHall3DOpen(false)}/>
-      )}
-
       {/* SCHEMA BOTTOM DRAWER */}
       {/* STATİSTİKA */}
       {statsOpen&&(
@@ -4330,16 +4372,8 @@ ${savedEvsList||"Yoxdur"}`;
                 )}
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                {tables.length>0&&(
-                  <button onClick={()=>setHall3DOpen(true)}
-                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(76,154,110,.4)",
-                      background:"rgba(76,154,110,.14)",backdropFilter:"blur(6px)",color:"#4C9A6E",fontSize:11,
-                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
-                    🎬 Render et
-                  </button>
-                )}
                 {hall&&hall._videoUrl&&(
-                  <button onClick={()=>window.open(hall._videoUrl,"_blank")}
+                  <button onClick={()=>setVideoPlayerOpen(true)}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
                       background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
                       fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
