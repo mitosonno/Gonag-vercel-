@@ -2632,9 +2632,6 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [showExistingVenues, setShowExistingVenues] = useState(false);
   const [infoCollapsed, setInfoCollapsed] = useState(false);
   useEffect(function(){
-    if(wallPoints.length>=2 && !infoCollapsed) setInfoCollapsed(true);
-  },[wallPoints.length]);
-  useEffect(function(){
     sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
       if(!rows) return;
       const byV = {};
@@ -2784,10 +2781,15 @@ function HallBuilderPanel({ onClose, onSaved }){
         <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,color:"#6B6259",cursor:"pointer"}}>✕</button>
       </div>
 
-      <div style={{padding:"6px 14px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+      <div style={{padding:"8px 14px 0",display:"flex",justifyContent:"center",alignItems:"center",flexShrink:0}}>
         <button onClick={()=>setInfoCollapsed(c=>!c)}
-          style={{fontSize:10,color:"#6B6259",background:"none",border:"none",cursor:"pointer",padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>
-          {infoCollapsed?"▾ Zal məlumatları (ad, şəkil, video)":"▲ Gizlət — kətana daha çox yer aç"}
+          style={{fontSize:11.5,fontWeight:700,
+            color:infoCollapsed?"#8A6B1E":"#6B6259",
+            background:infoCollapsed?"linear-gradient(155deg,rgba(212,175,90,.22),rgba(212,175,90,.1))":"rgba(255,255,255,.4)",
+            border:"1px solid "+(infoCollapsed?"rgba(212,175,90,.5)":"rgba(255,255,255,.5)"),
+            borderRadius:14,cursor:"pointer",padding:"8px 16px",display:"flex",alignItems:"center",gap:6,
+            boxShadow:infoCollapsed?"0 2px 8px -2px rgba(212,175,90,.35)":"none"}}>
+          {infoCollapsed?"✏️ Ad/Şəkil/Video — açmaq üçün toxun":"▲ Gizlət — kətana daha çox yer aç"}
         </button>
       </div>
       {!infoCollapsed&&(
