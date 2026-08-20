@@ -58,6 +58,7 @@ AKTİV ƏMRLƏR (cavabın SONUNA əlavə et):
 [OPEN_MECLIS:ID_ya_ad] — yadda saxlanmış məclisi aç
 [ADD_GUEST_PANEL:MasaID] — chat daxilində addım-addım qonaq əlavə etmə formasını başlat (Ad→Telefon→Cins→Say — istifadəçi doldurur, SƏN özün ad/say yazıb əlavə ETMİRSƏN)
 [SHOW_STATS] — statistika göstər
+[SHOW_HALL_OVERVIEW] — zalın bütün masalarının real mövqeli kiçik sxemini chat-da göstər (istifadəçi "zalın necə göründüyünü göstər", "sxemə bax" kimi soruşanda)
 
 VACIB: Qonaq əlavə etmək HƏMİŞƏ [ADD_GUEST_PANEL:ID] ilə olur — heç vaxt özün ad, telefon və ya say uydurub "əlavə olundu" demə. Yalnız formanı başlat, istifadəçi doldursun.
 
@@ -65,6 +66,7 @@ Misal: "masa sxemini göstər" → qısa cavab + [OPEN_SCHEMA]
 Misal: "Masa 5-ə qonaq əlavə et" → cavab + [ADD_GUEST_PANEL:5]
 Misal: "Leyla Mehdi məclisini aç" → cavab + [OPEN_MECLIS:Leyla]
 Misal: "Masa 12-ni dolduraq" → cavab + [OPEN_TABLE:12] + [ADD_GUEST_PANEL:12]
+Misal: "zalın necə göründüyünü göstər" → qısa cavab + [SHOW_HALL_OVERVIEW]
 Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz müqayisəsi + büdcə hesabı`;
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
@@ -1018,7 +1020,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               var bg = isDF?"linear-gradient(155deg,#F9DCE3,#F3C4D0)":isBG?"linear-gradient(155deg,#FFF7E0,#FDECC0)":isStage?"linear-gradient(155deg,#DCEBF9,#C4DDF3)":"linear-gradient(155deg,#E8F3E4,#D4EACB)";
               var bd = isDF?"#E8A8BA":isBG?"#D4AF5A":isStage?"#A8C7E8":"#9FCB8A";
               var tcol = isDF?"#B06B7E":isBG?"#8A6B1E":isStage?"#5B84B0":"#5A8F4A";
-              var dfSize = Math.min(el.w,el.h)*0.72; // Rəqs meydanı — kiçik, dairəvi
+              var dfSize = Math.max(el.w,el.h)*0.95; // Rəqs meydanı — dairəvi, kifayət qədər böyük
               return (
                 <div key={idx} style={{
                   position:"absolute",
@@ -1028,11 +1030,12 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   background:bg, border:"1px solid "+bd,
                   borderRadius:isDF?"50%":12,
                   boxShadow:"0 3px 10px -4px rgba(120,90,40,.25), inset 0 1px 0 rgba(255,255,255,.6)",
-                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:2,
-                  zIndex:2,pointerEvents:"none",userSelect:"none"
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isDF?4:2,
+                  padding:isDF?"6%":0,
+                  zIndex:2,pointerEvents:"none",userSelect:"none",boxSizing:"border-box"
                 }}>
-                  <span style={{fontSize:isDF?16:11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
-                  <span style={{fontSize:7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1,color:tcol,textAlign:"center"}}>{el.label}</span>
+                  <span style={{fontSize:isDF?"clamp(13px,3.2vw,20px)":11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
+                  <span style={{fontSize:isDF?"clamp(6.5px,1.5vw,9px)":7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1.3,color:tcol,textAlign:"center"}}>{el.label}</span>
                 </div>
               );
             })}
@@ -1126,6 +1129,18 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     opacity:allInvited?0.45:1,transition:"opacity .3s"}}
                   className={pulseId===t.id?"tpulse":longPressSelected.has(t.id)?"lp-selected":""}>
 
+                  {/* Masa adı — üstdə, oturacaqlarla qarışmasın */}
+                  {t.label&&t.label!=="__extra__"&&(
+                    <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
+                      fontSize:Math.max(9,S*0.19),fontWeight:700,
+                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
+                      background:"rgba(255,253,247,.92)",padding:"2px 8px",borderRadius:8,
+                      boxShadow:"0 1px 4px rgba(60,40,20,.2)",
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:4,zIndex:8}}>
+                      {t.label}
+                    </div>
+                  )}
+
                   {(()=>{
                     const seats = t.seats||8;
                     const isVip = (t.label||"").toLowerCase().includes("vip");
@@ -1185,18 +1200,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     </div>
                     <span style={{fontSize:Math.max(7,S*0.15),fontWeight:700,color:"#6B5A3A"}}>{oc}/{t.seats}</span>
                   </div>
-
-                  {/* Masa adı — altında */}
-                  {t.label&&t.label!=="__extra__"&&(
-                    <div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(9,S*0.19),fontWeight:700,
-                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
-                      background:"rgba(255,253,247,.9)",padding:"1px 7px",borderRadius:8,
-                      boxShadow:"0 1px 4px rgba(60,40,20,.2)",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginTop:3}}>
-                      {t.label}
-                    </div>
-                  )}
 
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
                     <div className="finger" style={{position:"absolute",top:0,left:"50%",
@@ -2754,13 +2757,13 @@ function HallBuilderPanel({ onClose, onSaved }){
       const layout = tables.map(t=>({id:t.id,xPct:t.x,yPct:t.y,seats:t.seats,label:t.label||""}));
       const elements = zones.map(z=>({type:z.type,xPct:z.x,yPct:z.y,w:z.w,h:z.h,label:z.label}));
       const columnsData = columns.map(c=>({id:c.id,xPct:c.x,yPct:c.y}));
-      await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
+      const createdHall = await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
         wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
-      if(onSaved) onSaved();
+      if(onSaved) onSaved(createdHall && createdHall[0]);
       onClose();
     }catch(e){ alert("Xəta baş verdi, yenidən cəhd edin."); }
     setSaving(false);
@@ -3843,6 +3846,7 @@ ${savedEvsList||"Yoxdur"}`;
       if(raw.includes("[OPEN_INVITE]")){ /* dəvətnamə paneli */ }
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
       if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&pushPanel("stats"); setStatsOpen(true); }
+      let attachHallOverview = raw.includes("[SHOW_HALL_OVERVIEW]");
 
       // [ADD_GUEST_PANEL:ID] — masanın chat-daxili formu başlayır (Ad→Telefon→Cins→Say)
       const addPanelMatch = raw.match(/\[ADD_GUEST_PANEL:(\d+)\]/);
@@ -3881,7 +3885,7 @@ ${savedEvsList||"Yoxdur"}`;
       }
 
       // Əmr etiketlərini cavabdan çıxar (köhnə [ADD_GUEST:...] artıq işlədilmir — tam forma tələb olunur)
-      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
+      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[SHOW_HALL_OVERVIEW\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
 
       const {text,qrs,newEv,adds,focN,labels} = parseCmd(cleanRaw);
       let cur = tabRef.current;
@@ -3896,7 +3900,7 @@ ${savedEvsList||"Yoxdur"}`;
       }
       if(focN!==null) setActiveTable(focN);
       if(qrs.includes("🔍 Restoran axtar")) setRestOpen(true);
-      setMsgs(m=>[...m,{role:"agent",text,qrs,tableSnapshotId:attachTableId}]);
+      setMsgs(m=>[...m,{role:"agent",text,qrs,tableSnapshotId:attachTableId,hallOverview:attachHallOverview}]);
       setHist([...nh,{role:"assistant",content:raw}]);
       // Guliya səslə cavab verir
       const plainText = text.replace(/[🎊✅📅🗺️📸⬜💍💫🎂🏢🥂👇🔍]/g,"").replace(/\n/g," ").trim();
@@ -4021,22 +4025,62 @@ ${savedEvsList||"Yoxdur"}`;
                     <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   ))}
                   {m.hallOverview&&tables.length>0&&(
-                    <div style={{marginTop:9,padding:12,borderRadius:16,
+                    <div style={{marginTop:9,padding:10,borderRadius:16,
                       background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
-                      border:"1px solid rgba(255,255,255,.5)",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                      {tables.map(t=>{
-                        const to=occ(t), tfull=to>=t.seats;
-                        return (
-                          <div key={t.id} onClick={()=>{
-                              if(tfull) return;
-                              setActiveTable(t.id);
-                              setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
-                            }}
-                            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:tfull?"default":"pointer",opacity:tfull?0.55:1}}>
-                            <TableSVG table={t} size={52} clickable={false}/>
-                          </div>
-                        );
-                      })}
+                      border:"1px solid rgba(255,255,255,.5)"}}>
+                      <div style={{position:"relative",width:"100%",aspectRatio:"1/1",borderRadius:12,overflow:"hidden",
+                        background:"radial-gradient(ellipse at 50% 0%, #FFFDF7, #F5EFE0 60%, #EEE4CC)",
+                        border:"1px solid rgba(212,175,90,.3)"}}>
+                        {hall&&hall._wallEdges&&hall._wallPath&&(
+                          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
+                            {hall._wallEdges.map(function(ed,i){
+                              var a=hall._wallPath.find(function(p){return p.id===ed.from;});
+                              var b=hall._wallPath.find(function(p){return p.id===ed.to;});
+                              if(!a||!b) return null;
+                              return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C9A25E" strokeWidth="0.7" strokeLinecap="round"/>;
+                            })}
+                          </svg>
+                        )}
+                        {hall&&hall._hallElements&&hall._hallElements.map(function(el,i){
+                          var isDF=el.type==="danceFloor";
+                          return (
+                            <div key={i} style={{position:"absolute",left:el.xPct+"%",top:el.yPct+"%",
+                              width:(isDF?Math.max(el.w,el.h)*0.9:el.w)+"%",height:(isDF?Math.max(el.w,el.h)*0.9:el.h)+"%",
+                              transform:"translate(-50%,-50%)",borderRadius:isDF?"50%":6,
+                              background:"rgba(255,255,255,.5)",border:"1px solid rgba(212,175,90,.4)",
+                              display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>
+                              {el.type==="danceFloor"?"💃":el.type==="brideGroom"?"👰":el.type==="stage"?"🎸":"🚪"}
+                            </div>
+                          );
+                        })}
+                        {tables.map(t=>{
+                          if(!t.pos) return null;
+                          const to=occ(t), tfull=to>=t.seats;
+                          const isVip=(t.label||"").toLowerCase().includes("vip");
+                          return (
+                            <div key={t.id} onClick={()=>{
+                                if(tfull) return;
+                                setActiveTable(t.id);
+                                setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+                              }}
+                              style={{position:"absolute",left:t.pos.xPct+"%",top:t.pos.yPct+"%",transform:"translate(-50%,-50%)",
+                                width:20,height:20,borderRadius:"50%",cursor:tfull?"default":"pointer",opacity:tfull?0.55:1,
+                                background:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
+                                border:"1.3px solid "+(isVip?"#D4AF5A":"#C9A25E"),
+                                display:"flex",alignItems:"center",justifyContent:"center",
+                                fontSize:9,fontWeight:800,color:"#211A16",fontFamily:"'Fraunces',serif",
+                                boxShadow:"0 2px 4px rgba(60,40,20,.25)"}}>
+                              {t.id}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button onClick={()=>{ pushPanel("schema"); setSchemaOpen(true); }}
+                        style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
+                          background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(10px)",
+                          color:"#F5EEE0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                        🗺️ Sxemə keç
+                      </button>
                     </div>
                   )}
                   {m.tableSnapshotId!=null&&(()=>{
@@ -4336,7 +4380,26 @@ ${savedEvsList||"Yoxdur"}`;
       {hallBuilderOpen&&(
         <HallBuilderPanel
           onClose={()=>setHallBuilderOpen(false)}
-          onSaved={()=>{
+          onSaved={(newHall)=>{
+            // Dərhal, sorğu gözləmədən siyahıya əlavə edirik (yarış şərtini önləmək üçün)
+            if(newHall){
+              setCustomHalls(prev=>{
+                const vname = newHall.venue_name||"Digər";
+                const next = prev.map(v=>({...v, halls:[...v.halls]}));
+                let venueEntry = next.find(v=>v.name===vname);
+                if(!venueEntry){
+                  venueEntry = {id:"custom_"+vname, name:vname, city:"Bakı", halls:[]};
+                  next.unshift(venueEntry);
+                } else {
+                  next.splice(next.indexOf(venueEntry),1);
+                  next.unshift(venueEntry);
+                }
+                venueEntry.halls.unshift({...newHall, hasLayout:true, cap:newHall.capacity});
+                return next;
+              });
+            }
+            setRestOpen(true);
+            // Arxa planda təzələnmiş tam siyahı ilə sinxronlaşdırırıq (əlavə təhlükəsizlik)
             sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
               if(!rows) return;
               const byVenue = {};
