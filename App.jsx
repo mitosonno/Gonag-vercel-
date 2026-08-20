@@ -54,16 +54,19 @@ AKTİV ƏMRLƏR (cavabın SONUNA əlavə et):
 [OPEN_SCHEMA] — masa sxemini aç
 [OPEN_REST] — restoran axtarışını aç
 [OPEN_INVITE] — dəvətnamə panelini aç
-[OPEN_TABLE:ID] — tək masanı seç və aç
+[OPEN_TABLE:ID] — həmin masanın kiçik sxemini chat-da göstər (ad, telefon, cins soruşmadan qonaq YAZMA — bu əmr yalnız göstərir)
 [OPEN_MECLIS:ID_ya_ad] — yadda saxlanmış məclisi aç
-[ADD_GUEST_PANEL:MasaID] — qonaq əlavə etmə formasını aç (istifadəçi özü doldurur)
-[ADD_GUEST:MasaID:Ad:Say] — qonaq əlavə et (agent özü əlavə edir)
+[ADD_GUEST_PANEL:MasaID] — chat daxilində addım-addım qonaq əlavə etmə formasını başlat (Ad→Telefon→Cins→Say — istifadəçi doldurur, SƏN özün ad/say yazıb əlavə ETMİRSƏN)
 [SHOW_STATS] — statistika göstər
+[SHOW_HALL_OVERVIEW] — zalın bütün masalarının real mövqeli kiçik sxemini chat-da göstər (istifadəçi "zalın necə göründüyünü göstər", "sxemə bax" kimi soruşanda)
+
+VACIB: Qonaq əlavə etmək HƏMİŞƏ [ADD_GUEST_PANEL:ID] ilə olur — heç vaxt özün ad, telefon və ya say uydurub "əlavə olundu" demə. Yalnız formanı başlat, istifadəçi doldursun.
 
 Misal: "masa sxemini göstər" → qısa cavab + [OPEN_SCHEMA]
-Misal: "Masa 5-ə qonaq əlavə et" → cavab + [OPEN_SCHEMA] + [ADD_GUEST_PANEL:5]
+Misal: "Masa 5-ə qonaq əlavə et" → cavab + [ADD_GUEST_PANEL:5]
 Misal: "Leyla Mehdi məclisini aç" → cavab + [OPEN_MECLIS:Leyla]
-Misal: "Masa 5-ə Əli əlavə et 3 nəfər" → cavab + [ADD_GUEST:5:Əli:3]
+Misal: "Masa 12-ni dolduraq" → cavab + [OPEN_TABLE:12] + [ADD_GUEST_PANEL:12]
+Misal: "zalın necə göründüyünü göstər" → qısa cavab + [SHOW_HALL_OVERVIEW]
 Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz müqayisəsi + büdcə hesabı`;
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
@@ -426,12 +429,18 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
           </g>
         );
       })}
-      {/* Center label */}
-      <text x={cx} y={cy-(size>100?6:4)} textAnchor="middle" dominantBaseline="middle"
-        fontSize={size>100?11:8} fill={tc} fontWeight="800">
-        {table.label==="__extra__"?"Extra":table.label?table.label.substring(0,8):String(table.id)}
+      {/* Center label — nömrə həmişə görünür, ad varsa altında kiçik */}
+      <text x={cx} y={cy-(size>100?9:5)} textAnchor="middle" dominantBaseline="middle"
+        fontSize={size>100?13:9} fill={tc} fontWeight="800">
+        {table.label==="__extra__"?"Extra":String(table.id)}
       </text>
-      <text x={cx} y={cy+(size>100?10:7)} textAnchor="middle" dominantBaseline="middle"
+      {table.label&&table.label!=="__extra__"&&(
+        <text x={cx} y={cy+(size>100?7:5)} textAnchor="middle" dominantBaseline="middle"
+          fontSize={size>100?7.5:6} fill={tc} opacity="0.75">
+          {table.label.substring(0,10)}
+        </text>
+      )}
+      <text x={cx} y={cy+(size>100?21:11)} textAnchor="middle" dominantBaseline="middle"
         fontSize={size>100?9:6} fill={full?"#50c878":"rgba(201,168,76,.6)"}>
         {totalOcc}/{table.seats}
       </text>
@@ -889,10 +898,9 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
       <div ref={wrapperRef} style={{
         width:"100%", height:canvasH+"px",
         position:"relative", overflow:"hidden",
-        borderRadius:28, border:"1px solid rgba(255,255,255,.5)",
-        background:"linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.08))",
-        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
-        boxShadow:"inset 0 1px 0 rgba(255,255,255,.5), inset 0 -20px 40px -20px rgba(160,130,90,.15), 0 8px 24px -8px rgba(60,40,20,.2)",
+        borderRadius:28, border:"1px solid rgba(212,175,90,.35)",
+        background:"radial-gradient(ellipse at 50% 0%, #FFFDF7, #F5EFE0 60%, #EEE4CC)",
+        boxShadow:"inset 0 0 0 1px rgba(212,175,90,.2), 0 8px 24px -8px rgba(60,40,20,.2)",
         touchAction:"pan-y", userSelect:"none"
       }}>
         {/* Inner canvas — scale+pan burada */}
@@ -974,34 +982,60 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               </div>
             );})()}
 
-            {/* Custom zal divar konturu — Zal Builder-də çəkilmiş */}
-            {hall&&hall._wallPath&&hall._wallPath.length>2&&(
-              <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
-                <polygon points={hall._wallPath.map(p=>p.x+"%,"+p.y+"%").join(" ")}
-                  fill="rgba(255,255,255,.15)" stroke="rgba(150,120,80,.4)" strokeWidth="1.5"/>
+            {/* Custom zal divar konturu — Zal Builder-də çəkilmiş (xətlərlə) */}
+            {hall&&hall._wallEdges&&hall._wallEdges.length>0&&hall._wallPath&&(
+              <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:1}}>
+                {hall._wallEdges.map(function(ed,idx){
+                  var a=hall._wallPath.find(function(p){return p.id===ed.from;});
+                  var b=hall._wallPath.find(function(p){return p.id===ed.to;});
+                  if(!a||!b) return null;
+                  return (
+                    <g key={idx}>
+                      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C9A25E" strokeWidth="0.6" strokeLinecap="round"/>
+                      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#FFF9EC" strokeWidth="0.18" strokeLinecap="round"/>
+                    </g>
+                  );
+                })}
+                {hall._wallPath.map(function(p){
+                  return <circle key={p.id} cx={p.x} cy={p.y} r="0.35" fill="#C9A25E" opacity="0.6"/>;
+                })}
               </svg>
             )}
+
+            {/* Custom zal sütunları */}
+            {hall&&hall._columns&&hall._columns.map(function(c,idx){
+              return (
+                <div key={idx} style={{position:"absolute",left:c.xPct+"%",top:c.yPct+"%",transform:"translate(-50%,-50%)",
+                  width:14,height:14,borderRadius:"50%",
+                  background:"radial-gradient(circle at 35% 30%, #F5EFE2, #D8CCA8)",
+                  border:"1px solid #B8A06A",boxShadow:"0 2px 5px -2px rgba(60,40,20,.3)",
+                  zIndex:1,pointerEvents:"none"}}/>
+              );
+            })}
 
             {/* Kiçik Zal elementləri */}
             {hasHallElements&&hall._hallElements.map(function(el,idx){
               var isDF=el.type==="danceFloor", isBG=el.type==="brideGroom",
                   isStage=el.type==="stage", isEnt=el.type==="entrance";
+              var bg = isDF?"linear-gradient(155deg,#F9DCE3,#F3C4D0)":isBG?"linear-gradient(155deg,#FFF7E0,#FDECC0)":isStage?"linear-gradient(155deg,#DCEBF9,#C4DDF3)":"linear-gradient(155deg,#E8F3E4,#D4EACB)";
+              var bd = isDF?"#E8A8BA":isBG?"#D4AF5A":isStage?"#A8C7E8":"#9FCB8A";
+              var tcol = isDF?"#B06B7E":isBG?"#8A6B1E":isStage?"#5B84B0":"#5A8F4A";
+              var dfSize = Math.max(el.w,el.h)*0.95; // Rəqs meydanı — dairəvi, kifayət qədər böyük
               return (
                 <div key={idx} style={{
                   position:"absolute",
                   left:el.xPct+"%", top:el.yPct+"%",
-                  width:el.w+"%", height:el.h+"%",
+                  width:isDF?dfSize+"%":el.w+"%", height:isDF?dfSize+"%":el.h+"%",
                   transform:"translate(-50%,-50%)",
-                  background:isDF?"rgba(130,50,90,.15)":isBG?"rgba(201,168,76,.06)":isStage?"rgba(70,110,190,.07)":"rgba(70,190,110,.07)",
-                  border:isDF?"1.5px dashed rgba(200,100,150,.45)":isBG?"1px solid rgba(201,168,76,.3)":isStage?"1px solid rgba(100,140,220,.25)":"1px solid rgba(70,190,110,.3)",
-                  borderRadius:isDF?10:8,
-                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,
-                  zIndex:2,pointerEvents:"none",userSelect:"none"
+                  background:bg, border:"1px solid "+bd,
+                  borderRadius:isDF?"50%":12,
+                  boxShadow:"0 3px 10px -4px rgba(120,90,40,.25), inset 0 1px 0 rgba(255,255,255,.6)",
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isDF?4:2,
+                  padding:isDF?"6%":0,
+                  zIndex:2,pointerEvents:"none",userSelect:"none",boxSizing:"border-box"
                 }}>
-                  <span style={{fontSize:isDF?16:11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
-                  <span style={{fontSize:8,fontWeight:700,letterSpacing:0.5,lineHeight:1,
-                    color:isDF?"rgba(220,130,165,.8)":isBG?"rgba(255,210,100,.8)":isStage?"rgba(130,175,240,.7)":"rgba(70,190,110,.7)"
-                  }}>{el.label}</span>
+                  <span style={{fontSize:isDF?"clamp(13px,3.2vw,20px)":11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
+                  <span style={{fontSize:isDF?"clamp(6.5px,1.5vw,9px)":7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1.3,color:tcol,textAlign:"center"}}>{el.label}</span>
                 </div>
               );
             })}
@@ -1035,8 +1069,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                       sx:e.touches[0].clientX,sy:e.touches[0].clientY,
                       offX:touchX-curX, offY:touchY-curY
                     };
-                    // Long press — yalnız 1 barmaq, zoom yoxdursa
-                    if(!editMode && e.touches.length===1 && zoomRef.current<=1.05){
+                    // Long press — yalnız 1 barmaq (istənilən miqyasda işləyir)
+                    if(!editMode && e.touches.length===1){
                       longPressTimer.current=setTimeout(function(){
                         setLongPressSelected(function(prev){
                           var s=new Set(prev);
@@ -1095,100 +1129,79 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     opacity:allInvited?0.45:1,transition:"opacity .3s"}}
                   className={pulseId===t.id?"tpulse":longPressSelected.has(t.id)?"lp-selected":""}>
 
-                  {/* Masa nömrəsi — üstündə */}
-                  <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                    fontSize:hasHallElements?Math.max(11,S*0.38):Math.max(8,S*0.18),
-                    fontWeight:700,
-                    color:"#211A16",
-                    textShadow:"none",
-                    whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2}}>
-                    {isExtra?"":t.id}
-                  </div>
-
-                  {(()=>{
-                    const r = S/2;
-                    const seatR = r + S*0.16;
-                    const seats = t.seats||8;
-                    const stateColor = fu?"#4C9A6E":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":"#8A6FA8";
-                    const stateGlow = fu?"#7ED6A5":side==="Oğlan evi"?"#FF9B85":side==="Qız evi"?"#EFC988":"#B99BD6";
-                    const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":stateColor;
-                    const totalSvgSize = S + S*0.62;
-                    const cx = totalSvgSize/2;
-                    const cy = totalSvgSize/2;
-                    const gid = "orb"+t.id;
-                    return (
-                      <svg width={totalSvgSize} height={totalSvgSize} style={{display:"block",pointerEvents:"none",overflow:"visible"}}>
-                        <defs>
-                          <radialGradient id={gid} cx="35%" cy="30%">
-                            <stop offset="0%" stopColor={stateGlow}/>
-                            <stop offset="100%" stopColor={stateColor}/>
-                          </radialGradient>
-                        </defs>
-                        {/* Nar dənələri — hər qonaq bir dənə, şüşə parıltısı ilə */}
-                        {Array.from({length:seats}).map((_,i)=>{
-                          const angle = (2*Math.PI/seats)*i - Math.PI/2;
-                          const sx = cx + seatR*Math.cos(angle);
-                          const sy = cy + seatR*Math.sin(angle);
-                          const filled = i < oc;
-                          const seedW = Math.max(3.5, S*0.15), seedH = Math.max(5, S*0.21);
-                          return (
-                            <ellipse key={i}
-                              cx={sx} cy={sy} rx={seedW/2} ry={seedH/2}
-                              fill={filled?`url(#${gid})`:"rgba(255,255,255,.55)"}
-                              stroke={stateColor}
-                              strokeWidth={filled?0.4:1.5}
-                              opacity={filled?1:0.75}
-                              style={filled?{filter:`drop-shadow(0 0 2px ${stateColor}99)`}:undefined}
-                              transform={`rotate(${(angle*180/Math.PI)+90} ${sx} ${sy})`}
-                            />
-                          );
-                        })}
-                        {/* Masa dairəsi — şüşə kürə */}
-                        <circle cx={cx} cy={cy} r={r-2} fill="rgba(255,255,255,.7)" stroke={ringColor} strokeWidth="2.5"
-                          style={{filter:`drop-shadow(0 2px 6px rgba(60,40,20,.25))`}}/>
-                        <circle cx={cx-(r-2)*0.32} cy={cy-(r-2)*0.35} r={(r-2)*0.34} fill="rgba(255,255,255,.65)"/>
-                        {/* Qonaq sayı — tünd mürəkkəb rəngi */}
-                        <text x={cx} y={side&&side!=="Ümumi"?cy-S*0.1:cy}
-                          textAnchor="middle" dominantBaseline="middle"
-                          fontSize={S*0.26} fontWeight="700"
-                          fill="#211A16">
-                          {isExtra?"E":oc}
-                        </text>
-                        {/* Tərəf yazısı */}
-                        {side&&side!=="Ümumi"&&(
-                          <text x={cx} y={cy+S*0.2} textAnchor="middle" dominantBaseline="middle"
-                            fontSize={Math.max(8,S*0.13)} fontWeight="600"
-                            fill={stateColor}>
-                            {side==="Oğlan evi"?"Oğlan":"Qız"}
-                          </text>
-                        )}
-                      </svg>
-                    );
-                  })()}
-
-                  {/* Masa adı — altında */}
+                  {/* Masa adı — üstdə, oturacaqlarla qarışmasın */}
                   {t.label&&t.label!=="__extra__"&&(
-                    <div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(7,S*0.16),fontWeight:600,
-                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#C9A84C":"#6B6259",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.2,marginTop:2}}>
+                    <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
+                      fontSize:Math.max(11,S*0.24),fontWeight:800,
+                      color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
+                      background:"rgba(255,253,247,.95)",padding:"3px 10px",borderRadius:9,
+                      border:"1px solid rgba(212,175,90,.3)",
+                      boxShadow:"0 2px 6px rgba(60,40,20,.22)",
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:5,zIndex:8}}>
                       {t.label}
                     </div>
                   )}
 
-                  {!editMode&&<div
-                    id={t.id===tables[0]?.id?"schema-edit-pencil":undefined}
-                    onClick={e=>{e.stopPropagation(); setFpPopupTbl(t); setFpPopup(p=>p===t.id?null:t.id);}}
-                    style={{position:"absolute",top:-6,right:-6,
-                      width:22,height:22,
-                      borderRadius:"50%",
-                      background:"linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55))",backdropFilter:"blur(6px)",
-                      border:"1px solid rgba(255,255,255,.6)",color:"#C1382A",
-                      fontSize:11,display:"flex",
-                      alignItems:"center",justifyContent:"center",zIndex:12,cursor:"pointer",
-                      boxShadow:"0 2px 6px rgba(60,40,20,.25)",
-                      touchAction:"manipulation",
-                      transform:`scale(${1/zoom})`,transformOrigin:"top right"}}>✏</div>}
+                  {(()=>{
+                    const seats = t.seats||8;
+                    const isVip = (t.label||"").toLowerCase().includes("vip");
+                    const statusColor = fu?"#C1382A":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":oc>0?"#B99BD6":"#8FBF9A";
+                    const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":isVip?"#D4AF5A":"#C9A25E";
+                    const wrapSize = S*1.66;
+                    return (
+                      <div style={{position:"relative",width:wrapSize,height:wrapSize,pointerEvents:"none"}}>
+                        {Array.from({length:seats}).map((_,i)=>{
+                          const angle=(i/seats)*Math.PI*2 - Math.PI/2;
+                          const cx=50+Math.cos(angle)*38, cy=50+Math.sin(angle)*38;
+                          const filled = i<oc;
+                          return (
+                            <div key={i} style={{
+                              position:"absolute",left:cx+"%",top:cy+"%",
+                              transform:`translate(-50%,-50%) rotate(${angle+Math.PI/2}rad)`,
+                              width:Math.max(3,S*0.15),height:Math.max(4.5,S*0.21),borderRadius:"3px 3px 6px 6px",
+                              background:filled?(isVip?"linear-gradient(180deg,#F3E2B0,#D4AF5A)":`linear-gradient(180deg,${statusColor}CC,${statusColor})`):"linear-gradient(180deg,#EDE6D5,#D8CFB5)",
+                              border:"0.5px solid rgba(150,120,60,.45)",
+                              opacity: filled?1:0.65,
+                              boxShadow: filled?`0 0 3px ${statusColor}88`:"none"
+                            }}/>
+                          );
+                        })}
+                        <div style={{
+                          position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",
+                          width:S*0.62,height:S*0.62,borderRadius:"50%",
+                          background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F5EFE2)",
+                          border:"1.5px solid "+ringColor,
+                          boxShadow:"0 4px 10px -3px rgba(60,40,20,.35), inset 0 1px 3px rgba(255,255,255,.85)",
+                          display:"flex",alignItems:"center",justifyContent:"center"
+                        }}>
+                          <div style={{
+                            width:"60%",height:"60%",borderRadius:"50%",
+                            background:isVip?"linear-gradient(155deg,#D4AF5A,#B8923E)":"linear-gradient(155deg,#3D2E1F,#211A16)",
+                            display:"flex",alignItems:"center",justifyContent:"center",
+                            color:"#FFF9EC",fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:Math.max(9,S*0.26)
+                          }}>
+                            {isExtra?"E":t.id}
+                          </div>
+                        </div>
+                        {side&&side!=="Ümumi"&&(
+                          <div style={{position:"absolute",left:"50%",bottom:"6%",transform:"translateX(-50%)",
+                            fontSize:Math.max(7,S*0.12),fontWeight:700,color:statusColor,whiteSpace:"nowrap"}}>
+                            {side==="Oğlan evi"?"Oğlan":"Qız"}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Doluluq — dairənin altında, kiçik zolaq + rəqəm */}
+                  <div style={{marginTop:2,display:"flex",flexDirection:"column",alignItems:"center",gap:2,pointerEvents:"none"}}>
+                    <div style={{width:Math.max(24,S*0.7),height:3,borderRadius:2,overflow:"hidden",background:"rgba(150,120,60,.18)"}}>
+                      <div style={{height:"100%",width:Math.min(100,(oc/(t.seats||1))*100)+"%",
+                        background:fu?"#C1382A":oc>0?"#D4AF5A":"#8FBF9A",borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:Math.max(7,S*0.15),fontWeight:700,color:"#6B5A3A"}}>{oc}/{t.seats}</span>
+                  </div>
+
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
                     <div className="finger" style={{position:"absolute",top:0,left:"50%",
                       fontSize:22,zIndex:20,pointerEvents:"none",lineHeight:1}}>👆</div>
@@ -1444,7 +1457,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -1461,6 +1474,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [slotCount, setSlotCount] = useState("1");
   const [slotGender, setSlotGender] = useState("");
   const [slotExtras, setSlotExtras] = useState([]);
+  const [slotAdding, setSlotAdding] = useState(false);
   const slotRef = useRef(null);
   const guestPanelRef = useRef(null);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -1507,6 +1521,61 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
   return (
     <div style={{minHeight:0}}>
+      {/* Cütlük kartı */}
+      {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
+        const title = obData.boy&&obData.girl ? obData.boy+" & "+obData.girl : (obData.name||obData.company||"");
+        const initials = obData.boy&&obData.girl
+          ? (obData.boy[0]||"")+"·"+(obData.girl[0]||"")
+          : (title.split(" ").map(w=>w[0]).slice(0,2).join("")||"?");
+        const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
+        const cap = tables.reduce((s,t)=>s+t.seats,0);
+        return (
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,padding:"13px 15px",borderRadius:20,
+            background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+            border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
+            <div style={{width:42,height:42,borderRadius:"50%",border:"1.5px solid #D4AF5A",background:"rgba(212,175,90,.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:600,color:"#8A6B1E",flexShrink:0}}>
+              {initials}
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+              <div style={{fontSize:9.5,color:"rgba(33,26,22,.5)",marginTop:2}}>
+                {hall&&hall.name} {obData.date?" · "+obData.date:""}
+              </div>
+            </div>
+            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>MASA</div>
+            </div>
+            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{totG}</div>
+              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
+            </div>
+            <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
+              <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
+              <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
+                strokeDasharray={2*Math.PI*13} strokeDashoffset={2*Math.PI*13*(1-(pct||0)/100)}
+                strokeLinecap="round" transform="rotate(-90 17 17)"/>
+              <text x="17" y="20" textAnchor="middle" fontFamily="'IBM Plex Mono',monospace" fontSize="8" fontWeight="700" fill="#211A16">{pct||0}%</text>
+            </svg>
+          </div>
+        );
+      })()}
+
+      {/* Naviqasiya: Sxem / Statistika / Dəvətnamə */}
+      {onOpenStats&&onOpenInvite&&(
+        <div style={{display:"flex",gap:5,marginBottom:10,padding:4,borderRadius:16,
+          background:"linear-gradient(155deg,rgba(255,255,255,.5),rgba(255,255,255,.2))",backdropFilter:"blur(14px)",
+          border:"1px solid rgba(255,255,255,.5)"}}>
+          <div style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff"}}>🗺 Sxem</div>
+          <button onClick={onOpenStats} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📊 Statistika</button>
+          <button onClick={onOpenInvite} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
+            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📨 Dəvətnamə</button>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,
         background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
@@ -1652,33 +1721,50 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         <div ref={guestPanelRef} style={{marginTop:12,background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 8px 22px -8px rgba(60,40,20,.2)",borderRadius:22,padding:16}}>
 
           {/* Table header */}
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
             {editLbl&&(
               <div style={{display:"flex",gap:5,flex:1,alignItems:"center"}}>
                 <input value={lblVal} onChange={e=>setLblVal(e.target.value)} autoFocus
-                  onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal);setEditLbl(false);}}} placeholder="Masanın adı..."
+                  onKeyDown={e=>{if(e.key==="Enter"){onLabel(expandedId,lblVal,exTbl.side);setEditLbl(false);}}} placeholder="Masanın adı..."
                   style={{flex:1,padding:"7px 11px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,color:"#211A16",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none"}}/>
-                <button onClick={()=>{onLabel(expandedId,lblVal);setEditLbl(false);}} style={{padding:"7px 13px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
+                <button onClick={()=>{onLabel(expandedId,lblVal,exTbl.side);setEditLbl(false);}} style={{padding:"7px 13px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:13,cursor:"pointer",fontWeight:700}}>✓</button>
                 <button onClick={()=>setEditLbl(false)} style={{padding:"7px 11px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:13,cursor:"pointer"}}>✕</button>
               </div>
             )}
             {!editLbl&&(
               <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
-                <div style={{flex:1}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)>=exTbl.seats?"#4C9A6E":"#211A16"}}>
+                <div style={{flex:1}} onClick={()=>{setLblVal(exTbl.label&&exTbl.label!=="__extra__"?exTbl.label:"");setEditLbl(true);}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}>
+                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
+                    <span style={{fontSize:11,color:"#5B84B0"}}>✏️</span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
                     <span style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>
-                      {((exTbl&&exTbl.guests)||[]).reduce((s,g)=>s+(g.count||1),0)}/{exTbl.seats} nəfər
+                      {occ(exTbl||{guests:[]})}/{exTbl.seats} nəfər
                     </span>
                   </div>
                 </div>
                 <button onClick={()=>{setExpandedId(null);setPopup(null);}} style={{width:28,height:28,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
               </div>
             )}
+          </div>
+
+          {/* Tərəf seçimi */}
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {[["Oğlan evi","#C1382A"],["Qız evi","#D4AF5A"],["Ümumi","#8A6FA8"]].map(([s,sc])=>{
+              const active = (exTbl.side||"Ümumi")===s || (s==="Ümumi"&&!exTbl.side);
+              return (
+                <button key={s} onClick={()=>onLabel(expandedId,exTbl.label,s==="Ümumi"?"":s)}
+                  style={{flex:1,padding:"7px 4px",borderRadius:12,fontSize:10.5,fontWeight:700,cursor:"pointer",
+                    border:"1px solid "+(active?sc+"66":"rgba(255,255,255,.5)"),
+                    background:active?sc+"1E":"rgba(255,255,255,.35)",
+                    color:active?sc:"rgba(33,26,22,.5)"}}>
+                  {s}
+                </button>
+              );
+            })}
           </div>
 
           {/* TableSVG */}
@@ -1777,18 +1863,23 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
               <button onClick={()=>{
                 if(!slotName.trim()) return;
+                if(slotAdding) return;
+                setSlotAdding(true);
                 const uc=(slotExtras.find(x=>x.type==="usher")||{count:0}).count;
                 const addCount=(parseInt(slotCount)||1)+uc;
                 const curOcc=occ(exTbl);
-                if(curOcc+addCount > exTbl.seats){
-                  alert(`⚠️ Masa doludur!\n\nBu masada ${exTbl.seats} yer var, hazırda ${curOcc} dolu.\n${addCount} nəfər əlavə etmək mümkün deyil.\n\nNövbəti masanı doldurun.`);
+                const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<exTbl.seats) ? hall.plannedSeatsPerTable : exTbl.seats;
+                if(curOcc+addCount > effectiveCap){
+                  alert(`⚠️ Masa doludur!\n\nBu masa üçün ${effectiveCap} nəfər planlaşdırılıb (fiziki tutum ${exTbl.seats}), hazırda ${curOcc} dolu.\n${addCount} nəfər əlavə etmək mümkün deyil.\n\nNövbəti masanı doldurun.`);
+                  setSlotAdding(false);
                   return;
                 }
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||""});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);
-              }} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
-                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
-                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
+                setTimeout(()=>setSlotAdding(false),400);
+              }} disabled={slotAdding} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
+                background:slotAdding?"rgba(150,120,80,.3)":"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
+                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:slotAdding?"default":"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
                 ✓ Əlavə et
               </button>
             </div>
@@ -1873,7 +1964,8 @@ function Bar({val,tot,color}){
 
 function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
-  const total = guests.reduce((s,g)=>s+(g.count||1),0);
+  const ushaqSayi = guests.reduce((s,g)=>s+(g.ushaqCount||0),0);
+  const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
   const seats = tables.reduce((s,t)=>s+t.seats,0);
   const kishi = guests.filter(g=>g.gender==="kishi").reduce((s,g)=>s+(g.count||1),0);
   const qadin = guests.filter(g=>g.gender==="qadin").reduce((s,g)=>s+(g.count||1),0);
@@ -1927,7 +2019,8 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
             {statCard("Kişi",kishi,"#7aade8","👨")}
             {statCard("Qadın",qadin,"#e87aad","👩")}
-            {statCard("Digər",total-kishi-qadin,"rgba(201,168,76,.7)","👤")}
+            {statCard("Uşaq",ushaqSayi,"#D4AF5A","👧")}
+            {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)","👤")}
           </div>
 
           {/* RSVP Bölməsi */}
@@ -2300,17 +2393,17 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       const rsvpLink=code?baseUrl+"/rsvp/"+code:baseUrl;
       const phone=(g.phone||"").replace(/\D/g,"");
       const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+      // Pəncərəni DƏRHAL açırıq (async işlərdən əvvəl) ki, brauzer blok etməsin
+      const waWin = phone ? window.open("about:blank","_blank") : null;
       const c=makeCanvas(g.name);
       await new Promise(resolve=>{
-        c.toBlob(async(blob)=>{
-          if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-            try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
-          } else {
+        c.toBlob((blob)=>{
+          if(blob){
             const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
-            a.href=c.toDataURL("image/png"); a.click();
-            await new Promise(r=>setTimeout(r,700));
-            if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+            a.href=URL.createObjectURL(blob); a.click();
           }
+          if(phone && waWin) waWin.location.href="https://wa.me/"+phone+"?text="+encodeURIComponent(msg);
+          else if(waWin) waWin.close();
           resolve();
         },"image/png");
       });
@@ -2321,32 +2414,25 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
   }
 
   async function sendOneWA(g){
+    const phone=(g.phone||"").replace(/\D/g,"");
+    // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (hələ heç bir await olmadan) — klikin sinxron içində
+    const waWin = window.open("about:blank","_blank");
     const evName=(obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&obData.name?obData.name:"Məclis");
     const gList=guests.map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
-    const phone=(g.phone||"").replace(/\D/g,"");
     const code = await createRsvp(g, activeTbl);
     const baseUrl = window.location.origin;
     const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
-    // Web Share API ilə şəkil + mətn birlikdə göndər
+    // Şəkli endirib, əvvəlcədən açılmış pəncərəni WhatsApp linkinə yönləndiririk
     const c = makeCanvas(g.name);
-    c.toBlob(async (blob)=>{
-      if(blob && navigator.canShare && navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-        try{
-          await navigator.share({
-            files:[new File([blob],"devetname.png",{type:"image/png"})],
-            text: msg
-          });
-          return;
-        }catch(e){ /* istifadəçi ləğv etdi */ return; }
+    c.toBlob((blob)=>{
+      if(blob){
+        const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
+        a.href=URL.createObjectURL(blob); a.click();
       }
-      // Web Share dəstəklənmirsə — PNG endir + WhatsApp aç
-      const a=document.createElement("a"); a.download="devetname-masa"+activeTbl.id+"-"+g.name.replace(/\s/g,"")+".png";
-      a.href=c.toDataURL("image/png"); a.click();
-      setTimeout(()=>{
-        if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
-        else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
-      },600);
+      const link = phone ? "https://wa.me/"+phone+"?text="+encodeURIComponent(msg) : "https://wa.me/?text="+encodeURIComponent(msg);
+      if(waWin) waWin.location.href=link;
+      else window.open(link,"_blank");
     },"image/png");
   }
 
@@ -2531,11 +2617,35 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [capacity, setCapacity] = useState("150");
   const [photoUrl, setPhotoUrl] = useState(null);
   const [mode, setMode] = useState("wall");
-  const [wallPoints, setWallPoints] = useState([]);
+  const [wallPoints, setWallPoints] = useState([]); // [{id,x,y}]
+  const [wallEdges, setWallEdges] = useState([]); // [{id,from,to}]
+  const [selectedPoint, setSelectedPoint] = useState(null);
   const [zones, setZones] = useState([]);
   const [tables, setTables] = useState([]);
+  const [columns, setColumns] = useState([]);
+  const [tableEditId, setTableEditId] = useState(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
+  const [existingVenues, setExistingVenues] = useState([]); // [{name, halls:[names]}]
+  const [showExistingVenues, setShowExistingVenues] = useState(false);
+  const [infoCollapsed, setInfoCollapsed] = useState(false);
+  useEffect(function(){
+    if(wallPoints.length>=2 && !infoCollapsed) setInfoCollapsed(true);
+  },[wallPoints.length]);
+  useEffect(function(){
+    sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
+      if(!rows) return;
+      const byV = {};
+      rows.forEach(h=>{
+        if(!h.venue_name) return;
+        if(!byV[h.venue_name]) byV[h.venue_name]=[];
+        byV[h.venue_name].push(h.name);
+      });
+      setExistingVenues(Object.entries(byV).map(([name,halls])=>({name,halls})));
+    });
+  },[]);
   const canvasRef = useRef(null);
   const dragRef = useRef(null);
   const movedRef = useRef(false);
@@ -2545,6 +2655,19 @@ function HallBuilderPanel({ onClose, onSaved }){
     if(!file) return;
     const reader = new FileReader();
     reader.onload = ev => setPhotoUrl(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handleVideoUpload(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    if(file.size > 10*1024*1024){
+      alert("⚠️ Video çox böyükdür (maks. 10MB). Zəhmət olmasa daha kiçik/qısa video seçin, ya da telefon quraşdırmalarından sıxışdırın.");
+      e.target.value="";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => setVideoUrl(ev.target.result);
     reader.readAsDataURL(file);
   }
 
@@ -2560,13 +2683,46 @@ function HallBuilderPanel({ onClose, onSaved }){
   function canvasClick(e){
     if(movedRef.current){ movedRef.current=false; return; }
     if(!canvasRef.current) return;
-    const {x,y} = ptFromEvent(e);
-    if(mode==="wall"){ setWallPoints(p=>[...p,{x,y}]); }
-    else if(mode==="zone"){ setZoneLabelInput({x,y}); }
+    const raw = ptFromEvent(e);
+    if(mode==="wall"){
+      // Boş yerə klik — sərbəst, birləşməmiş nöqtə əlavə edir
+      const id = wallPoints.length? Math.max(...wallPoints.map(p=>p.id))+1 : 1;
+      setWallPoints(p=>[...p,{id,x:raw.x,y:raw.y}]);
+    }
+    else if(mode==="zone"){ setZoneLabelInput(raw); }
     else if(mode==="table"){
       const id = tables.length? Math.max(...tables.map(t=>t.id))+1 : 1;
-      setTables(t=>[...t,{id,x,y,seats:8,label:""}]);
+      setTables(t=>[...t,{id,x:raw.x,y:raw.y,seats:8,label:""}]);
+      setTableEditId(id);
     }
+    else if(mode==="column"){
+      const id = columns.length? Math.max(...columns.map(c=>c.id))+1 : 1;
+      setColumns(c=>[...c,{id,x:raw.x,y:raw.y}]);
+    }
+  }
+
+  // Nöqtəyə toxunulanda — ilk toxunma seçir, ikinci toxunma xətt çəkib birləşdirir
+  function pointTap(id){
+    if(mode!=="wall") return;
+    if(selectedPoint===null){ setSelectedPoint(id); return; }
+    if(selectedPoint===id){ setSelectedPoint(null); return; }
+    const exists = wallEdges.some(ed=>(ed.from===selectedPoint&&ed.to===id)||(ed.from===id&&ed.to===selectedPoint));
+    if(!exists){
+      const a = wallPoints.find(p=>p.id===selectedPoint), b = wallPoints.find(p=>p.id===id);
+      let x2=b.x, y2=b.y;
+      if(a && snapOn){
+        const dx=b.x-a.x, dy=b.y-a.y, dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist>=1.5){
+          let angle=Math.atan2(dy,dx); const step=Math.PI/12;
+          angle=Math.round(angle/step)*step;
+          x2=Math.max(0,Math.min(100,a.x+dist*Math.cos(angle)));
+          y2=Math.max(0,Math.min(100,a.y+dist*Math.sin(angle)));
+          setWallPoints(p=>p.map(pt=>pt.id===id?{...pt,x:x2,y:y2}:pt));
+        }
+      }
+      setWallEdges(edges=>[...edges,{id:Date.now(),from:selectedPoint,to:id}]);
+    }
+    setSelectedPoint(null);
   }
 
   function addZone(label, type){
@@ -2584,15 +2740,16 @@ function HallBuilderPanel({ onClose, onSaved }){
     movedRef.current = true;
     const {x,y} = ptFromEvent(e);
     const {kind,id} = dragRef.current;
-    if(kind==="wall") setWallPoints(p=>p.map((pt,i)=>i===id?{x,y}:pt));
+    if(kind==="wall") setWallPoints(p=>p.map(pt=>pt.id===id?{...pt,x,y}:pt));
     if(kind==="zone") setZones(z=>z.map(zz=>zz.id===id?{...zz,x,y}:zz));
     if(kind==="table") setTables(t=>t.map(tt=>tt.id===id?{...tt,x,y}:tt));
+    if(kind==="column") setColumns(c=>c.map(cc=>cc.id===id?{...cc,x,y}:cc));
   }
   function dragEnd(){ dragRef.current=null; }
 
   async function saveHall(){
     if(!venueName.trim()||!hallName.trim()){ alert("Restoran və zal adını yazın 🙏"); return; }
-    if(wallPoints.length<3){ alert("Ən azı 3 divar nöqtəsi çəkin (zalın konturu) 🙏"); return; }
+    if(wallEdges.length<3){ alert("Ən azı 3 divar xətti çəkin (nöqtələri bir-birinə toxunub birləşdirin) 🙏"); return; }
     setSaving(true);
     try{
       let venueId = null;
@@ -2604,19 +2761,18 @@ function HallBuilderPanel({ onClose, onSaved }){
       }
       const layout = tables.map(t=>({id:t.id,xPct:t.x,yPct:t.y,seats:t.seats,label:t.label||""}));
       const elements = zones.map(z=>({type:z.type,xPct:z.x,yPct:z.y,w:z.w,h:z.h,label:z.label}));
-      await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
+      const columnsData = columns.map(c=>({id:c.id,xPct:c.x,yPct:c.y}));
+      const createdHall = await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
-        wall_path:wallPoints, photo_url:photoUrl||null, has_layout:true
+        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
-      if(onSaved) onSaved();
+      if(onSaved) onSaved(createdHall && createdHall[0]);
       onClose();
     }catch(e){ alert("Xəta baş verdi, yenidən cəhd edin."); }
     setSaving(false);
   }
-
-  const polyPoints = wallPoints.map(p=>p.x+"%,"+p.y+"%").join(" ");
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:600,
@@ -2628,7 +2784,14 @@ function HallBuilderPanel({ onClose, onSaved }){
         <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,color:"#6B6259",cursor:"pointer"}}>✕</button>
       </div>
 
-      <div style={{padding:"10px 14px",display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
+      <div style={{padding:"6px 14px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <button onClick={()=>setInfoCollapsed(c=>!c)}
+          style={{fontSize:10,color:"#6B6259",background:"none",border:"none",cursor:"pointer",padding:"4px 0",display:"flex",alignItems:"center",gap:4}}>
+          {infoCollapsed?"▾ Zal məlumatları (ad, şəkil, video)":"▲ Gizlət — kətana daha çox yer aç"}
+        </button>
+      </div>
+      {!infoCollapsed&&(
+      <div style={{padding:"6px 14px 0",display:"flex",flexDirection:"column",gap:7,flexShrink:0}}>
         <div style={{display:"flex",gap:6}}>
           <input value={venueName} onChange={e=>setVenueName(e.target.value)} placeholder="Restoran adı"
             style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
@@ -2637,47 +2800,129 @@ function HallBuilderPanel({ onClose, onSaved }){
           <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Tutum" type="number"
             style={{width:74,padding:"9px 8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
         </div>
-        <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
-          📷 {photoUrl?"Şəkil yükləndi — dəyişmək üçün klik":"Zalın şəklini/planını yüklə (istəyə bağlı)"}
-          <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
-        </label>
+        {existingVenues.length>0&&!venueName.trim()&&(
+          <button onClick={()=>setShowExistingVenues(s=>!s)}
+            style={{alignSelf:"flex-start",fontSize:9.5,color:"#5B84B0",background:"none",border:"none",cursor:"pointer",padding:"2px 0",textDecoration:"underline"}}>
+            {showExistingVenues?"▲ Gizlət":"▾ Mövcud restoranlardan seç ("+existingVenues.length+")"}
+          </button>
+        )}
+        {existingVenues.length>0&&showExistingVenues&&!venueName.trim()&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+            {existingVenues.map(v=>(
+              <button key={v.name} onClick={()=>{setVenueName(v.name);setShowExistingVenues(false);}}
+                style={{padding:"4px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",
+                  background:"rgba(255,255,255,.3)",backdropFilter:"blur(6px)",
+                  color:"#6B6259",fontSize:9.5,cursor:"pointer",whiteSpace:"nowrap"}}>
+                {v.name} ({v.halls.length})
+              </button>
+            ))}
+          </div>
+        )}
+        {venueName.trim() && existingVenues.find(v=>v.name.toLowerCase()===venueName.trim().toLowerCase()) && (
+          <div style={{fontSize:9.5,color:"rgba(76,154,110,.9)",background:"rgba(76,154,110,.1)",padding:"6px 10px",borderRadius:10}}>
+            Bu restoranda artıq: {existingVenues.find(v=>v.name.toLowerCase()===venueName.trim().toLowerCase()).halls.join(", ")} — yeni zal əlavə edirsiniz
+          </div>
+        )}
+        {photoUrl ? (
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)"}}>
+            <img src={photoUrl} style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
+            <div style={{flex:1,fontSize:10,color:"rgba(33,26,22,.6)"}}>Zal şəkli (yalnız məlumat üçün — fon deyil)</div>
+            <label style={{padding:"6px 10px",borderRadius:10,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+              Dəyiş
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
+            </label>
+            <button onClick={()=>setPhotoUrl(null)} style={{padding:"6px 10px",borderRadius:10,background:"rgba(193,56,42,.12)",color:"#C1382A",fontSize:10,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+          </div>
+        ) : (
+          <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
+            📷 Zalın şəklini yüklə (yalnız məlumat üçün, istəyə bağlı)
+            <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:"none"}}/>
+          </label>
+        )}
+        {videoUrl ? (
+          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.3)"}}>
+            <video src={videoUrl} style={{width:44,height:44,borderRadius:8,objectFit:"cover",flexShrink:0}} muted/>
+            <div style={{flex:1,fontSize:10,color:"rgba(33,26,22,.6)"}}>Zalın videosu yüklənib</div>
+            <label style={{padding:"6px 10px",borderRadius:10,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+              Dəyiş
+              <input type="file" accept="video/*" onChange={handleVideoUpload} style={{display:"none"}}/>
+            </label>
+            <button onClick={()=>setVideoUrl("")} style={{padding:"6px 10px",borderRadius:10,background:"rgba(193,56,42,.12)",color:"#C1382A",fontSize:10,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+          </div>
+        ) : (
+          <label style={{padding:"9px 12px",borderRadius:12,border:"1px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.3)",fontSize:11,color:"#6B6259",textAlign:"center",cursor:"pointer"}}>
+            🎥 Zalın real videosunu yüklə (maks. 10MB, istəyə bağlı)
+            <input type="file" accept="video/*" onChange={handleVideoUpload} style={{display:"none"}}/>
+          </label>
+        )}
       </div>
-
+      )}
       <div style={{padding:"0 14px",display:"flex",gap:6,flexShrink:0}}>
-        {[["wall","🧱 Divar"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
+        {[["wall","🧱 Divar"],["column","🟤 Sütun"],["zone","🏷 Zona"],["table","🪑 Masa"]].map(([m,l])=>(
           <button key={m} onClick={()=>setMode(m)}
-            style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid "+(mode===m?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+            style={{flex:1,padding:"9px 4px",borderRadius:12,border:"1px solid "+(mode===m?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
               background:mode===m?"rgba(193,56,42,.16)":"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",
-              color:mode===m?"#C1382A":"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
+              color:mode===m?"#C1382A":"#6B6259",fontSize:10,fontWeight:700,cursor:"pointer"}}>{l}</button>
         ))}
       </div>
 
-      <div style={{fontSize:10,color:"#6B6259",padding:"7px 16px",flexShrink:0}}>
-        {mode==="wall"&&"Divar künclərinə ardıcıl klikləyin (ən azı 3 nöqtə) — nöqtələri sonra sürüşdürüb düzəldə bilərsiniz"}
-        {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
-        {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
+      <div style={{padding:"7px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+        <div style={{fontSize:10,color:"#6B6259",flex:1}}>
+          {mode==="wall"&&"Boş yerə klikləyib nöqtə qoyun. 2 nöqtəyə ardıcıl toxunub birləşdirin (yaşıl=seçili). Səhv nöqtəni seçib üstündəki 🗑 ilə silin"}
+          {mode==="column"&&"Sütunun yerinə klikləyin — divardan ayrı, öz nişanı ilə görünür"}
+          {mode==="zone"&&"Kətanə klikləyin — zona növünü seçəcəksiniz (Səhnə, Rəqs meydanı və s.)"}
+          {mode==="table"&&"Kətanə klikləyin — masa əlavə olunacaq, sonra sürüşdürüb yerini düzəldin"}
+        </div>
+        {mode==="wall"&&(
+          <button onClick={()=>setSnapOn(s=>!s)} style={{flexShrink:0,marginLeft:8,padding:"4px 9px",borderRadius:10,
+            border:"1px solid "+(snapOn?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),
+            background:snapOn?"rgba(76,154,110,.18)":"rgba(255,255,255,.3)",
+            color:snapOn?"#4C9A6E":"#6B6259",fontSize:9,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+            {snapOn?"✓ Düzləşdirmə AÇIQ":"Düzləşdirmə BAĞLI"}
+          </button>
+        )}
       </div>
 
       <div ref={canvasRef} onClick={canvasClick}
         onTouchMove={dragMove} onTouchEnd={dragEnd}
         onMouseMove={dragMove} onMouseUp={dragEnd}
         style={{flex:1,margin:"6px 14px",borderRadius:20,position:"relative",overflow:"hidden",
-        backgroundImage:photoUrl?`url(${photoUrl})`:"none",
-        backgroundSize:"contain",backgroundPosition:"center",backgroundRepeat:"no-repeat",
         backgroundColor:"rgba(255,255,255,.4)",
         border:"1px solid rgba(255,255,255,.5)",cursor:"crosshair",touchAction:"none"}}>
 
-        {wallPoints.length>1 && (
-          <svg width="100%" height="100%" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
-            <polygon points={polyPoints} fill="rgba(193,56,42,.1)" stroke="#C1382A" strokeWidth="2"/>
+        {wallEdges.length>0 && (
+          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
+            {wallEdges.map(ed=>{
+              const a = wallPoints.find(p=>p.id===ed.from), b = wallPoints.find(p=>p.id===ed.to);
+              if(!a||!b) return null;
+              return <line key={ed.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C1382A" strokeWidth="0.7"/>;
+            })}
           </svg>
         )}
-        {wallPoints.map((p,i)=>(
-          <div key={i}
-            onTouchStart={e=>dragStart("wall",i,e)} onMouseDown={e=>dragStart("wall",i,e)}
-            style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",
-            width:16,height:16,borderRadius:"50%",background:"#C1382A",border:"2px solid #fff",cursor:"grab",zIndex:5,
-            boxShadow:"0 2px 5px rgba(0,0,0,.3)"}}/>
+        {wallPoints.map((p)=>(
+          <div key={p.id} style={{position:"absolute",left:p.x+"%",top:p.y+"%",transform:"translate(-50%,-50%)",zIndex:5}}>
+            <div
+              onTouchStart={e=>dragStart("wall",p.id,e)} onMouseDown={e=>dragStart("wall",p.id,e)}
+              onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) pointTap(p.id); }}
+              style={{
+              width:selectedPoint===p.id?20:16,height:selectedPoint===p.id?20:16,borderRadius:"50%",
+              background:selectedPoint===p.id?"#4C9A6E":"#C1382A",
+              border:"2px solid #fff",cursor:"grab",
+              boxShadow:selectedPoint===p.id?"0 0 0 4px rgba(76,154,110,.3), 0 2px 5px rgba(0,0,0,.3)":"0 2px 5px rgba(0,0,0,.3)",
+              transition:"width .15s,height .15s"}}/>
+            {selectedPoint===p.id&&(
+              <button onClick={e=>{
+                  e.stopPropagation();
+                  setWallEdges(edges=>edges.filter(ed=>ed.from!==p.id&&ed.to!==p.id));
+                  setWallPoints(pts=>pts.filter(x=>x.id!==p.id));
+                  setSelectedPoint(null);
+                }}
+                style={{position:"absolute",top:-26,left:"50%",transform:"translateX(-50%)",
+                width:22,height:22,borderRadius:"50%",background:"#C1382A",color:"#fff",border:"2px solid #fff",
+                fontSize:11,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",
+                boxShadow:"0 2px 6px rgba(0,0,0,.35)",zIndex:9}}>🗑</button>
+            )}
+          </div>
         ))}
 
         {zones.map(z=>(
@@ -2695,13 +2940,26 @@ function HallBuilderPanel({ onClose, onSaved }){
         {tables.map(t=>(
           <div key={t.id}
             onTouchStart={e=>dragStart("table",t.id,e)} onMouseDown={e=>dragStart("table",t.id,e)}
+            onClick={e=>{ e.stopPropagation(); const wasMoved=movedRef.current; movedRef.current=false; if(!wasMoved) setTableEditId(t.id); }}
             style={{position:"absolute",left:t.x+"%",top:t.y+"%",transform:"translate(-50%,-50%)",
-            width:36,height:36,borderRadius:"50%",background:"rgba(255,255,255,.9)",border:"2px solid #D4AF5A",
-            display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:"#8A6B1E",
+            width:38,height:38,borderRadius:"50%",background:"rgba(255,255,255,.9)",border:"2px solid #D4AF5A",
+            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",color:"#8A6B1E",
             cursor:"grab",zIndex:6,boxShadow:"0 2px 6px rgba(0,0,0,.2)"}}>
-            {t.id}
+            <span style={{fontSize:10,fontWeight:800,lineHeight:1}}>{t.id}</span>
+            <span style={{fontSize:7,fontWeight:600,opacity:.75,lineHeight:1,marginTop:1}}>{t.seats}n</span>
             <span onClick={e=>{e.stopPropagation();setTables(tt=>tt.filter(x=>x.id!==t.id));}}
               style={{position:"absolute",top:-7,right:-7,width:17,height:17,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
+          </div>
+        ))}
+
+        {columns.map(c=>(
+          <div key={c.id}
+            onTouchStart={e=>dragStart("column",c.id,e)} onMouseDown={e=>dragStart("column",c.id,e)}
+            style={{position:"absolute",left:c.x+"%",top:c.y+"%",transform:"translate(-50%,-50%)",
+            width:16,height:16,borderRadius:4,background:"repeating-linear-gradient(45deg,#8A7A6E,#8A7A6E 2px,#B8AC9C 2px,#B8AC9C 4px)",
+            border:"1.5px solid #5A4E45",cursor:"grab",zIndex:7,boxShadow:"0 2px 5px rgba(0,0,0,.25)"}}>
+            <span onClick={e=>{e.stopPropagation();setColumns(cc=>cc.filter(x=>x.id!==c.id));}}
+              style={{position:"absolute",top:-8,right:-8,width:15,height:15,borderRadius:"50%",background:"#C1382A",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>✕</span>
           </div>
         ))}
       </div>
@@ -2720,9 +2978,55 @@ function HallBuilderPanel({ onClose, onSaved }){
         </div>
       )}
 
-      <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:8}}>
-        <button onClick={()=>setWallPoints(p=>p.slice(0,-1))}
-          style={{padding:"12px 14px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:11,cursor:"pointer"}}>↺ Son nöqtə</button>
+      {tableEditId!==null && (()=>{
+        const t = tables.find(x=>x.id===tableEditId);
+        if(!t) return null;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setTableEditId(null)}>
+            <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(155deg,rgba(255,255,255,.9),rgba(255,255,255,.7))",backdropFilter:"blur(20px)",borderRadius:20,padding:18,width:"100%",maxWidth:280,border:"1px solid rgba(255,255,255,.6)"}}>
+              <div style={{fontSize:13,fontWeight:700,marginBottom:4,color:"#211A16"}}>Masa {t.id}</div>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginBottom:12}}>Masada neçə nəfər oturacaq?</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:12}}>
+                {[6,8,10,12].map(n=>(
+                  <button key={n} onClick={()=>setTables(tt=>tt.map(x=>x.id===t.id?{...x,seats:n}:x))}
+                    style={{padding:"10px 0",borderRadius:12,border:"1px solid "+(t.seats===n?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+                      background:t.seats===n?"rgba(193,56,42,.14)":"rgba(255,255,255,.5)",
+                      color:t.seats===n?"#C1382A":"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>{n}</button>
+                ))}
+              </div>
+              <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:12}}>
+                <span style={{fontSize:11,color:"rgba(33,26,22,.5)"}}>Digər:</span>
+                <input type="number" value={t.seats} onChange={e=>{
+                  const v=parseInt(e.target.value)||1;
+                  setTables(tt=>tt.map(x=>x.id===t.id?{...x,seats:v}:x));
+                }} style={{width:60,padding:"6px 9px",borderRadius:10,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",fontSize:12,outline:"none",color:"#211A16"}}/>
+              </div>
+              <input value={t.label} onChange={e=>setTables(tt=>tt.map(x=>x.id===t.id?{...x,label:e.target.value}:x))}
+                placeholder="Masa adı (istəyə bağlı, məs: VIP)"
+                style={{width:"100%",padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",fontSize:12,outline:"none",color:"#211A16",boxSizing:"border-box",marginBottom:12}}/>
+              <button onClick={()=>setTableEditId(null)}
+                style={{width:"100%",padding:"11px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Tamam</button>
+            </div>
+          </div>
+        );
+      })()}
+
+      <div style={{padding:"10px 14px 24px",flexShrink:0,display:"flex",gap:6}}>
+        <button onClick={()=>{
+          if(mode==="wall"){
+            if(wallEdges.length>0) setWallEdges(ed=>ed.slice(0,-1));
+            else setWallPoints(p=>p.slice(0,-1));
+          }
+          else if(mode==="column") setColumns(c=>c.slice(0,-1));
+          else if(mode==="zone") setZones(z=>z.slice(0,-1));
+          else if(mode==="table") setTables(t=>t.slice(0,-1));
+        }}
+          style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"#6B6259",fontSize:10.5,cursor:"pointer",whiteSpace:"nowrap"}}>↺ Sonuncu</button>
+        <button onClick={()=>{
+          if(!confirm("Bütün zal (divarlar, sütunlar, zonalar, masalar) sıfırlansın?")) return;
+          setWallPoints([]); setWallEdges([]); setSelectedPoint(null); setColumns([]); setZones([]); setTables([]); setPhotoUrl(null);
+        }}
+          style={{padding:"12px 10px",borderRadius:16,border:"1px solid rgba(193,56,42,.35)",background:"rgba(193,56,42,.1)",backdropFilter:"blur(8px)",color:"#C1382A",fontSize:10.5,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}>🗑 Sıfırla</button>
         <button onClick={saveHall} disabled={saving}
           style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",
             background:"linear-gradient(155deg,#5EB889,#3d8259)",backdropFilter:"blur(8px)",
@@ -2756,6 +3060,9 @@ export default function App(){
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceRecogRef = useRef(null);
   const voiceActiveRef = useRef(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
   const [hist, setHist] = useState([]);
   const [ev, setEv] = useState({});
   const [evType, setEvType] = useState("");
@@ -2766,11 +3073,15 @@ export default function App(){
   //        "korp_company"|"korp_topic"|"korp_date"
   //        "restoran"|"done"
   const [obStep, setObStep] = useState("type");
+  const [pickerDate, setPickerDate] = useState("");
+  const [pickerTime, setPickerTime] = useState("19:00");
+  const [chatWizard, setChatWizard] = useState(null); // {tableId, step, name, phone, gender, count}
   const [obData, setObData] = useState({});
   const [tables, setTables] = useState([]);
   const [layoutMode, setLayoutMode] = useState(null); // "ready"|"photo"|"custom"
   const [layoutPickOpen, setLayoutPickOpen] = useState(false);
   const [realPhotoOpen, setRealPhotoOpen] = useState(false);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [hall, setHall] = useState(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
@@ -3124,9 +3435,12 @@ export default function App(){
   function pickCustomHall(rest, hallObj){
     const h = {
       _venueName: rest.name, name: hallObj.name,
-      totalGuests: hallObj.capacity, _step:"done",
+      totalGuests: null, _step:"customTotal",
       _hallElements: hallObj.elements||[],
       _wallPath: hallObj.wall_path||[],
+      _wallEdges: hallObj.wall_edges||[],
+      _columns: hallObj.columns||[],
+      _videoUrl: hallObj.video_url||null,
       planImageUrl: hallObj.photo_url||null
     };
     const customTables = (hallObj.layout||[]).map(t=>({
@@ -3137,9 +3451,9 @@ export default function App(){
     setTables(customTables);
     setLayoutMode("ready");
     setRestOpen(false);
-    const evLabel = evType==="nishan"?"Nişana":evType==="adgunu"?"Tədbirə":evType==="korporativ"?"Tədbirə":"Toya";
-    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🗺️ Real zal sxemi yükləndi (${customTables.length} masa)!\n\nZalın sxeminə baxa bilərsiniz.`;
-    setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["🗺️ Sxemi aç"]}]);
+    const totalCap = customTables.reduce((s,t)=>s+t.seats,0);
+    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🎉 Əla, zal sxemi hazırdır! ${customTables.length} masa qoyulub (ümumi tutum: ${totalCap} nəfər).\n\nİndi struktura əsasən dəqiqləşdirək — ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
+    setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
     setHist(hh=>[...hh,{role:"assistant",content:msg}]);
   }
 
@@ -3235,6 +3549,31 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
 
 
     if(txt==="🔍 Restoran axtar"){ setRestOpen(true); setBusy(false); return; }
+    if(txt==="➕ Növbəti qonaq"){
+      const lastTid = tabRef.current.length>0 ? activeTable : null;
+      if(lastTid){
+        setChatWizard({tableId:lastTid, step:"name", name:"", phone:"", gender:"", count:"1"});
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
+      }
+      setBusy(false); return;
+    }
+    if(txt==="→ Sxemə keç"){
+      setChatWizard(null);
+      pushPanel("schema"); setSchemaOpen(true);
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
+      setBusy(false); return;
+    }
+    if(txt==="💬 Chat-da əlavə et"){
+      const firstOpen = tabRef.current.find(t=>occ(t)<t.seats);
+      if(firstOpen){
+        setActiveTable(firstOpen.id);
+        setChatWizard({tableId:firstOpen.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:`Yaxşı, Masa ${firstOpen.id} ilə başlayaq 👇`,qrs:[]}]);
+      } else {
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Bütün masalar doludur! 🎉",qrs:[]}]);
+      }
+      setBusy(false); return;
+    }
 
     // ═══ ONBOARDING STATE MACHINE — tamamilə client-side ═══
     function obReply(msg, qrs=[]){
@@ -3367,6 +3706,51 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa yalnız rəqəm yazın (məs: 120)",qrs:[]}]);
       setBusy(false); return;
     }
+    // Custom (Zal Builder) hal — masalar artıq hazırdır, yalnız ümumi qonaq sayı lazımdır
+    if(hall && hall._step==="customTotal"){
+      if(/^\d+$/.test(txt)){
+        const n=parseInt(txt);
+        if(n>=1){
+          setHall(h=>({...h, totalGuests:n, _step:"customSeats"}));
+          const msg = `${n} nəfər qeyd edildi! ✅\n\nHər masada neçə nəfər əyləşdirməyi planlaşdırırsınız? (Masalar daha böyük ola bilər, amma az adam əyləşdirə bilərsiniz — məs. 12 yerlik masada 10 nəfər)`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["6","8","10","12","Masanın öz tutumu"]}]);
+          setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+          setBusy(false); return;
+        }
+      }
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa yalnız rəqəm yazın (məs: 150)",qrs:[]}]);
+      setBusy(false); return;
+    }
+    // Custom hal — hər masada neçə nəfər əyləşdirmə planı (fiziki tutumdan az ola bilər)
+    if(hall && hall._step==="customSeats"){
+      if(txt==="Masanın öz tutumu"){
+        setHall(h=>({...h, _step:"done"}));
+        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+        setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+        setBusy(false); return;
+      }
+      if(["6","8","10","12"].includes(txt)){
+        const n=parseInt(txt);
+        setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
+        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+        setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+        setBusy(false); return;
+      }
+      if(/^\d+$/.test(txt)){
+        const n=parseInt(txt);
+        if(n>=1&&n<=30){
+          setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
+          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+          setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+          setBusy(false); return;
+        }
+      }
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zəhmət olmasa rəqəm yazın",qrs:["6","8","10","12","Masanın öz tutumu"]}]);
+      setBusy(false); return;
+    }
     // Hall seats step — stolda neçə nəfər
     if(hall && hall._step==="seats"){
       if(["6","8","10","12"].includes(txt)){ confirmSeats(parseInt(txt)); setBusy(false); return; }
@@ -3474,22 +3858,24 @@ ${savedEvsList||"Yoxdur"}`;
       if(raw.includes("[OPEN_INVITE]")){ /* dəvətnamə paneli */ }
       if(raw.includes("[OPEN_REST]")){ setRestOpen(true); }
       if(raw.includes("[SHOW_STATS]")){ setStatsOpen&&pushPanel("stats"); setStatsOpen(true); }
+      let attachHallOverview = raw.includes("[SHOW_HALL_OVERVIEW]");
 
-      // [ADD_GUEST_PANEL:ID] — sxemi aç, masanı seç, slot formu aç
+      // [ADD_GUEST_PANEL:ID] — masanın chat-daxili formu başlayır (Ad→Telefon→Cins→Say)
       const addPanelMatch = raw.match(/\[ADD_GUEST_PANEL:(\d+)\]/);
+      let attachTableId = null;
       if(addPanelMatch){
         const tId = parseInt(addPanelMatch[1]);
-        pushPanel("schema"); setSchemaOpen(true);
         setActiveTable(tId);
-        setAgentSlotTable(tId);
+        attachTableId = tId;
+        setChatWizard({tableId:tId, step:"name", name:"", phone:"", gender:"", count:"1"});
       }
 
-      // [OPEN_TABLE:ID] — tək masanı seç
+      // [OPEN_TABLE:ID] — masanın kiçik sxemi chat-da göstərilsin
       const tableMatch = raw.match(/\[OPEN_TABLE:(\d+)\]/);
       if(tableMatch){
         const tId = parseInt(tableMatch[1]);
         setActiveTable(tId);
-        pushPanel("schema"); setSchemaOpen(true);
+        attachTableId = tId;
       }
 
       // [OPEN_MECLIS:ID_or_NAME] — yadda saxlanmış məclisi aç
@@ -3510,19 +3896,8 @@ ${savedEvsList||"Yoxdur"}`;
         else { gulivaSpeak("Bu adda məclis tapılmadı."); }
       }
 
-      // [ADD_GUEST:MasaID:Ad:Say] parse et
-      const addMatches = [...raw.matchAll(/\[ADD_GUEST:(\d+):([^:]+):(\d+)\]/g)];
-      if(addMatches.length>0){
-        addMatches.forEach(m=>{
-          const tblId=parseInt(m[1]), gName=m[2].trim(), gCount=parseInt(m[3])||1;
-          const newG={id:Date.now()+Math.random(),name:gName,count:gCount,phone:"",gender:"",invited:false,tableId:tblId};
-          const next=applyGuests([newG],tabRef.current);
-          setTables(next);
-        });
-      }
-
-      // Əmr etiketlərini cavabdan çıxar
-      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
+      // Əmr etiketlərini cavabdan çıxar (köhnə [ADD_GUEST:...] artıq işlədilmir — tam forma tələb olunur)
+      const cleanRaw = raw.replace(/\[OPEN_SCHEMA\]|\[OPEN_INVITE\]|\[OPEN_REST\]|\[SHOW_STATS\]|\[SHOW_HALL_OVERVIEW\]|\[ADD_GUEST_PANEL:\d+\]|\[ADD_GUEST:[^\]]+\]|\[OPEN_TABLE:\d+\]|\[OPEN_MECLIS:[^\]]+\]/g,"").trim();
 
       const {text,qrs,newEv,adds,focN,labels} = parseCmd(cleanRaw);
       let cur = tabRef.current;
@@ -3537,7 +3912,7 @@ ${savedEvsList||"Yoxdur"}`;
       }
       if(focN!==null) setActiveTable(focN);
       if(qrs.includes("🔍 Restoran axtar")) setRestOpen(true);
-      setMsgs(m=>[...m,{role:"agent",text,qrs}]);
+      setMsgs(m=>[...m,{role:"agent",text,qrs,tableSnapshotId:attachTableId,hallOverview:attachHallOverview}]);
       setHist([...nh,{role:"assistant",content:raw}]);
       // Guliya səslə cavab verir
       const plainText = text.replace(/[🎊✅📅🗺️📸⬜💍💫🎂🏢🥂👇🔍]/g,"").replace(/\n/g," ").trim();
@@ -3549,103 +3924,80 @@ ${savedEvsList||"Yoxdur"}`;
     inpRef.current&&inpRef.current.focus();
   }
 
-  function gulivaSpeak(text){
-    if(!text) return;
-    // Android Chrome-da speechSynthesis user gesture tələb edir
-    // Voices yüklənməyibsə — yenidən cəhd et
-    const doSpeak = ()=>{
-      if(!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang="az-AZ"; u.rate=1.0; u.pitch=1.1; u.volume=1;
-      const vs=window.speechSynthesis.getVoices();
-      // Əvvəlcə Azərbaycan, sonra Türk, sonra Rus, sonra default
-      const v=vs.find(x=>x.lang.startsWith("az"))
-        ||vs.find(x=>x.lang.startsWith("tr"))
-        ||vs.find(x=>x.lang.startsWith("ru"))
-        ||vs.find(x=>x.lang.startsWith("en")&&x.name.toLowerCase().includes("female"))
-        ||vs[0];
-      if(v) u.voice=v;
+  async function gulivaSpeak(text){
+    if(!text || !text.trim()) return;
+    try{
       setIsSpeaking(true);
-      u.onend=()=>{
+      const res = await fetch("/api/tts",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({text, voice:"nova"})
+      });
+      if(!res.ok){ setIsSpeaking(false); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if(audioPlayerRef.current){ try{ audioPlayerRef.current.pause(); }catch(e){} }
+      const audio = new Audio(url);
+      audioPlayerRef.current = audio;
+      audio.onended = ()=>{
         setIsSpeaking(false);
-        setTimeout(()=>{
-          if(voiceActiveRef.current && !isListening) startVoice();
-        },400);
+        URL.revokeObjectURL(url);
       };
-      u.onerror=()=>{ setIsSpeaking(false); };
-      window.speechSynthesis.speak(u);
-      // Android workaround — səs başlamırsa resume et
-      setTimeout(()=>{
-        if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-      },100);
-    };
-    const vs=window.speechSynthesis.getVoices();
-    if(vs.length>0){ doSpeak(); }
-    else{
-      window.speechSynthesis.onvoiceschanged=()=>{ doSpeak(); };
-      // 500ms gözlə, əgər voices gəlmədisə yenə cəhd et
-      setTimeout(doSpeak, 500);
-    }
+      audio.onerror = ()=>{ setIsSpeaking(false); };
+      await audio.play();
+    }catch(e){ setIsSpeaking(false); }
   }
 
   function toggleVoice(){
-    if(isSpeaking){ window.speechSynthesis&&window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+    if(isSpeaking){
+      if(audioPlayerRef.current){ try{ audioPlayerRef.current.pause(); }catch(e){} }
+      setIsSpeaking(false);
+      return;
+    }
     if(isListening){ stopVoice(); return; }
     startVoice();
   }
 
-  function startVoice(){
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){ alert("Mikrofon bu brauzerdə işləmir. Chrome istifadə edin."); return; }
-    const r=new SR();
-    r.lang="az-AZ"; r.interimResults=false; r.continuous=true;
-    r.onstart=()=>setIsListening(true);
-    r.onresult=e=>{
-      // Yalnız son nəticəni al
-      const result = e.results[e.results.length-1];
-      if(!result.isFinal) return;
-      const t=result[0].transcript.trim();
-      if(!t) return;
-      const lower=t.toLowerCase();
-      // "Guliya dur/dayans/stop" — dayandır
-      if(lower.includes("dur")||lower.includes("dayans")||lower.includes("stop")){
-        gulivaSpeak("Dayandım. Lazım olanda yenidən çağırın.");
-        stopVoice();
-        return;
-      }
-      // "Guliya" açar sözü təkrar aktivləşmə
-      if((lower==="guliya"||lower==="güliya")&&lower.length<10){
-        gulivaSpeak("Bəli, buyurun!");
-        return;
-      }
-      send(t);
-    };
-    r.onerror=e=>{
-      if(e.error==="not-allowed"){ gulivaSpeak("Mikrofon icazəsi lazımdır."); setIsListening(false); return; }
-      // Digər xətalarda yenidən başla
-      if(voiceActiveRef.current && e.error!=="aborted"){
-        setTimeout(()=>{ if(voiceActiveRef.current) startVoice(); },1000);
-      }
-    };
-    r.onend=()=>{
-      setIsListening(false);
-      // Guliya danışmırsa və aktiv rejim varsa — yenidən başla
-      if(voiceActiveRef.current){
-        setTimeout(()=>{
-          if(voiceActiveRef.current) startVoice();
-        },500);
-      }
-    };
-    voiceRecogRef.current=r;
-    voiceActiveRef.current=true;
-    try{ r.start(); }catch(e){}
+  async function startVoice(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      const rec = new MediaRecorder(stream, {mimeType});
+      audioChunksRef.current = [];
+      rec.ondataavailable = e=>{ if(e.data && e.data.size>0) audioChunksRef.current.push(e.data); };
+      rec.onstop = async ()=>{
+        stream.getTracks().forEach(t=>t.stop());
+        setIsListening(false);
+        if(audioChunksRef.current.length===0) return;
+        const blob = new Blob(audioChunksRef.current, {type:mimeType});
+        if(blob.size < 800) return; // çox qısa — səs yoxdur
+        const reader = new FileReader();
+        reader.onloadend = async ()=>{
+          const base64 = reader.result.split(",")[1];
+          try{
+            const res = await fetch("/api/stt",{
+              method:"POST", headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({audioBase64:base64, mimeType})
+            });
+            const data = await res.json();
+            const text = (data.text||"").trim();
+            if(text) send(text);
+          }catch(e){}
+        };
+        reader.readAsDataURL(blob);
+      };
+      mediaRecorderRef.current = rec;
+      rec.start();
+      setIsListening(true);
+    }catch(e){
+      alert("Mikrofon icazəsi lazımdır 🙏");
+    }
   }
 
   function stopVoice(){
-    voiceActiveRef.current=false;
+    if(mediaRecorderRef.current && mediaRecorderRef.current.state!=="inactive"){
+      try{ mediaRecorderRef.current.stop(); }catch(e){}
+    }
     setIsListening(false);
-    if(voiceRecogRef.current) try{ voiceRecogRef.current.stop(); }catch(e){}
   }
 
   const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%);}\n.glass,.tb,.pill,.tt,.menu3,.bb.a,.qb,.qbn,.ir .inp,.sndb,.rsp,.back-btn,.ev-card,.gcard,.rsvp-row,.dev-opt,.stat-card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 8px 22px -8px rgba(60,40,20,.22);position:relative;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin:14px 12px 0;border-radius:22px;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#C1382A;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;}\n.dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 8px rgba(193,56,42,.65);animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,.35)}70%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 7px rgba(193,56,42,0)}100%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,0)}}\n.pn{font-size:11px;color:#211A16;font-weight:700;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:16px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.menu3{width:32px;height:32px;border-radius:50%;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.4);background:transparent;}\n.schema-panel{flex:1;overflow:hidden;background:transparent;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(150,120,80,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 10px rgba(193,56,42,.5);border:none;}\n.av.u{background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25));backdrop-filter:blur(10px);}\n.bb{padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{color:#211A16;border-radius:18px 18px 18px 5px;}\n.bb.u{background:linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);color:#F5EEE0;margin-left:auto;border-radius:18px 18px 5px 18px;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 26px -10px rgba(0,0,0,.5);}\n.qw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}\n.qb{padding:7px 13px;border-radius:18px;color:#211A16;font-size:11.5px;cursor:pointer;font-weight:600;}\n.qb:hover{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#C1382A;box-shadow:0 0 4px rgba(193,56,42,.6);animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:10px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.inp{flex:1;background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:10px 16px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:rgba(193,56,42,.5);}\n.sndb{width:38px;height:38px;padding:0;background:linear-gradient(155deg,#FF6B52,#C1382A);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -2px rgba(193,56,42,.55),0 1px 0 rgba(255,255,255,.3) inset;}\n.sndb:hover{filter:brightness(1.08);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}\n.qbar{display:flex;gap:6px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.4);flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:7px 13px;border-radius:18px;color:#6B6259;font-size:11px;cursor:pointer;font-weight:600;}\n.qbn:hover{border-color:rgba(193,56,42,.4);color:#C1382A;}\n.qbn.on{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.cnt{display:inline-block;margin-left:4px;background:linear-gradient(155deg,#EFC988,#D4AF5A);color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;box-shadow:0 0 4px rgba(212,175,90,.5);}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.45);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{border-radius:26px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.4);}\n.rsi{width:100%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:9px 13px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:8px 15px;border-radius:14px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.pbar-bg{height:5px;background:rgba(150,120,80,.15);border-radius:3px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#FF9B85,#C1382A);border-radius:3px;transition:width .5s;box-shadow:0 0 6px rgba(193,56,42,.4);}\n.glass::before,.tb::before,.pill::before,.tt::before,.bb.a::before,.qb::before,.qbn::before,.inp::before,.rsp::before,.ev-card::before,.gcard::before,.rsvp-row::before,.dev-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.55) 0%,transparent 30%,transparent 70%,rgba(255,255,255,.2) 100%);pointer-events:none;}
@@ -3684,6 +4036,79 @@ ${savedEvsList||"Yoxdur"}`;
                   {m.masaCards&&m.masaCards.map((t,ti)=>(
                     <MasaDevetCard key={ti} tbl={t} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
                   ))}
+                  {m.hallOverview&&tables.length>0&&(
+                    <div style={{marginTop:9,padding:10,borderRadius:16,
+                      background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
+                      border:"1px solid rgba(255,255,255,.5)"}}>
+                      <div style={{position:"relative",width:"100%",aspectRatio:"1/1",borderRadius:12,overflow:"hidden",
+                        background:"radial-gradient(ellipse at 50% 0%, #FFFDF7, #F5EFE0 60%, #EEE4CC)",
+                        border:"1px solid rgba(212,175,90,.3)"}}>
+                        {hall&&hall._wallEdges&&hall._wallPath&&(
+                          <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{position:"absolute",inset:0,pointerEvents:"none"}}>
+                            {hall._wallEdges.map(function(ed,i){
+                              var a=hall._wallPath.find(function(p){return p.id===ed.from;});
+                              var b=hall._wallPath.find(function(p){return p.id===ed.to;});
+                              if(!a||!b) return null;
+                              return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#C9A25E" strokeWidth="0.7" strokeLinecap="round"/>;
+                            })}
+                          </svg>
+                        )}
+                        {hall&&hall._hallElements&&hall._hallElements.map(function(el,i){
+                          var isDF=el.type==="danceFloor";
+                          return (
+                            <div key={i} style={{position:"absolute",left:el.xPct+"%",top:el.yPct+"%",
+                              width:(isDF?Math.max(el.w,el.h)*0.9:el.w)+"%",height:(isDF?Math.max(el.w,el.h)*0.9:el.h)+"%",
+                              transform:"translate(-50%,-50%)",borderRadius:isDF?"50%":6,
+                              background:"rgba(255,255,255,.5)",border:"1px solid rgba(212,175,90,.4)",
+                              display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>
+                              {el.type==="danceFloor"?"💃":el.type==="brideGroom"?"👰":el.type==="stage"?"🎸":"🚪"}
+                            </div>
+                          );
+                        })}
+                        {tables.map(t=>{
+                          if(!t.pos) return null;
+                          const to=occ(t), tfull=to>=t.seats;
+                          const isVip=(t.label||"").toLowerCase().includes("vip");
+                          return (
+                            <div key={t.id} onClick={()=>{
+                                if(tfull) return;
+                                setActiveTable(t.id);
+                                setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+                              }}
+                              style={{position:"absolute",left:t.pos.xPct+"%",top:t.pos.yPct+"%",transform:"translate(-50%,-50%)",
+                                width:20,height:20,borderRadius:"50%",cursor:tfull?"default":"pointer",opacity:tfull?0.55:1,
+                                background:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
+                                border:"1.3px solid "+(isVip?"#D4AF5A":"#C9A25E"),
+                                display:"flex",alignItems:"center",justifyContent:"center",
+                                fontSize:9,fontWeight:800,color:"#211A16",fontFamily:"'Fraunces',serif",
+                                boxShadow:"0 2px 4px rgba(60,40,20,.25)"}}>
+                              {t.id}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <button onClick={()=>{ pushPanel("schema"); setSchemaOpen(true); }}
+                        style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
+                          background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(10px)",
+                          color:"#F5EEE0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                        🗺️ Sxemə keç
+                      </button>
+                    </div>
+                  )}
+                  {m.tableSnapshotId!=null&&(()=>{
+                    const t = tables.find(x=>x.id===m.tableSnapshotId);
+                    if(!t) return null;
+                    return (
+                      <div style={{marginTop:9,display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:12,borderRadius:16,
+                        background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(14px)",
+                        border:"1px solid rgba(255,255,255,.5)"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>
+                          Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""}
+                        </div>
+                        <TableSVG table={t} size={130} clickable={false}/>
+                      </div>
+                    );
+                  })()}
                   {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(
                     <div className="qw">{m.qrs.map((q,qi)=><button key={qi} className="qb" onClick={()=>send(q)}>{q}</button>)}</div>
                   )}
@@ -3693,6 +4118,138 @@ ${savedEvsList||"Yoxdur"}`;
             {busy&&<div className="mw agent"><div className="av a">👩‍💼</div><div className="bb a tbb"><div className="ds"><span/><span/><span/></div></div></div>}
             <div ref={endRef}/>
           </div>
+          {chatWizard&&(()=>{
+            const t = tables.find(x=>x.id===chatWizard.tableId);
+            if(!t){ return null; }
+            const oc = occ(t);
+            const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<t.seats)?hall.plannedSeatsPerTable:t.seats;
+            const full = oc>=effectiveCap;
+            function finishAdd(){
+              const isUshaq = chatWizard.gender==="ushaq";
+              const g = {
+                id:Date.now()+Math.random(), name:chatWizard.name.trim(),
+                phone:chatWizard.phone.trim()?("+994"+chatWizard.phone.trim()):"",
+                count: isUshaq ? 0 : (parseInt(chatWizard.count)||1),
+                gender: isUshaq ? "" : chatWizard.gender,
+                ushaqCount: isUshaq ? (parseInt(chatWizard.count)||1) : 0,
+                invited:false, side:t.side||"", tableId:t.id
+              };
+              const totalAdd = g.count + g.ushaqCount;
+              if(oc+totalAdd>effectiveCap){
+                setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.`,qrs:[]}]);
+                setChatWizard(null);
+                return;
+              }
+              setTables(ts=>ts.map(x=>x.id===t.id?{...x,guests:[...x.guests,g]}:x));
+              setChatWizard(null);
+              const newOc = oc+totalAdd;
+              setMsgs(m=>[...m,{role:"agent",
+                text:`✅ ${g.name} əlavə olundu! Masa ${t.id}: ${newOc}/${effectiveCap} dolu.\n\nNövbəti qonağı əlavə edək?`,
+                qrs:newOc<effectiveCap?["➕ Növbəti qonaq","→ Sxemə keç"]:["→ Sxemə keç"],
+                tableSnapshotId:t.id}]);
+            }
+            return (
+              <div style={{margin:"0 12px 8px",padding:"12px 13px",borderRadius:18,
+                background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(18px) saturate(150%)",
+                border:"1px solid rgba(255,255,255,.55)",display:"flex",flexDirection:"column",gap:9}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""} ({oc}/{effectiveCap})</div>
+                  <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
+                      style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
+                        borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                      📍 Özüm yerləşdirim
+                    </button>
+                    <button onClick={()=>setChatWizard(null)}
+                      style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",
+                        color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                  </div>
+                </div>
+
+                <input value={t.label&&t.label!=="__extra__"?t.label:""} placeholder="✏️ Masaya ad qoy (məs: VIP, Ailə) — istəyə bağlı"
+                  onChange={e=>{
+                    const lbl = e.target.value;
+                    setTables(ts=>ts.map(x=>x.id===t.id?{...x,label:lbl}:x));
+                  }}
+                  style={{padding:"7px 11px",borderRadius:11,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",fontSize:11,outline:"none",color:"#211A16"}}/>
+
+                {full ? (
+                  <div style={{fontSize:11,color:"#C1382A"}}>Bu masa artıq doludur. Başqa masa seçin.</div>
+                ) : chatWizard.step==="name" ? (
+                  <>
+                    <input autoFocus value={chatWizard.name} onChange={e=>setChatWizard(w=>({...w,name:e.target.value}))}
+                      placeholder="Ad Soyad" onKeyDown={e=>{if(e.key==="Enter"&&chatWizard.name.trim())setChatWizard(w=>({...w,step:"phone"}));}}
+                      style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.55)",background:"rgba(255,255,255,.55)",fontSize:12,outline:"none",color:"#211A16"}}/>
+                    <button disabled={!chatWizard.name.trim()} onClick={()=>setChatWizard(w=>({...w,step:"phone"}))}
+                      style={{padding:"9px",borderRadius:12,border:"none",background:chatWizard.name.trim()?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                        color:chatWizard.name.trim()?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,cursor:chatWizard.name.trim()?"pointer":"default"}}>Növbəti →</button>
+                  </>
+                ) : chatWizard.step==="phone" ? (
+                  <>
+                    <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.55)",border:"1px solid rgba(255,255,255,.55)",borderRadius:12,overflow:"hidden"}}>
+                      <span style={{padding:"0 8px",fontSize:12,color:"rgba(33,26,22,.55)",fontWeight:600}}>+994</span>
+                      <input autoFocus value={chatWizard.phone} onChange={e=>setChatWizard(w=>({...w,phone:e.target.value.replace(/[^\d\s\-]/g,"")}))}
+                        placeholder="XX XXX XX XX" style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",outline:"none",fontSize:12,color:"#211A16"}}/>
+                    </div>
+                    <button disabled={chatWizard.phone.replace(/\D/g,"").length<7} onClick={()=>setChatWizard(w=>({...w,step:"gender"}))}
+                      style={{padding:"9px",borderRadius:12,border:"none",
+                        background:chatWizard.phone.replace(/\D/g,"").length>=7?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                        color:chatWizard.phone.replace(/\D/g,"").length>=7?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,
+                        cursor:chatWizard.phone.replace(/\D/g,"").length>=7?"pointer":"default"}}>Növbəti →</button>
+                  </>
+                ) : chatWizard.step==="gender" ? (
+                  <div style={{display:"flex",gap:6}}>
+                    {[["kishi","👨 Kişi","#5B84B0"],["qadin","👩 Qadın","#C9668A"],["ushaq","👧 Uşaq","#D4AF5A"]].map(([val,lbl,sc])=>(
+                      <button key={val} onClick={()=>setChatWizard(w=>({...w,gender:val,step:"count"}))}
+                        style={{flex:1,padding:"10px 4px",borderRadius:12,border:"1px solid "+sc+"55",background:sc+"1A",color:sc,fontSize:11,fontWeight:700,cursor:"pointer"}}>{lbl}</button>
+                    ))}
+                  </div>
+                ) : chatWizard.step==="count" ? (
+                  <>
+                    <div style={{fontSize:10.5,color:"rgba(33,26,22,.6)"}}>
+                      {chatWizard.gender==="qadin"?"Özü ilə birlikdə neçə nəfər gələcək?":"Neçə nəfər?"}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:14}}>
+                      <button onClick={()=>setChatWizard(w=>({...w,count:String(Math.max(1,(parseInt(w.count)||1)-1))}))}
+                        style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(193,56,42,.14)",color:"#C1382A",fontSize:16,fontWeight:700,cursor:"pointer"}}>−</button>
+                      <span style={{fontSize:18,fontWeight:800,color:"#211A16",minWidth:24,textAlign:"center"}}>{chatWizard.count}</span>
+                      <button onClick={()=>setChatWizard(w=>({...w,count:String((parseInt(w.count)||1)+1)}))}
+                        style={{width:32,height:32,borderRadius:"50%",border:"none",background:"rgba(76,154,110,.16)",color:"#4C9A6E",fontSize:16,fontWeight:700,cursor:"pointer"}}>+</button>
+                    </div>
+                    <button onClick={finishAdd}
+                      style={{padding:"10px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>✓ Əlavə et</button>
+                  </>
+                ) : null}
+              </div>
+            );
+          })()}
+          {["toy_date","nishan_date","adgunu_date","korp_date"].includes(obStep)&&(
+            <div style={{margin:"0 12px 8px",padding:"11px 12px",borderRadius:16,
+              background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(16px)",
+              border:"1px solid rgba(255,255,255,.5)",display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.55)",fontWeight:600}}>📅 Tarixi seçin (və ya yuxarıda əl ilə yazın)</div>
+              <div style={{display:"flex",gap:7}}>
+                <input type="date" value={pickerDate} onChange={e=>setPickerDate(e.target.value)}
+                  style={{flex:1,padding:"9px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.6)",fontSize:12,outline:"none",color:"#211A16"}}/>
+                <input type="time" value={pickerTime} onChange={e=>setPickerTime(e.target.value)}
+                  style={{width:92,padding:"9px 10px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.6)",fontSize:12,outline:"none",color:"#211A16"}}/>
+              </div>
+              <button onClick={()=>{
+                if(!pickerDate) return;
+                const azMonths=["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+                const d=new Date(pickerDate+"T00:00:00");
+                const formatted=d.getDate()+" "+azMonths[d.getMonth()]+" "+d.getFullYear()+(pickerTime?", "+pickerTime:"");
+                send(formatted);
+                setPickerDate("");
+              }} disabled={!pickerDate}
+                style={{padding:"10px",borderRadius:13,border:"none",
+                  background:pickerDate?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
+                  color:pickerDate?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,
+                  cursor:pickerDate?"pointer":"default"}}>
+                ✓ Bu tarixi təsdiqlə
+              </button>
+            </div>
+          )}
           <div className="ir">
             <button onClick={toggleVoice} style={{
               width:38,height:38,borderRadius:"50%",border:"1px solid",flexShrink:0,
@@ -3790,6 +4347,23 @@ ${savedEvsList||"Yoxdur"}`;
         </div>
       )}
 
+      {videoPlayerOpen&&hall&&hall._videoUrl&&(
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(20,15,10,.96)",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}
+          onClick={()=>setVideoPlayerOpen(false)}>
+          <div style={{position:"absolute",top:16,left:0,right:0,textAlign:"center",
+            color:"rgba(212,175,90,.8)",fontSize:12,letterSpacing:1}}>
+            {hall._venueName} — {hall.name}
+          </div>
+          <video src={hall._videoUrl} controls autoPlay playsInline
+            style={{maxWidth:"100%",maxHeight:"75vh",borderRadius:16,boxShadow:"0 20px 50px rgba(0,0,0,.5)"}}
+            onClick={e=>e.stopPropagation()}/>
+          <button onClick={()=>setVideoPlayerOpen(false)}
+            style={{position:"absolute",top:14,right:16,width:32,height:32,borderRadius:"50%",
+              background:"rgba(255,255,255,.15)",border:"none",color:"#F5EEE0",fontSize:16,cursor:"pointer"}}>✕</button>
+        </div>
+      )}
+
       {layoutPickOpen&&(
         <LayoutPickerModal
           hall={layoutPickOpen.hall||hall}
@@ -3823,7 +4397,26 @@ ${savedEvsList||"Yoxdur"}`;
       {hallBuilderOpen&&(
         <HallBuilderPanel
           onClose={()=>setHallBuilderOpen(false)}
-          onSaved={()=>{
+          onSaved={(newHall)=>{
+            // Dərhal, sorğu gözləmədən siyahıya əlavə edirik (yarış şərtini önləmək üçün)
+            if(newHall){
+              setCustomHalls(prev=>{
+                const vname = newHall.venue_name||"Digər";
+                const next = prev.map(v=>({...v, halls:[...v.halls]}));
+                let venueEntry = next.find(v=>v.name===vname);
+                if(!venueEntry){
+                  venueEntry = {id:"custom_"+vname, name:vname, city:"Bakı", halls:[]};
+                  next.unshift(venueEntry);
+                } else {
+                  next.splice(next.indexOf(venueEntry),1);
+                  next.unshift(venueEntry);
+                }
+                venueEntry.halls.unshift({...newHall, hasLayout:true, cap:newHall.capacity});
+                return next;
+              });
+            }
+            setRestOpen(true);
+            // Arxa planda təzələnmiş tam siyahı ilə sinxronlaşdırırıq (əlavə təhlükəsizlik)
             sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
               if(!rows) return;
               const byVenue = {};
@@ -3868,6 +4461,14 @@ ${savedEvsList||"Yoxdur"}`;
                 )}
               </div>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                {hall&&hall._videoUrl&&(
+                  <button onClick={()=>setVideoPlayerOpen(true)}
+                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
+                      background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
+                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                    🎥 Zalın videosu
+                  </button>
+                )}
                 {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
                   <button onClick={()=>setRealPhotoOpen(true)}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
@@ -3897,6 +4498,10 @@ ${savedEvsList||"Yoxdur"}`;
                 onAgentSlotClear={()=>setAgentSlotTable(null)}
                 hall={hall}
                 pct={pct}
+                obData={obData}
+                evType={evType}
+                onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
+                onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
                 layoutMode={layoutMode}
                 onAddTable={()=>{
@@ -4385,15 +4990,21 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     return code;
   }
 
-  async function shareMsg(phone, msg, canvas){
+  async function shareMsg(phone, msg, canvas, preOpenedWin){
     return new Promise(resolve=>{
-      canvas.toBlob(async(blob)=>{
-        if(blob&&navigator.canShare&&navigator.canShare({files:[new File([blob],"devetname.png",{type:"image/png"})]})){
-          try{ await navigator.share({files:[new File([blob],"devetname.png",{type:"image/png"})],text:msg}); }catch(e){}
-        } else {
-          const a=document.createElement("a"); a.download="devetname.png"; a.href=canvas.toDataURL("image/png"); a.click();
-          await new Promise(r=>setTimeout(r,500));
-          if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+      canvas.toBlob((blob)=>{
+        if(blob){
+          try{
+            const a=document.createElement("a");
+            a.download="devetname-"+(phone||"qonaq")+".png";
+            a.href=URL.createObjectURL(blob);
+            a.click();
+          }catch(e){}
+        }
+        if(phone && preOpenedWin){
+          preOpenedWin.location.href="https://wa.me/"+phone+"?text="+encodeURIComponent(msg);
+        } else if(preOpenedWin){
+          preOpenedWin.close();
         }
         resolve();
       },"image/png");
@@ -4408,13 +5019,15 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       for(const g of (tbl.guests||[])){
         const phone=(g.phone||"").replace(/\D/g,"");
         if(!phone) continue;
+        // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (createRsvp-dəki await-dan öncə)
+        const waWin = window.open("about:blank","_blank");
         const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
-        await shareMsg(phone,msg,c);
+        await shareMsg(phone,msg,c,waWin);
         await new Promise(r=>setTimeout(r,800));
       }
     }
@@ -4426,6 +5039,8 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     if(!singleGuest) return;
     const {guest,tbl}=singleGuest;
     const phone=(guest.phone||"").replace(/\D/g,"");
+    // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (createRsvp-in await-ından öncə)
+    const waWin = window.open("about:blank","_blank");
     const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
     const baseUrl=window.location.origin;
     const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
@@ -4434,7 +5049,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
     const c=document.createElement("canvas");
     drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
-    await shareMsg(phone,msg,c);
+    await shareMsg(phone,msg,c,waWin);
     onMarkSent&&onMarkSent([guest.id]);
     setSingleGuest(null);
     setSingleStep("list");
