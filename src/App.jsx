@@ -1164,7 +1164,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                             display:"flex",alignItems:"center",justifyContent:"center",
                             color:"#FFF9EC",fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:Math.max(9,S*0.26)
                           }}>
-                            {isExtra?"E":oc}
+                            {isExtra?"E":t.id}
                           </div>
                         </div>
                         {side&&side!=="Ümumi"&&(
@@ -1176,6 +1176,15 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                       </div>
                     );
                   })()}
+
+                  {/* Doluluq — dairənin altında, kiçik zolaq + rəqəm */}
+                  <div style={{marginTop:2,display:"flex",flexDirection:"column",alignItems:"center",gap:2,pointerEvents:"none"}}>
+                    <div style={{width:Math.max(24,S*0.7),height:3,borderRadius:2,overflow:"hidden",background:"rgba(150,120,60,.18)"}}>
+                      <div style={{height:"100%",width:Math.min(100,(oc/(t.seats||1))*100)+"%",
+                        background:fu?"#C1382A":oc>0?"#D4AF5A":"#8FBF9A",borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:Math.max(7,S*0.15),fontWeight:700,color:"#6B5A3A"}}>{oc}/{t.seats}</span>
+                  </div>
 
                   {/* Masa adı — altında */}
                   {t.label&&t.label!=="__extra__"&&(
