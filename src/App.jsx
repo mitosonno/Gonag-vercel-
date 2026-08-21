@@ -3712,7 +3712,14 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="customTotal"){
       if(/^\d+$/.test(txt)){
         const n=parseInt(txt);
+        const hallCap = tabRef.current.reduce((s,t)=>s+(t.seats||0),0);
         if(n>=1){
+          if(hallCap>0 && n>hallCap){
+            const msg = `⚠️ Bu zal yalnız ${hallCap} nəfər tutur (${tabRef.current.length} masa × oturacaqlar). ${n} nəfər sığmaz.\n\nZəhmət olmasa ${hallCap}-dan az/bərabər rəqəm yazın, ya da masa sayını artırın.`;
+            setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:[]}]);
+            setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
+            setBusy(false); return;
+          }
           setHall(h=>({...h, totalGuests:n, _step:"customSeats"}));
           const msg = `${n} nəfər qeyd edildi! ✅\n\nHər masada neçə nəfər əyləşdirməyi planlaşdırırsınız? (Masalar daha böyük ola bilər, amma az adam əyləşdirə bilərsiniz — məs. 12 yerlik masada 10 nəfər)`;
           setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["6","8","10","12","Masanın öz tutumu"]}]);
