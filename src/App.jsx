@@ -4094,6 +4094,7 @@ ${savedEvsList||"Yoxdur"}`;
                           const to=occ(t), tfull=to>=t.seats, tpartial=to>0&&!tfull;
                           const isVip=(t.label||"").toLowerCase().includes("vip");
                           const statusColor = tfull?"#C1382A":tpartial?"#D4AF5A":"#8FBF9A";
+                          const seats = Math.min(t.seats||8, 10); // kiçik önizləmədə ən çox 10 nöqtə, yer üçün
                           return (
                             <div key={t.id} onClick={()=>{
                                 if(tfull) return;
@@ -4101,13 +4102,27 @@ ${savedEvsList||"Yoxdur"}`;
                                 setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
                               }}
                               style={{position:"absolute",left:t.pos.xPct+"%",top:t.pos.yPct+"%",transform:"translate(-50%,-50%)",
-                                width:22,height:22,borderRadius:"50%",cursor:tfull?"default":"pointer",
+                                width:34,height:34,cursor:tfull?"default":"pointer"}}>
+                              {Array.from({length:seats}).map((_,si)=>{
+                                const angle=(si/seats)*Math.PI*2-Math.PI/2;
+                                const sx=50+Math.cos(angle)*46, sy=50+Math.sin(angle)*46;
+                                const filled = si<Math.round((to/(t.seats||8))*seats);
+                                return (
+                                  <div key={si} style={{position:"absolute",left:sx+"%",top:sy+"%",
+                                    transform:`translate(-50%,-50%) rotate(${angle+Math.PI/2}rad)`,
+                                    width:2.6,height:4,borderRadius:1,
+                                    background:filled?statusColor:"rgba(150,120,60,.35)"}}/>
+                                );
+                              })}
+                              <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",
+                                width:20,height:20,borderRadius:"50%",
                                 background:tfull?statusColor:tpartial?`linear-gradient(155deg,${statusColor}55,${statusColor}25)`:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
-                                border:"2px solid "+statusColor,
+                                border:"1.6px solid "+statusColor,
                                 display:"flex",alignItems:"center",justifyContent:"center",
                                 fontSize:8.5,fontWeight:800,color:tfull?"#FFF9EC":"#211A16",fontFamily:"'Fraunces',serif",
                                 boxShadow:"0 2px 4px rgba(60,40,20,.25)"}}>
-                              {t.id}
+                                {t.id}
+                              </div>
                             </div>
                           );
                         })}
@@ -4187,7 +4202,7 @@ ${savedEvsList||"Yoxdur"}`;
                 background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(18px) saturate(150%)",
                 border:"1px solid rgba(255,255,255,.55)",display:"flex",flexDirection:"column",gap:9}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""} ({oc}/{effectiveCap})</div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""}</div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
                     <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
                       style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
@@ -4197,8 +4212,8 @@ ${savedEvsList||"Yoxdur"}`;
                     <button onClick={()=>{
                         setChatWizard(null);
                         setMsgs(m=>[...m,{role:"agent",
-                          text:"Yaxşı, dayandırdım. Davam etmək istəsəniz, aşağıdan seçin 👇",
-                          qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+                          text:"Dayandırıldı. Davam etmək istəsəniz 👇",
+                          qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"]}]);
                       }}
                       style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",
                         color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
