@@ -4160,7 +4160,8 @@ ${savedEvsList||"Yoxdur"}`;
               };
               const totalAdd = g.count + g.ushaqCount;
               if(oc+totalAdd>effectiveCap){
-                setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.`,qrs:[]}]);
+                setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.\n\nBaşqa masa seçin 👇`,
+                  qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
                 setChatWizard(null);
                 return;
               }
@@ -4184,7 +4185,12 @@ ${savedEvsList||"Yoxdur"}`;
                         borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
                       📍 Özüm yerləşdirim
                     </button>
-                    <button onClick={()=>setChatWizard(null)}
+                    <button onClick={()=>{
+                        setChatWizard(null);
+                        setMsgs(m=>[...m,{role:"agent",
+                          text:"Yaxşı, dayandırdım. Davam etmək istəsəniz, aşağıdan seçin 👇",
+                          qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+                      }}
                       style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",
                         color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
                   </div>
