@@ -3086,6 +3086,15 @@ export default function App(){
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [hall, setHall] = useState(null);
   const [schemaOpen, setSchemaOpen] = useState(false);
+  const prevSchemaOpenRef = useRef(false);
+  useEffect(function(){
+    // Sxem bağlananda (əvvəl açıq idisə) — chat-a avtomatik yenilənmiş önizləmə + xatırlatma göndər
+    if(prevSchemaOpenRef.current && !schemaOpen && tabRef.current && tabRef.current.length>0){
+      const msg = "🗺️ Zal sxemi bağlandı — indi belə görünür.\n\nMasaları burada, chat-da mənim vasitəmlə doldura bilərsiniz, ya da özünüz ümumi sxemə keçib əlavə edə bilərsiniz.";
+      setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+    }
+    prevSchemaOpenRef.current = schemaOpen;
+  },[schemaOpen]);
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
   const [schemaTutStep, setSchemaTutStep] = useState(0);
   const [devetData, setDevetData] = useState({metn:"", media:null});
@@ -3115,9 +3124,8 @@ export default function App(){
   const [restOpen, setRestOpen] = useState(false);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
   const [customHalls, setCustomHalls] = useState([]);
-  useEffect(function(){
-    if(!restOpen) return;
-    sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
+  function refetchCustomHalls(){
+    return sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
       if(!rows) return;
       const byVenue = {};
       rows.forEach(h=>{
@@ -3127,6 +3135,13 @@ export default function App(){
       });
       setCustomHalls(Object.values(byVenue));
     });
+  }
+  useEffect(function(){
+    refetchCustomHalls(); // tətbiq açılan kimi əvvəlcədən yüklə — "Restoran seç" açanda gecikmə olmasın
+  },[]);
+  useEffect(function(){
+    if(!restOpen) return;
+    refetchCustomHalls();
   },[restOpen]);
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
@@ -4425,17 +4440,7 @@ ${savedEvsList||"Yoxdur"}`;
               });
             }
             setRestOpen(true);
-            // Arxa planda təzələnmiş tam siyahı ilə sinxronlaşdırırıq (əlavə təhlükəsizlik)
-            sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
-              if(!rows) return;
-              const byVenue = {};
-              rows.forEach(h=>{
-                const vname = h.venue_name||"Digər";
-                if(!byVenue[vname]) byVenue[vname]={id:"custom_"+vname,name:vname,city:"Bakı",halls:[]};
-                byVenue[vname].halls.push({...h,hasLayout:true,cap:h.capacity});
-              });
-              setCustomHalls(Object.values(byVenue));
-            });
+            refetchCustomHalls(); // arxa planda tam siyahı ilə sinxronlaşdır
           }}
         />
       )}
