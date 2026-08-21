@@ -4091,8 +4091,9 @@ ${savedEvsList||"Yoxdur"}`;
                         })}
                         {tables.map(t=>{
                           if(!t.pos) return null;
-                          const to=occ(t), tfull=to>=t.seats;
+                          const to=occ(t), tfull=to>=t.seats, tpartial=to>0&&!tfull;
                           const isVip=(t.label||"").toLowerCase().includes("vip");
+                          const statusColor = tfull?"#C1382A":tpartial?"#D4AF5A":"#8FBF9A";
                           return (
                             <div key={t.id} onClick={()=>{
                                 if(tfull) return;
@@ -4100,16 +4101,24 @@ ${savedEvsList||"Yoxdur"}`;
                                 setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
                               }}
                               style={{position:"absolute",left:t.pos.xPct+"%",top:t.pos.yPct+"%",transform:"translate(-50%,-50%)",
-                                width:20,height:20,borderRadius:"50%",cursor:tfull?"default":"pointer",opacity:tfull?0.55:1,
-                                background:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
-                                border:"1.3px solid "+(isVip?"#D4AF5A":"#C9A25E"),
+                                width:22,height:22,borderRadius:"50%",cursor:tfull?"default":"pointer",
+                                background:tfull?statusColor:tpartial?`linear-gradient(155deg,${statusColor}55,${statusColor}25)`:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
+                                border:"2px solid "+statusColor,
                                 display:"flex",alignItems:"center",justifyContent:"center",
-                                fontSize:9,fontWeight:800,color:"#211A16",fontFamily:"'Fraunces',serif",
+                                fontSize:8.5,fontWeight:800,color:tfull?"#FFF9EC":"#211A16",fontFamily:"'Fraunces',serif",
                                 boxShadow:"0 2px 4px rgba(60,40,20,.25)"}}>
                               {t.id}
                             </div>
                           );
                         })}
+                      </div>
+                      <div style={{display:"flex",gap:10,justifyContent:"center",marginTop:7}}>
+                        {[["#8FBF9A","Boş"],["#D4AF5A","Qismən dolu"],["#C1382A","Dolu"]].map(([c,l])=>(
+                          <div key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+                            <div style={{width:7,height:7,borderRadius:"50%",background:c}}/>
+                            <span style={{fontSize:9,color:"#6B5A3A"}}>{l}</span>
+                          </div>
+                        ))}
                       </div>
                       <button onClick={()=>{ pushPanel("schema"); setSchemaOpen(true); }}
                         style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
@@ -4238,6 +4247,16 @@ ${savedEvsList||"Yoxdur"}`;
                   <>
                     <div style={{fontSize:10.5,color:"rgba(33,26,22,.6)"}}>
                       {chatWizard.gender==="qadin"?"Özü ilə birlikdə neçə nəfər gələcək?":"Neçə nəfər?"}
+                    </div>
+                    <div style={{display:"flex",gap:6,justifyContent:"center"}}>
+                      {[1,2,3,4,5,6].map(n=>(
+                        <button key={n} onClick={()=>setChatWizard(w=>({...w,count:String(n)}))}
+                          style={{width:28,height:28,borderRadius:"50%",
+                            border:"1px solid "+(parseInt(chatWizard.count)===n?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+                            background:parseInt(chatWizard.count)===n?"rgba(193,56,42,.16)":"rgba(255,255,255,.35)",
+                            color:parseInt(chatWizard.count)===n?"#C1382A":"#211A16",
+                            fontSize:12,fontWeight:700,cursor:"pointer"}}>{n}</button>
+                      ))}
                     </div>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:14}}>
                       <button onClick={()=>setChatWizard(w=>({...w,count:String(Math.max(1,(parseInt(w.count)||1)-1))}))}
