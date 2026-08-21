@@ -30,7 +30,18 @@ export default async function handler(req, res) {
       + "&from=" + encodeURIComponent(sender)
       + "&text=" + encodeURIComponent(text);
 
-    const response = await fetch(url);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    let response;
+    try {
+      response = await fetch(url, { signal: controller.signal });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      const isAbort = fetchErr.name === "AbortError";
+      res.status(504).json({ ok: false, error: isAbort ? "MSM.az serveri 8 saniyə ərzində cavab vermədi (timeout)" : ("MSM.az-a qoşula bilmədi: " + fetchErr.message) });
+      return;
+    }
+    clearTimeout(timeoutId);
     const raw = await response.text();
 
     // Cavab formatı: errno=100&errtext=OK&message_id=526973&charge=1&balance=123
