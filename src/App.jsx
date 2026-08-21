@@ -3078,6 +3078,9 @@ export default function App(){
   const [pickerDate, setPickerDate] = useState("");
   const [pickerTime, setPickerTime] = useState("19:00");
   const [chatWizard, setChatWizard] = useState(null); // {tableId, step, name, phone, gender, count}
+  const [chatLongPress, setChatLongPress] = useState(new Set()); // seçilmiş masa ID-ləri
+  const [chatLongPressResult, setChatLongPressResult] = useState(null); // {code, tblIds}
+  const chatLongPressTimer = useRef(null);
   const [obData, setObData] = useState({});
   const [tables, setTables] = useState([]);
   const [layoutMode, setLayoutMode] = useState(null); // "ready"|"photo"|"custom"
@@ -3582,10 +3585,11 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     }
     if(txt==="💬 Chat-da əlavə et"){
       const firstOpen = tabRef.current.find(t=>occ(t)<t.seats);
+      const explainMsg = "👇 Yuxarıdakı sxemdə istədiyiniz masaya bir dəfə toxunun — onu birbaşa burada dolduraq.\n\n💡 Bir masanı başqasına həvalə etmək istəsəniz: həmin masaya barmağınızla basıb 1 saniyə saxlayın — link yaranacaq, onu göndərdiyiniz adam öz qonaqlarını özü əlavə edib, istəsə özü də dəvətnamə göndərə bilər.";
       if(firstOpen){
         setActiveTable(firstOpen.id);
         setChatWizard({tableId:firstOpen.id, step:"name", name:"", phone:"", gender:"", count:"1"});
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:`Yaxşı, Masa ${firstOpen.id} ilə başlayaq 👇`,qrs:[]}]);
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:explainMsg+`\n\nİndi Masa ${firstOpen.id} ilə başlayaq 👇`,qrs:[],hallOverview:true}]);
       } else {
         setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Bütün masalar doludur! 🎉",qrs:[]}]);
       }
@@ -4093,16 +4097,37 @@ ${savedEvsList||"Yoxdur"}`;
                           if(!t.pos) return null;
                           const to=occ(t), tfull=to>=t.seats, tpartial=to>0&&!tfull;
                           const isVip=(t.label||"").toLowerCase().includes("vip");
-                          const statusColor = tfull?"#C1382A":tpartial?"#D4AF5A":"#8FBF9A";
+                          const isSel = chatLongPress.has(t.id);
+                          const statusColor = isSel?"#C1382A":tfull?"#C1382A":tpartial?"#D4AF5A":"#8FBF9A";
                           const seats = Math.min(t.seats||8, 10); // kiçik önizləmədə ən çox 10 nöqtə, yer üçün
-                          return (
-                            <div key={t.id} onClick={()=>{
-                                if(tfull) return;
+                          function startPress(){
+                            chatLongPressTimer.current = setTimeout(()=>{
+                              chatLongPressTimer.current = null;
+                              setChatLongPress(prev=>{
+                                const next = new Set(prev);
+                                if(next.has(t.id)) next.delete(t.id); else next.add(t.id);
+                                return next;
+                              });
+                              setChatLongPressResult(null);
+                              if(navigator.vibrate) navigator.vibrate(40);
+                            },550);
+                          }
+                          function cancelPress(wasLong){
+                            if(chatLongPressTimer.current){
+                              clearTimeout(chatLongPressTimer.current);
+                              chatLongPressTimer.current = null;
+                              if(!wasLong && !tfull){
                                 setActiveTable(t.id);
                                 setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
-                              }}
+                              }
+                            }
+                          }
+                          return (
+                            <div key={t.id}
+                              onTouchStart={startPress} onTouchEnd={()=>cancelPress(false)} onTouchCancel={()=>cancelPress(true)}
+                              onMouseDown={startPress} onMouseUp={()=>cancelPress(false)} onMouseLeave={()=>cancelPress(true)}
                               style={{position:"absolute",left:t.pos.xPct+"%",top:t.pos.yPct+"%",transform:"translate(-50%,-50%)",
-                                width:34,height:34,cursor:tfull?"default":"pointer"}}>
+                                width:34,height:34,cursor:tfull&&!isSel?"default":"pointer",touchAction:"none"}}>
                               {Array.from({length:seats}).map((_,si)=>{
                                 const angle=(si/seats)*Math.PI*2-Math.PI/2;
                                 const sx=50+Math.cos(angle)*46, sy=50+Math.sin(angle)*46;
@@ -4115,12 +4140,13 @@ ${savedEvsList||"Yoxdur"}`;
                                 );
                               })}
                               <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",
-                                width:20,height:20,borderRadius:"50%",
-                                background:tfull?statusColor:tpartial?`linear-gradient(155deg,${statusColor}55,${statusColor}25)`:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
-                                border:"1.6px solid "+statusColor,
+                                width:isSel?24:20,height:isSel?24:20,borderRadius:"50%",
+                                background:isSel?"rgba(193,56,42,.22)":tfull?statusColor:tpartial?`linear-gradient(155deg,${statusColor}55,${statusColor}25)`:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
+                                border:(isSel?"2px":"1.6px")+" solid "+statusColor,
                                 display:"flex",alignItems:"center",justifyContent:"center",
-                                fontSize:8.5,fontWeight:800,color:tfull?"#FFF9EC":"#211A16",fontFamily:"'Fraunces',serif",
-                                boxShadow:"0 2px 4px rgba(60,40,20,.25)"}}>
+                                fontSize:8.5,fontWeight:800,color:isSel?"#C1382A":tfull?"#FFF9EC":"#211A16",fontFamily:"'Fraunces',serif",
+                                boxShadow:isSel?"0 0 0 3px rgba(193,56,42,.18), 0 2px 4px rgba(60,40,20,.25)":"0 2px 4px rgba(60,40,20,.25)",
+                                transition:"width .15s,height .15s"}}>
                                 {t.id}
                               </div>
                             </div>
@@ -4135,6 +4161,52 @@ ${savedEvsList||"Yoxdur"}`;
                           </div>
                         ))}
                       </div>
+
+                      {chatLongPress.size>0&&(
+                        <div style={{marginTop:8,padding:10,borderRadius:12,background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.25)"}}>
+                          {chatLongPressResult?(
+                            <div>
+                              <div style={{fontSize:10.5,color:"#C1382A",fontWeight:700,marginBottom:6}}>✅ Kod hazırdır!</div>
+                              <div style={{background:"linear-gradient(155deg,rgba(30,22,16,.8),rgba(30,22,16,.6))",borderRadius:11,padding:"10px",textAlign:"center",marginBottom:8}}>
+                                <div style={{fontSize:20,fontWeight:900,color:"#D4AF5A",letterSpacing:3,fontFamily:"'IBM Plex Mono',monospace"}}>{chatLongPressResult.code}</div>
+                                <div style={{fontSize:8.5,color:"rgba(245,238,224,.6)",marginTop:3}}>{chatLongPressResult.tblIds.length} masa</div>
+                              </div>
+                              <div style={{display:"flex",gap:6}}>
+                                <button onClick={()=>{
+                                  const msg="🎊 Sizi məclisimizin masa sxeminə dəvət edirəm!\n\nAşağıdakı linkə basın — masanızı görəcək və qonaqlarınızı əlavə edəcəksiniz:\n\n👉 https://gonag-vercel.vercel.app/invite/"+chatLongPressResult.code+"\n\nTəşəkkür edirik! 🙏";
+                                  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+                                }} style={{flex:1,padding:"8px",borderRadius:10,border:"1px solid rgba(76,154,110,.3)",background:"rgba(76,154,110,.18)",color:"#4C9A6E",fontSize:10.5,fontWeight:700,cursor:"pointer"}}>📱 WhatsApp</button>
+                                <button onClick={()=>{setChatLongPress(new Set());setChatLongPressResult(null);}}
+                                  style={{padding:"8px 11px",borderRadius:10,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:10.5,cursor:"pointer"}}>✕</button>
+                              </div>
+                            </div>
+                          ):(
+                            <div>
+                              <div style={{fontSize:10.5,color:"#C1382A",fontWeight:700,marginBottom:8}}>🔴 {chatLongPress.size} masa seçildi — başqasına həvalə et</div>
+                              <div style={{display:"flex",gap:6}}>
+                                <button onClick={()=>{
+                                    const code="G"+Math.random().toString(36).substring(2,5).toUpperCase()+Math.random().toString(36).substring(2,4).toUpperCase();
+                                    const tblIds=Array.from(chatLongPress);
+                                    setChatLongPressResult({code,tblIds});
+                                    try{
+                                      fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
+                                        method:"POST",
+                                        headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
+                                        body:JSON.stringify({code,session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
+                                      }).catch(()=>{});
+                                    }catch(e){}
+                                  }}
+                                  style={{flex:1,padding:"8px",borderRadius:10,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.16)",color:"#C1382A",fontSize:10.5,fontWeight:700,cursor:"pointer"}}>
+                                  🔴 Kod yarat → Göndər
+                                </button>
+                                <button onClick={()=>setChatLongPress(new Set())}
+                                  style={{padding:"8px 11px",borderRadius:10,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:10.5,cursor:"pointer"}}>✕</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <button onClick={()=>{ pushPanel("schema"); setSchemaOpen(true); }}
                         style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
                           background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(10px)",
