@@ -237,6 +237,17 @@ async function sbLoadEvents(sessionId){
   return await sbFetch("events?session_id=eq."+encodeURIComponent(sessionId)+"&order=created_at.desc") || [];
 }
 
+// Yalnız siyahı üçün — ağır "tables" (bütün qonaqlar+chat tarixçəsi) sahəsini çəkmir, ona görə tez açılır
+async function sbLoadEventsSummary(sessionId){
+  return await sbFetch("events?session_id=eq."+encodeURIComponent(sessionId)+"&select=id,session_id,type,couple,date,hall_name,hall_total,hall_seats,status,created_at,updated_at&order=created_at.desc") || [];
+}
+
+// "Davam et" basılanda — həmin BİR məclisin tam məlumatı (masalar, qonaqlar, chat tarixçəsi)
+async function sbLoadEventFull(dbId){
+  const rows = await sbFetch("events?id=eq."+dbId);
+  return rows && rows[0] ? rows[0] : null;
+}
+
 async function sbDeleteEvent(dbId){
   await sbFetch("events?id=eq."+dbId, {method:"DELETE"});
 }
@@ -2191,15 +2202,15 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                   </div>
                   <div style={{fontSize:11,color:"rgba(33,26,22,.5)",marginTop:2}}>
                     {ev.obData&&ev.obData.date&&<span>{ev.obData.date} · </span>}
-                    {ev.hall&&ev.hall.name&&<span>{ev.hall.name} · </span>}
+                    {(ev.hall&&ev.hall.name)||ev.hallName?<span>{(ev.hall&&ev.hall.name)||ev.hallName} · </span>:null}
                     {ev.tables&&ev.tables.length>0&&<span>{ev.tables.length} masa · </span>}
                     {ev.totalGuests>0&&<span>{ev.totalGuests} qonaq</span>}
                   </div>
                 </div>
               </div>
 
-              {/* Progress bar */}
-              {ev.tables&&ev.tables.length>0&&(()=>{
+              {/* Progress bar — tam masalar yüklənibsə dəqiq, yoxsa təxmini (hallTotal əsasında) */}
+              {ev.tables&&ev.tables.length>0?(()=>{
                 const filled = ev.tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1),0),0);
                 const cap = ev.tables.reduce((s,t)=>s+t.seats,0);
                 const pct = cap>0?Math.round(filled/cap*100):0;
@@ -2214,7 +2225,11 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
                     </div>
                   </div>
                 );
-              })()}
+              })():(ev.hallTotal>0&&(
+                <div style={{marginBottom:10,fontSize:10,color:"rgba(33,26,22,.45)"}}>
+                  Tutum: {ev.hallTotal} nəfər — "Davam et" basanda dəqiq doluluq görünəcək
+                </div>
+              ))}
 
               {/* Buttons */}
               <div style={{display:"flex",gap:8}}>
@@ -3079,6 +3094,7 @@ export default function App(){
   const [pickerTime, setPickerTime] = useState("19:00");
   const [chatWizard, setChatWizard] = useState(null); // {tableId, step, name, phone, gender, count}
   const [chatLongPress, setChatLongPress] = useState(new Set()); // seçilmiş masa ID-ləri
+  const [chatWizardPickerOpen, setChatWizardPickerOpen] = useState(false);
   const [chatLongPressResult, setChatLongPressResult] = useState(null); // {code, tblIds}
   const chatLongPressTimer = useRef(null);
   const [obData, setObData] = useState({});
@@ -3240,29 +3256,27 @@ export default function App(){
       }).catch(function(){});
     }catch(e){}
 
-    // Supabase-dən yüklə
-    sbLoadEvents(sessionId).then(rows=>{
+    // Supabase-dən yüklə — yüngül (siyahı üçün), tam detallar "Davam et" basılanda çəkilir
+    sbLoadEventsSummary(sessionId).then(rows=>{
       if(rows&&rows.length>0){
         const evs = rows.map(r=>{
-          const tblData = r.tables||{};
-          const meta = tblData._meta||{};
-          const actualTables = Array.isArray(tblData) ? tblData : (tblData.rows||[]);
           return {
             id: r.id+"",
             dbId: r.id,
             sessionId: r.session_id,
-            evType: meta.evType||r.type||"",
-            obStep: meta.obStep||"done",
-            obData: meta.obData||{},
-            hall: meta.hall||null,
-            msgs: meta.msgs||[],
-            hist: meta.hist||[],
-            tables: actualTables,
+            evType: r.type||"",
+            obStep: "done",
+            obData: { boy: (r.couple||"").split(" & ")[0]||"", girl: (r.couple||"").split(" & ")[1]||"", name: r.couple||"", date: r.date||"" },
+            hall: null,
+            msgs: [],
+            hist: [],
+            tables: [], // yalnız siyahı üçün — tam masalar "Davam et" basılanda yüklənir
             status: r.status||"natamam",
-            totalGuests: meta.totalGuests||0,
+            totalGuests: r.hall_total||0,
             hallName: r.hall_name,
             hallTotal: r.hall_total,
             hallSeats: r.hall_seats,
+            _summaryOnly: true, // bu obyektdə hələ tam data yoxdur
           };
         });
         setSavedEvents(evs);
@@ -3328,19 +3342,44 @@ export default function App(){
     return evId;
   }
 
-  function loadEvent(ev_snap){
+  async function loadEvent(ev_snap){
     // Aktiv məclisi əvvəlcə saxla
     if(currentEvId) saveCurrentEvent({status:"natamam"});
-    setCurrentEvId(ev_snap.id);
-    setEvType(ev_snap.evType||"");
-    setObData(ev_snap.obData||{});
-    setObStep(ev_snap.obStep||"done");
-    setEv(ev_snap.ev||{});
-    setHall(ev_snap.hall||null);
-    setTables(ev_snap.tables||[]);
-    setMsgs(ev_snap.msgs||[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
-    setHist(ev_snap.hist||[]);
-    if(ev_snap.tables&&ev_snap.tables.length>0) pushPanel("schema"); setSchemaOpen(true);
+
+    let full = ev_snap;
+    if(ev_snap._summaryOnly && ev_snap.dbId){
+      setMsgs([{role:"agent",text:"Yüklənir...",qrs:[]}]);
+      try{
+        const row = await sbLoadEventFull(ev_snap.dbId);
+        if(row){
+          const tblData = row.tables||{};
+          const meta = tblData._meta||{};
+          const actualTables = Array.isArray(tblData) ? tblData : (tblData.rows||[]);
+          full = {
+            ...ev_snap,
+            evType: meta.evType||row.type||"",
+            obStep: meta.obStep||"done",
+            obData: meta.obData||ev_snap.obData||{},
+            hall: meta.hall||null,
+            msgs: meta.msgs||[],
+            hist: meta.hist||[],
+            tables: actualTables,
+            totalGuests: meta.totalGuests||0,
+          };
+        }
+      }catch(e){}
+    }
+
+    setCurrentEvId(full.id);
+    setEvType(full.evType||"");
+    setObData(full.obData||{});
+    setObStep(full.obStep||"done");
+    setEv(full.ev||{});
+    setHall(full.hall||null);
+    setTables(full.tables||[]);
+    setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
+    setHist(full.hist||[]);
+    if(full.tables&&full.tables.length>0){ pushPanel("schema"); setSchemaOpen(true); }
     setMeclisOpen(false);
   }
 
@@ -4276,6 +4315,11 @@ ${savedEvsList||"Yoxdur"}`;
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#211A16"}}>Masa {t.id}{t.label&&t.label!=="__extra__"?" — "+t.label:""}</div>
                   <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <button onClick={()=>setChatWizardPickerOpen(o=>!o)}
+                      style={{fontSize:9.5,fontWeight:700,color:"#8A6B1E",background:"rgba(212,175,90,.16)",border:"1px solid rgba(212,175,90,.35)",
+                        borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
+                      🔄 Masanı dəyiş
+                    </button>
                     <button onClick={()=>{ setChatWizard(null); pushPanel("schema"); setSchemaOpen(true); }}
                       style={{fontSize:9.5,fontWeight:700,color:"#5B84B0",background:"rgba(91,132,176,.14)",border:"1px solid rgba(91,132,176,.3)",
                         borderRadius:12,padding:"5px 9px",cursor:"pointer",whiteSpace:"nowrap"}}>
@@ -4291,6 +4335,34 @@ ${savedEvsList||"Yoxdur"}`;
                         color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
                   </div>
                 </div>
+
+                {chatWizardPickerOpen&&(
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6,padding:9,borderRadius:12,
+                    background:"rgba(255,255,255,.4)",border:"1px solid rgba(255,255,255,.5)"}}>
+                    {(tables||[]).map(tt=>{
+                      const tOc = occ(tt), tFull = tOc>=tt.seats, tPartial = tOc>0&&!tFull;
+                      const isCurrent = tt.id===chatWizard.tableId;
+                      const sc = tFull?"#C1382A":tPartial?"#D4AF5A":"#8FBF9A";
+                      return (
+                        <button key={tt.id} onClick={()=>{
+                            if(tFull) return;
+                            setActiveTable(tt.id);
+                            setChatWizard({tableId:tt.id, step:"name", name:"", phone:"", gender:"", count:"1"});
+                            setChatWizardPickerOpen(false);
+                          }}
+                          disabled={tFull}
+                          style={{aspectRatio:"1/1",borderRadius:"50%",
+                            border:(isCurrent?"2px":"1.3px")+" solid "+sc,
+                            background:isCurrent?sc+"22":tFull?sc:"rgba(255,255,255,.6)",
+                            color:tFull?"#FFF9EC":"#211A16",fontWeight:800,fontSize:11,
+                            fontFamily:"'Fraunces',serif",cursor:tFull?"default":"pointer",
+                            opacity:tFull?0.6:1}}>
+                          {tt.id}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <input value={t.label&&t.label!=="__extra__"?t.label:""} placeholder="✏️ Masaya ad qoy (məs: VIP, Ailə) — istəyə bağlı"
                   onChange={e=>{
