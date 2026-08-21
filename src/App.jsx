@@ -5134,7 +5134,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
   const [senderTitle, setSenderTitle] = useState("xanım");
   const [pulse, setPulse] = useState(true);
   const [smsSending, setSmsSending] = useState(false);
-  const [smsProgress, setSmsProgress] = useState({done:0,total:0,failed:0});
+  const [smsProgress, setSmsProgress] = useState({done:0,total:0,failed:0,lastError:""});
   const canvasRef = useRef(null);
   const shabRefs = [useRef(null),useRef(null),useRef(null),useRef(null)];
   // Tək-tək göndər
@@ -5243,7 +5243,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       if(phone) targets.push({g,tbl,phone});
     }));
     setSmsSending(true);
-    setSmsProgress({done:0,total:targets.length,failed:0});
+    setSmsProgress({done:0,total:targets.length,failed:0,lastError:""});
     for(let i=0;i<targets.length;i++){
       const {g,tbl,phone}=targets[i];
       try{
@@ -5251,10 +5251,11 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+". Ətraflı: "+rsvpLink+" - GONAG.AZ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
-        const j=await r.json().catch(()=>({ok:false}));
-        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1)}));
+        const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
+        const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
+        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+": "+errMsg)}));
       }catch(e){
-        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1}));
+        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1,lastError:g.name+": "+e.message}));
       }
       await new Promise(r=>setTimeout(r,150));
     }
@@ -5280,6 +5281,33 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     onMarkSent&&onMarkSent([guest.id]);
     setSingleGuest(null);
     setSingleStep("list");
+  }
+
+  async function sendSingleSMS(){
+    if(!singleGuest) return;
+    const {guest,tbl}=singleGuest;
+    const phone=(guest.phone||"").replace(/\D/g,"");
+    if(!phone){ alert("Bu qonağın telefon nömrəsi yoxdur"); return; }
+    setSmsSending(true);
+    try{
+      const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
+      const baseUrl=window.location.origin;
+      const code=await createRsvp(guest,tbl);
+      const rsvpLink=baseUrl+"/rsvp/"+code;
+      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+". Ətraflı: "+rsvpLink+" - GONAG.AZ";
+      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
+      const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
+      if(j.ok){
+        onMarkSent&&onMarkSent([guest.id]);
+        setSingleGuest(null);
+        setSingleStep("list");
+      } else {
+        alert("⚠️ SMS göndərilmədi: "+(j.error||j.errtext||"naməlum xəta"));
+      }
+    }catch(e){
+      alert("⚠️ SMS göndərilmədi: "+e.message);
+    }
+    setSmsSending(false);
   }
 
   const gold="#8A6B1E";
@@ -5462,15 +5490,20 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
                 <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"rgba(212,175,90,.3)",border:"1px solid rgba(201,168,76,.25)",color:gold,fontSize:11}}>Masa {t.id}</div>
               ))}
             </div>
-            {smsSending&&(
+            {smsProgress.total>0&&(
               <div style={{marginTop:14,padding:"10px 14px",borderRadius:12,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)"}}>
                 <div style={{fontSize:11,color:"#5B84B0",fontWeight:700,marginBottom:6}}>
-                  📩 SMS göndərilir... {smsProgress.done}/{smsProgress.total}
+                  📩 {smsSending?"SMS göndərilir...":"SMS nəticəsi:"} {smsProgress.done}/{smsProgress.total}
                   {smsProgress.failed>0&&<span style={{color:"#C1382A"}}> ({smsProgress.failed} uğursuz)</span>}
                 </div>
                 <div style={{height:5,background:"rgba(91,132,176,.15)",borderRadius:3,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:(smsProgress.total>0?smsProgress.done/smsProgress.total*100:0)+"%",background:"#5B84B0",borderRadius:3}}/>
+                  <div style={{height:"100%",width:(smsProgress.total>0?smsProgress.done/smsProgress.total*100:0)+"%",background:smsProgress.failed>0?"#C1382A":"#5B84B0",borderRadius:3}}/>
                 </div>
+                {smsProgress.lastError&&(
+                  <div style={{marginTop:8,fontSize:10,color:"#C1382A",background:"rgba(193,56,42,.08)",padding:"6px 9px",borderRadius:8}}>
+                    ⚠️ Son xəta: {smsProgress.lastError}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -5553,11 +5586,17 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
           <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",justifyContent:"center",alignItems:"flex-start"}}>
             <canvas ref={singleCanvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
           </div>
-          <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-            <button onClick={()=>setSingleStep("shablon")} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:12,cursor:"pointer"}}>🔄 Dəyişdir</button>
-            <button onClick={sendSingle}
-              style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#4C9A6E",fontSize:14,fontWeight:800,cursor:"pointer"}}>
-              ✅ Göndər
+          <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setSingleStep("shablon")} disabled={smsSending} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:12,cursor:smsSending?"default":"pointer"}}>🔄 Dəyişdir</button>
+              <button onClick={sendSingle} disabled={smsSending}
+                style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#4C9A6E",fontSize:14,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1}}>
+                📱 WhatsApp
+              </button>
+            </div>
+            <button onClick={sendSingleSMS} disabled={smsSending}
+              style={{padding:"12px",borderRadius:11,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
+              {smsSending?"Göndərilir...":"📩 SMS ilə göndər"}
             </button>
           </div>
         </>
