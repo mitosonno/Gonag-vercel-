@@ -2063,7 +2063,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
           </div>
 
           {/* Dəvətnamə çatdırılma hesabatı */}
-          {(smsSent+smsFailed+waSent+deliveryPending)>0&&(
+          {true&&(
             <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:16}}>
               <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10}}>📨 Dəvətnamə çatdırılması</div>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -2410,6 +2410,16 @@ function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   ctx.strokeStyle=S.accent; ctx.lineWidth=0.8; ctx.globalAlpha=0.35;
   ctx.beginPath(); ctx.moveTo(100,H-68); ctx.lineTo(W-100,H-68); ctx.stroke(); ctx.globalAlpha=1;
   ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  GONAG.AZ  ✦", W/2, H-34);
+}
+
+function MiniShablonPreview({ shablon, obData }){
+  const canvasRef = useRef(null);
+  useEffect(()=>{
+    if(!canvasRef.current) return;
+    const sampleTbl = { id:1, seats:8, guests:[{name:"Nümunə Qonaq",count:1,gender:""}] };
+    drawDevetnamePNG({canvas:canvasRef.current, shablon, tbl:sampleTbl, obData:obData||{}, hallName:(obData&&obData.hallName)||"Zal adı", guestName:"Hörmətli Qonaq"});
+  },[shablon, obData]);
+  return <canvas ref={canvasRef} style={{width:"100%",aspectRatio:"2/3",borderRadius:"9px 9px 0 0",display:"block"}}/>;
 }
 
 function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumber, setCardNumber }){
@@ -3242,6 +3252,7 @@ export default function App(){
   const [myInviteOpen, setMyInviteOpen] = useState(false);
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
+  const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
   const [agentSlotTable, setAgentSlotTable] = useState(null);
@@ -4612,31 +4623,28 @@ ${savedEvsList||"Yoxdur"}`;
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" style={{display:"block"}}><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
           </div>
-          <div className="qbar">
-            {hasS&&<button className="qbn on" onClick={()=>{
-              pushPanel("schema"); setSchemaOpen(true);
-              if(schemaTutStep===0) setSchemaTutStep(1);
-            }}>
-              🗺️ Zalın sxemi <span className="cnt">{tables.length}</span>
-            </button>}
-            {tables.length>0&&<button className="qbn on" onClick={()=>{
-              if(totG===0){
-                setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]);
-                return;
-              }
-              pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-            }}>
-              📨 Dəvətnamə
-            </button>}
-            {totG>0&&<button className="qbn on" onClick={()=>{ pushPanel("stats"); setStatsOpen(true); }}>
-              📊 Statistika
-            </button>}
-            {totG>0&&<button className="qbn on" onClick={()=>printAll(tables,obData,hall)}>
-              🖨️ Çap et
-            </button>}
-            <button className="qbn on" onClick={()=>setMyInviteOpen(true)}>
-              🎬 Mənim dəvətnamələrim
-            </button>
+          <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.25)",backdropFilter:"blur(10px)"}}>
+            {[
+              {key:"schema", icon:"🗺️", label:"Zalın sxemi", show:hasS, cnt:tables.length,
+                onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); if(schemaTutStep===0) setSchemaTutStep(1); }},
+              {key:"invite", icon:"📨", label:"Dəvətnamələr", show:tables.length>0,
+                onClick:()=>{
+                  if(totG===0){ setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]); return; }
+                  pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                }},
+              {key:"stats", icon:"📊", label:"Statistika", show:totG>0,
+                onClick:()=>{ pushPanel("stats"); setStatsOpen(true); }},
+              {key:"meclis", icon:"📋", label:"Məclislərim", show:true, cnt:savedEvents.length,
+                onClick:()=>{ pushPanel("meclis"); setMeclisOpen(true); }},
+            ].filter(it=>it.show).map(it=>(
+              <button key={it.key} onClick={it.onClick}
+                style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+                  border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
+                <span style={{fontSize:19}}>{it.icon}</span>
+                <span style={{fontSize:10,fontWeight:600,color:"#6B6259"}}>{it.label}</span>
+                {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -4678,6 +4686,11 @@ ${savedEvsList||"Yoxdur"}`;
                     </label>
                     <button onClick={()=>setMyInviteMedia(null)} style={{padding:"9px 14px",borderRadius:11,background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
                   </div>
+                  <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"9px 12px",borderRadius:11,background:"rgba(76,154,110,.08)",cursor:"pointer"}}>
+                    <input type="checkbox" checked={myInviteIncludeMedia} onChange={e=>setMyInviteIncludeMedia(e.target.checked)}
+                      style={{width:16,height:16,accentColor:"#4C9A6E"}}/>
+                    <span style={{fontSize:11.5,color:"#4C9A6E",fontWeight:600}}>Qonaqlara göndərəndə bu {myInviteMedia.type==="video"?"videonu":"şəkli"} də əlavə et</span>
+                  </label>
                 </div>
               ):(
                 <label style={{display:"block",padding:"20px 14px",borderRadius:16,border:"1px dashed rgba(150,120,80,.4)",
@@ -4698,21 +4711,28 @@ ${savedEvsList||"Yoxdur"}`;
               )}
 
               <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Hazır şablonlarımız</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:16}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:16}}>
                 {DEVETNAME_SHABLONLAR.map((s,i)=>(
-                  <button key={i} onClick={()=>setMyInviteShablon(i)}
-                    style={{padding:"12px 8px",borderRadius:13,cursor:"pointer",textAlign:"center",
-                      border:"1px solid "+(myInviteShablon===i?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
-                      background:myInviteShablon===i?"rgba(193,56,42,.12)":"rgba(255,255,255,.4)"}}>
-                    <div style={{width:"100%",aspectRatio:"3/4",borderRadius:8,marginBottom:6,
-                      background:"linear-gradient(155deg,"+s.bg+","+s.accent+")"}}/>
-                    <span style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16"}}>{s.ad}</span>
-                  </button>
+                  <div key={i} style={{borderRadius:15,overflow:"hidden",cursor:"pointer",
+                      border:"2px solid "+(myInviteShablon===i?"#C1382A":"rgba(255,255,255,.5)"),
+                      background:"rgba(255,255,255,.4)"}}
+                    onClick={()=>setMyInviteShablon(i)}>
+                    <MiniShablonPreview shablon={s} obData={obData}/>
+                    <div style={{padding:"8px 6px",textAlign:"center"}}>
+                      <div style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16",marginBottom:6}}>{s.ad}</div>
+                      <button onClick={e=>{e.stopPropagation();setMyInviteShablon(i);}}
+                        style={{width:"100%",padding:"6px",borderRadius:9,border:"none",fontSize:10,fontWeight:800,cursor:"pointer",
+                          background:myInviteShablon===i?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.12)",
+                          color:myInviteShablon===i?"#fff":"#6B6259"}}>
+                        {myInviteShablon===i?"✓ Seçildi":"Seç"}
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
 
               <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12}}>
-                💡 Qonaqlara göndərəndə hər ikisi (seçdiyiniz şablon + öz videonuz/şəkliniz) birgə göndəriləcək.
+                💡 {myInviteMedia&&myInviteIncludeMedia?"Seçdiyiniz şablon + öz "+(myInviteMedia.type==="video"?"videonuz":"şəkliniz")+" birgə göndəriləcək.":"Yalnız seçdiyiniz şablon göndəriləcək (video/şəkil əlavə etmək istəsəniz yuxarıdakı qutunu işarələyin)."}
               </div>
             </div>
           </div>
@@ -5176,6 +5196,8 @@ ${savedEvsList||"Yoxdur"}`;
           hall={hall}
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
+          onOpenMyInvite={()=>setMyInviteOpen(true)}
+          onPrint={()=>printAll(tables,obData,hall)}
         />
       )}
 
@@ -5356,7 +5378,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, onMarkSmsResult, obData, hall, cardNumber, setCardNumber }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
@@ -5586,6 +5608,22 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, onMarkSmsResult, 
             <div style={{fontSize:15,fontWeight:700,color:"#5B84B0",marginBottom:4}}>Tək-tək göndər</div>
             <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
           </button>
+          <div style={{display:"flex",gap:10,marginTop:4}}>
+            {onOpenMyInvite&&(
+              <button onClick={onOpenMyInvite} style={{flex:1,padding:"14px 12px",borderRadius:16,border:"1px solid rgba(212,175,90,.3)",
+                background:"rgba(212,175,90,.1)",textAlign:"center",cursor:"pointer",color:"#8A6B1E"}}>
+                <div style={{fontSize:18,marginBottom:4}}>🎬</div>
+                <div style={{fontSize:11,fontWeight:700}}>Mənim dəvətnamələrim</div>
+              </button>
+            )}
+            {onPrint&&(
+              <button onClick={onPrint} style={{flex:1,padding:"14px 12px",borderRadius:16,border:"1px solid rgba(150,120,80,.25)",
+                background:"rgba(150,120,80,.08)",textAlign:"center",cursor:"pointer",color:"#6B6259"}}>
+                <div style={{fontSize:18,marginBottom:4}}>🖨️</div>
+                <div style={{fontSize:11,fontWeight:700}}>Çap et</div>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
