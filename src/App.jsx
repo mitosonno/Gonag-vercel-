@@ -1,4 +1,14 @@
 import { useState, useRef, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+import AuthScreen from "./AuthScreen.jsx";
+
+const supabase = createClient(
+  "https://dpvoluttxelwnqcfnsbh.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368"
+);
+// Cari giriş edilmiş istifadəçinin access_token-i — RLS-li sorğular üçün sbFetch bunu istifadə edəcək
+let _currentAccessToken = null;
+export function setCurrentAccessToken(t){ _currentAccessToken = t; }
 
 const RESTAURANTS = [
   { id:0, name:"Gülüstan Sarayı", address:"Şəhriyar küç. 2, Bakı", halls:[{id:1,name:"Böyük Zal",cap:200,hasLayout:true},{id:2,name:"Kiçik Zal",cap:160,hasLayout:true}] },
@@ -180,7 +190,7 @@ async function sbFetch(path, options={}){
     ...options,
     headers: {
       "apikey": SB_KEY,
-      "Authorization": "Bearer " + SB_KEY,
+      "Authorization": "Bearer " + (_currentAccessToken || SB_KEY),
       "Content-Type": "application/json",
       "Prefer": options.prefer||"",
       ...(options.headers||{})
@@ -2140,7 +2150,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 }
 
 
-function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
+function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onLogout }){
   const [confirmId, setConfirmId] = useState(null);
   if(!events||events.length===0) return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
@@ -2255,12 +2265,19 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent }){
           ))}
         </div>
         {/* Sabit alt düymə */}
-        <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
+        <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
           <button onClick={()=>{onClose();if(onNewEvent)onNewEvent();}}
             style={{width:"100%",padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",
               background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
             ✨ Yeni Məclis Yarat
           </button>
+          {onLogout&&(
+            <button onClick={onLogout}
+              style={{width:"100%",padding:"11px",borderRadius:14,border:"1px solid rgba(193,56,42,.25)",
+                background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+              🚪 Çıxış
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -3058,14 +3075,48 @@ function HallBuilderPanel({ onClose, onSaved }){
 
 
 export default function App(){
+  // ── Giriş / Auth ──
+  const [session, setSession] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data})=>{
+      setSession(data.session);
+      if(data.session) setCurrentAccessToken(data.session.access_token);
+      setAuthChecked(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession)=>{
+      setSession(newSession);
+      setCurrentAccessToken(newSession ? newSession.access_token : null);
+    });
+    return ()=>{ listener&&listener.subscription&&listener.subscription.unsubscribe(); };
+  },[]);
+
   // ── Məclislərim ──
   const [savedEvents, setSavedEvents] = useState([]);
   const savedEventsRef = useRef([]);
   useEffect(()=>{ savedEventsRef.current=savedEvents; },[savedEvents]);
-  const [sessionId] = useState(()=>{
-    // Sabit ID — mobil və PC eyni məlumatı görür
-    return "gonag_user_main";
-  });
+  const sessionId = session&&session.user? session.user.id : null;
+
+  // Köhnə anonim datanı (bu telefonda əvvəldən yığılmış) bir dəfəlik yeni hesaba köçür
+  useEffect(()=>{
+    if(!sessionId) return;
+    (async ()=>{
+      try{
+        const migKey = "gonag_migrated_"+sessionId;
+        if(localStorage.getItem(migKey)) return;
+        const mine = await sbFetch("events?session_id=eq."+sessionId+"&select=id&limit=1");
+        if(mine && mine.length>0){ localStorage.setItem(migKey,"1"); return; }
+        await sbFetch("events?session_id=eq.gonag_user_main", {
+          method:"PATCH",
+          headers:{"Prefer":"return=minimal"},
+          body: JSON.stringify({session_id: sessionId})
+        });
+        localStorage.setItem(migKey,"1");
+      }catch(e){}
+    })();
+  },[sessionId]);
+
   const [meclisOpen, setMeclisOpen] = useState(false);
   const [currentEvId, setCurrentEvId] = useState(null);
   useEffect(()=>{
@@ -3221,6 +3272,7 @@ export default function App(){
   },[tables, hall, obData, evType, currentEvId]);
 
   useEffect(()=>{
+    if(!sessionId) return;
     // Əvvəlcə localStorage-dən yüklə — dərhal görünür
     function loadFromStorage(sbRows){
       try{
@@ -3302,7 +3354,7 @@ export default function App(){
     }).catch(function(){
       if(!storageLoaded) loadFromStorage(null);
     });
-  },[]);
+  },[sessionId]);
 
   // Auto-save current event
   function saveCurrentEvent(overrides={}){
@@ -4084,6 +4136,24 @@ ${savedEvsList||"Yoxdur"}`;
 @keyframes fingerpoint{0%{opacity:0;transform:translate(-50%,-120%) scale(0.7)}20%{opacity:1;transform:translate(-50%,-120%) scale(1)}80%{opacity:1;transform:translate(-50%,-120%) scale(1)}100%{opacity:0;transform:translate(-50%,-130%) scale(0.8)}}
 .finger{animation:fingerpoint 1s ease forwards;}\n`;
 
+  if(!authChecked){
+    return (
+      <div style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+        background:"radial-gradient(ellipse at 50% 0%, #FFFDF7, #F5EFE0 60%, #EEE4CC)"}}>
+        <div style={{width:32,height:32,border:"3px solid rgba(193,56,42,.2)",borderTopColor:"#C1382A",borderRadius:"50%",animation:"authload .8s linear infinite"}}/>
+        <style>{"@keyframes authload{to{transform:rotate(360deg)}}"}</style>
+      </div>
+    );
+  }
+  if(!session){
+    return (
+      <AuthScreen supabase={supabase} onAuthenticated={(newSession)=>{
+        setSession(newSession);
+        setCurrentAccessToken(newSession.access_token);
+      }}/>
+    );
+  }
+
   return (
     <div>
       <style>{CSS}</style>
@@ -4535,6 +4605,7 @@ ${savedEvsList||"Yoxdur"}`;
           onSelect={loadEvent}
           onDelete={deleteEvent}
           onClose={closeTopPanel}
+          onLogout={()=>{ supabase.auth.signOut(); }}
           onNewEvent={()=>{
             setMeclisOpen(false);
             // Əvvəlcə aktiv məclisi saxla
