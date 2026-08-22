@@ -4225,10 +4225,6 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="logo">GONAG<span>.AZ</span></div>
           <div className="tbx">
             <div className="pill"><div className="dot"/><span className="pn">Gul Agent</span></div>
-            <button className="menu3" onClick={()=>{ pushPanel("meclis"); setMeclisOpen(true); }} style={{position:"relative"}} title="Menyu">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-              {savedEvents.length>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#c9a84c",color:"#FFFFFF",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{savedEvents.length}</span>}
-            </button>
           </div>
         </div>
 
@@ -4625,24 +4621,28 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.25)",backdropFilter:"blur(10px)"}}>
             {[
-              {key:"schema", icon:"🗺️", label:"Zalın sxemi", show:hasS, cnt:tables.length,
+              {key:"schema", icon:"🗺️", label:"Zalın sxemi", enabled:hasS, cnt:tables.length,
+                hint:"Əvvəlcə məclis yaradın və restoran seçin 🙏",
                 onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); if(schemaTutStep===0) setSchemaTutStep(1); }},
-              {key:"invite", icon:"📨", label:"Dəvətnamələr", show:tables.length>0,
-                onClick:()=>{
-                  if(totG===0){ setMsgs(m=>[...m,{role:"agent",text:"Əvvəlcə masalara qonaq əlavə et! 🙏\n\nSxemi aç → masaları doldur → sonra dəvətnamə göndər.",qrs:["🗺️ Sxemi aç","Sonra"]}]); return; }
-                  pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-                }},
-              {key:"stats", icon:"📊", label:"Statistika", show:totG>0,
+              {key:"invite", icon:"📨", label:"Dəvətnamələr", enabled:tables.length>0&&totG>0,
+                hint:tables.length===0?"Əvvəlcə zal sxemini qurun 🙏":"Əvvəlcə masalara qonaq əlavə edin 🙏",
+                onClick:()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }},
+              {key:"stats", icon:"📊", label:"Statistika", enabled:totG>0,
+                hint:"Statistika üçün əvvəlcə qonaq əlavə edin 🙏",
                 onClick:()=>{ pushPanel("stats"); setStatsOpen(true); }},
-              {key:"meclis", icon:"📋", label:"Məclislərim", show:true, cnt:savedEvents.length,
+              {key:"meclis", icon:"📋", label:"Məclislərim", enabled:true, cnt:savedEvents.length,
                 onClick:()=>{ pushPanel("meclis"); setMeclisOpen(true); }},
-            ].filter(it=>it.show).map(it=>(
-              <button key={it.key} onClick={it.onClick}
+            ].map(it=>(
+              <button key={it.key} onClick={()=>{
+                  if(it.enabled){ it.onClick(); }
+                  else { setMsgs(m=>[...m,{role:"agent",text:it.hint,qrs:[]}]); }
+                }}
                 style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
-                  border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
+                  border:"none",background:"transparent",cursor:"pointer",position:"relative",
+                  opacity:it.enabled?1:0.4}}>
                 <span style={{fontSize:19}}>{it.icon}</span>
                 <span style={{fontSize:10,fontWeight:600,color:"#6B6259"}}>{it.label}</span>
-                {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+                {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
               </button>
             ))}
           </div>
