@@ -2730,7 +2730,7 @@ function MasaDevetCard({ tbl, ev, hall, setDevetPNGOpen }){
 
 
 // ═══ ZAL BUILDER — admin real zal sxemi qurma aləti ═══
-function HallBuilderPanel({ onClose, onSaved }){
+function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin }){
   const [venueName, setVenueName] = useState("");
   const [hallName, setHallName] = useState("");
   const [capacity, setCapacity] = useState("150");
@@ -2744,6 +2744,9 @@ function HallBuilderPanel({ onClose, onSaved }){
   const [columns, setColumns] = useState([]);
   const [tableEditId, setTableEditId] = useState(null);
   const [videoUrl, setVideoUrl] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [makePublic, setMakePublic] = useState(false);
   const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
@@ -2882,7 +2885,9 @@ function HallBuilderPanel({ onClose, onSaved }){
       const createdHall = await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
-        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true
+        wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true,
+        created_by:currentUserId||null, is_public:isAdmin?makePublic:false,
+        maps_url:mapsUrl.trim()||null, contact_phone:contactPhone.trim()||null
       })});
       alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
       if(onSaved) onSaved(createdHall && createdHall[0]);
@@ -2976,6 +2981,23 @@ function HallBuilderPanel({ onClose, onSaved }){
             🎥 Zalın real videosunu yüklə (maks. 10MB, istəyə bağlı)
             <input type="file" accept="video/*" onChange={handleVideoUpload} style={{display:"none"}}/>
           </label>
+        )}
+
+        <input value={mapsUrl} onChange={e=>setMapsUrl(e.target.value)} placeholder="📍 Google Maps linki (istəyə bağlı — qonaqlar üçün SMS-də göndərilir)"
+          style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:11,outline:"none",color:"#211A16"}}/>
+        <input value={contactPhone} onChange={e=>setContactPhone(e.target.value)} placeholder="📞 Zalın əlaqə nömrəsi (istəyə bağlı)"
+          style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:11,outline:"none",color:"#211A16"}}/>
+
+        {isAdmin&&(
+          <label style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",borderRadius:12,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.3)",cursor:"pointer"}}>
+            <input type="checkbox" checked={makePublic} onChange={e=>setMakePublic(e.target.checked)} style={{width:16,height:16,accentColor:"#D4AF5A"}}/>
+            <span style={{fontSize:11,color:"#8A6B1E",fontWeight:600}}>🌐 Bunu bütün istifadəçilər üçün ümumi et (rəsmi zal)</span>
+          </label>
+        )}
+        {!isAdmin&&(
+          <div style={{fontSize:9.5,color:"rgba(33,26,22,.4)",padding:"0 4px"}}>
+            🔒 Bu zal yalnız sizin hesabınızda görünəcək
+          </div>
         )}
       </div>
       )}
@@ -3656,6 +3678,8 @@ export default function App(){
       _wallEdges: hallObj.wall_edges||[],
       _columns: hallObj.columns||[],
       _videoUrl: hallObj.video_url||null,
+      _mapsUrl: hallObj.maps_url||null,
+      _contactPhone: hallObj.contact_phone||null,
       planImageUrl: hallObj.photo_url||null
     };
     const customTables = (hallObj.layout||[]).map(t=>({
@@ -4894,6 +4918,8 @@ ${savedEvsList||"Yoxdur"}`;
 
       {hallBuilderOpen&&(
         <HallBuilderPanel
+          currentUserId={session&&session.user?session.user.id:null}
+          isAdmin={!!(session&&session.user&&session.user.email==="nurlan.asgarov@gmail.com")}
           onClose={()=>setHallBuilderOpen(false)}
           onSaved={(newHall)=>{
             // Dərhal, sorğu gözləmədən siyahıya əlavə edirik (yarış şərtini önləmək üçün)
@@ -5548,7 +5574,8 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       try{
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+". Ətraflı: "+rsvpLink+" - GONAG.AZ";
+        const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
+        const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+" Ətraflı: "+rsvpLink+" - GONAG.AZ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -5595,7 +5622,8 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const baseUrl=window.location.origin;
       const code=await createRsvp(guest,tbl);
       const rsvpLink=baseUrl+"/rsvp/"+code;
-      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+". Ətraflı: "+rsvpLink+" - GONAG.AZ";
+      const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
+      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+" Ətraflı: "+rsvpLink+" - GONAG.AZ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
