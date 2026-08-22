@@ -1615,7 +1615,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.4)",
               backdropFilter:"blur(8px)",
               color:shareMode?"#5B84B0":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            📤 Yönəlt
+            📤 Masanı yönəlt
           </button>
           <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"7px 13px",borderRadius:14,border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             {editMode?"✓ Bitir":"✏️ Düzəlt"}
@@ -1667,7 +1667,8 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 </button>
                 {tables.map(function(t){
                   var isSel=shareSelected.has(t.id);
-                  var sc=t.side==="Oğlan evi"?"#C1382A":t.side==="Qız evi"?"#D4AF5A":"#8A6FA8";
+                  var to=occ(t), tfull=to>=t.seats, tpartial=to>0&&!tfull;
+                  var sc=isSel?"#5B84B0":tfull?"#C1382A":tpartial?"#D4AF5A":"#8FBF9A";
                   return (
                     <button key={t.id} onClick={function(){
                       setShareSelected(function(prev){
@@ -1675,10 +1676,21 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                         if(s.has(t.id)) s.delete(t.id); else s.add(t.id);
                         return s;
                       });
-                    }} style={{padding:"5px 10px",borderRadius:12,fontSize:10,fontWeight:700,cursor:"pointer",backdropFilter:"blur(6px)",
-                      border:"1px solid "+(isSel?sc+"88":sc+"33"),
-                      background:isSel?sc+"26":"rgba(255,255,255,.25)",color:isSel?sc:sc+"aa"}}>
-                      №{t.id}{t.label&&t.label!=="__extra__"?" "+t.label.substring(0,5):""}
+                    }} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+                      background:"none",border:"none",cursor:"pointer",padding:4}}>
+                      <div style={{width:34,height:34,borderRadius:"50%",
+                        background:isSel?"rgba(91,132,176,.22)":tfull?sc:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
+                        border:(isSel?"2.5px":"1.6px")+" solid "+sc,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:12,fontWeight:800,color:isSel?"#5B84B0":tfull?"#FFF9EC":"#211A16",
+                        fontFamily:"'Fraunces',serif",
+                        boxShadow:isSel?"0 0 0 3px rgba(91,132,176,.18)":"0 2px 4px rgba(60,40,20,.2)",
+                        transition:"box-shadow .15s"}}>
+                        {t.id}
+                      </div>
+                      {t.label&&t.label!=="__extra__"&&(
+                        <span style={{fontSize:8,color:sc,fontWeight:700,maxWidth:44,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.label}</span>
+                      )}
                     </button>
                   );
                 })}
@@ -1999,6 +2011,12 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const pending = guests.filter(g=>g.phone&&!rs[g.phone]);
   const noPhone = guests.filter(g=>!g.phone);
 
+  // Dəvətnamə çatdırılma statistikası (SMS/WhatsApp)
+  const smsSent = guests.filter(g=>g.smsStatus==="sent").length;
+  const smsFailed = guests.filter(g=>g.smsStatus==="failed").length;
+  const waSent = guests.filter(g=>g.waStatus==="sent").length;
+  const deliveryPending = guests.filter(g=>g.phone&&!g.smsStatus&&!g.waStatus).length;
+
   const [expand, setExpand] = useState(null); // "attending"|"not_attending"|"pending"
   const [smsGuest, setSmsGuest] = useState(null);
   const [smsText, setSmsText] = useState("");
@@ -2043,6 +2061,35 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
             {statCard("Uşaq",ushaqSayi,"#D4AF5A","👧")}
             {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)","👤")}
           </div>
+
+          {/* Dəvətnamə çatdırılma hesabatı */}
+          {(smsSent+smsFailed+waSent+deliveryPending)>0&&(
+            <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:16}}>
+              <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10}}>📨 Dəvətnamə çatdırılması</div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(76,154,110,.1)",border:"1px solid rgba(76,154,110,.25)"}}>
+                  <span style={{fontSize:12,color:"#4C9A6E"}}>✅ SMS çatıb</span>
+                  <span style={{fontSize:13,fontWeight:800,color:"#4C9A6E"}}>{smsSent}</span>
+                </div>
+                {smsFailed>0&&(
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.25)"}}>
+                    <span style={{fontSize:12,color:"#C1382A"}}>❌ SMS çatmayıb</span>
+                    <span style={{fontSize:13,fontWeight:800,color:"#C1382A"}}>{smsFailed}</span>
+                  </div>
+                )}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)"}}>
+                  <span style={{fontSize:12,color:"#5B84B0"}}>📱 WhatsApp göndərilib</span>
+                  <span style={{fontSize:13,fontWeight:800,color:"#5B84B0"}}>{waSent}</span>
+                </div>
+                {deliveryPending>0&&(
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.25)"}}>
+                    <span style={{fontSize:12,color:"#8A6B1E"}}>⏳ Hələ göndərilməyib</span>
+                    <span style={{fontSize:13,fontWeight:800,color:"#8A6B1E"}}>{deliveryPending}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* RSVP Bölməsi */}
           <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:12}}>
@@ -3192,10 +3239,14 @@ export default function App(){
     }
   }
   const [statsOpen, setStatsOpen] = useState(false);
+  const [myInviteOpen, setMyInviteOpen] = useState(false);
+  const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
+  const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
   const [agentSlotTable, setAgentSlotTable] = useState(null);
   const [restOpen, setRestOpen] = useState(false);
+  const [restSearch, setRestSearch] = useState("");
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
   const [customHalls, setCustomHalls] = useState([]);
   function refetchCustomHalls(){
@@ -4583,9 +4634,90 @@ ${savedEvsList||"Yoxdur"}`;
             {totG>0&&<button className="qbn on" onClick={()=>printAll(tables,obData,hall)}>
               🖨️ Çap et
             </button>}
+            <button className="qbn on" onClick={()=>setMyInviteOpen(true)}>
+              🎬 Mənim dəvətnamələrim
+            </button>
           </div>
         </div>
       </div>
+
+      {/* MƏNİM DƏVƏTNAMƏLƏRİM */}
+      {myInviteOpen&&(
+        <div className="ov" onClick={()=>setMyInviteOpen(false)}>
+          <div className="rsp" onClick={e=>e.stopPropagation()} style={{maxWidth:420}}>
+            <div className="rsh">
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
+                <button className="dcl" onClick={()=>setMyInviteOpen(false)}>✕</button>
+              </div>
+            </div>
+            <div className="rsb">
+              <div style={{fontSize:11.5,color:"#6B6259",marginBottom:14,lineHeight:1.5}}>
+                Öz video və ya şəkil dəvətnamənizi yükləyin — qonaqlara göndərəndə bizim hazır şablonla **birlikdə** gedə bilər.
+              </div>
+
+              {myInviteMedia?(
+                <div style={{marginBottom:16,padding:12,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
+                  {myInviteMedia.type==="video"?(
+                    <video src={myInviteMedia.url} controls style={{width:"100%",borderRadius:12,display:"block"}}/>
+                  ):(
+                    <img src={myInviteMedia.url} style={{width:"100%",borderRadius:12,display:"block"}}/>
+                  )}
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <label style={{flex:1,padding:"9px",borderRadius:11,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer"}}>
+                      Dəyiş
+                      <input type="file" accept="image/*,video/*" style={{display:"none"}}
+                        onChange={e=>{
+                          const f=e.target.files&&e.target.files[0]; if(!f) return;
+                          if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
+                          const isVideo=f.type.startsWith("video/");
+                          const reader=new FileReader();
+                          reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
+                          reader.readAsDataURL(f);
+                        }}/>
+                    </label>
+                    <button onClick={()=>setMyInviteMedia(null)} style={{padding:"9px 14px",borderRadius:11,background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+                  </div>
+                </div>
+              ):(
+                <label style={{display:"block",padding:"20px 14px",borderRadius:16,border:"1px dashed rgba(150,120,80,.4)",
+                  background:"rgba(255,255,255,.3)",textAlign:"center",cursor:"pointer",marginBottom:16}}>
+                  <div style={{fontSize:24,marginBottom:6}}>📤</div>
+                  <div style={{fontSize:12,color:"#6B6259",fontWeight:600}}>Video və ya şəkil yükləyin</div>
+                  <div style={{fontSize:10,color:"rgba(33,26,22,.4)",marginTop:3}}>maks. 15MB</div>
+                  <input type="file" accept="image/*,video/*" style={{display:"none"}}
+                    onChange={e=>{
+                      const f=e.target.files&&e.target.files[0]; if(!f) return;
+                      if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
+                      const isVideo=f.type.startsWith("video/");
+                      const reader=new FileReader();
+                      reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
+                      reader.readAsDataURL(f);
+                    }}/>
+                </label>
+              )}
+
+              <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Hazır şablonlarımız</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8,marginBottom:16}}>
+                {DEVETNAME_SHABLONLAR.map((s,i)=>(
+                  <button key={i} onClick={()=>setMyInviteShablon(i)}
+                    style={{padding:"12px 8px",borderRadius:13,cursor:"pointer",textAlign:"center",
+                      border:"1px solid "+(myInviteShablon===i?"rgba(193,56,42,.5)":"rgba(255,255,255,.5)"),
+                      background:myInviteShablon===i?"rgba(193,56,42,.12)":"rgba(255,255,255,.4)"}}>
+                    <div style={{width:"100%",aspectRatio:"3/4",borderRadius:8,marginBottom:6,
+                      background:"linear-gradient(155deg,"+s.bg+","+s.accent+")"}}/>
+                    <span style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16"}}>{s.ad}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12}}>
+                💡 Qonaqlara göndərəndə hər ikisi (seçdiyiniz şablon + öz videonuz/şəkliniz) birgə göndəriləcək.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MƏCLİSLƏRİM PANEL */}
       {devetPNGOpen&&(
@@ -4677,8 +4809,25 @@ ${savedEvsList||"Yoxdur"}`;
                   background:"rgba(76,154,110,.08)",color:"#4C9A6E",fontSize:12,fontWeight:700,cursor:"pointer"}}>
                 🛠 Yeni zal qur (real sxem)
               </button>
-              {customHalls.map(r=><RestCard key={"c"+r.id} rest={r} onPick={(rr,h)=>pickCustomHall(rr,h)}/>)}
-              {RESTAURANTS.map(r=><RestCard key={r.id} rest={r} onPick={pickHall}/>)}
+              <input value={restSearch} onChange={e=>setRestSearch(e.target.value)} placeholder="🔍 Restoran adı yazın..."
+                style={{width:"100%",padding:"10px 14px",marginBottom:12,borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
+                  background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:13,outline:"none",color:"#211A16"}}/>
+              {(()=>{
+                const q = restSearch.trim().toLowerCase();
+                const allRests = [...customHalls.map(r=>({...r,_custom:true})), ...RESTAURANTS.map(r=>({...r,_custom:false}))];
+                const filtered = q ? allRests.filter(r=>r.name.toLowerCase().includes(q)) : allRests.slice(0,3);
+                if(filtered.length===0){
+                  return <div style={{textAlign:"center",padding:20,fontSize:12,color:"#6B6259"}}>Bu adda restoran tapılmadı</div>;
+                }
+                return filtered.map(r=>
+                  <RestCard key={(r._custom?"c":"")+r.id} rest={r} onPick={r._custom?(rr,h)=>pickCustomHall(rr,h):pickHall}/>
+                );
+              })()}
+              {!restSearch.trim()&&(customHalls.length+RESTAURANTS.length)>3&&(
+                <div style={{textAlign:"center",fontSize:10.5,color:"#6B6259",marginTop:4}}>
+                  Daha çox restoran üçün yuxarıda axtarın ({customHalls.length+RESTAURANTS.length-3} əlavə)
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -5020,7 +5169,8 @@ ${savedEvsList||"Yoxdur"}`;
           notInvTables={tables.filter(t=>t.guests.length>0)}
           allTables={tables}
           onClose={closeTopPanel}
-          onMarkSent={(ids)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true}:g)})));}}
+          onMarkSent={(ids,channel)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true,...(channel==="whatsapp"?{waStatus:"sent"}:{})}:g)})));}}
+          onMarkSmsResult={(guestId,success)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>g.id===guestId?{...g,invited:true,smsStatus:success?"sent":"failed"}:g)})));}}
           devetData={devetData}
           obData={obData}
           hall={hall}
@@ -5206,7 +5356,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, cardNumber, setCardNumber }){
+function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, onMarkSmsResult, obData, hall, cardNumber, setCardNumber }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
@@ -5313,7 +5463,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
         await new Promise(r=>setTimeout(r,800));
       }
     }
-    onMarkSent&&onMarkSent(toSend.flatMap(t=>t.guests.map(g=>g.id)));
+    onMarkSent&&onMarkSent(toSend.flatMap(t=>t.guests.map(g=>g.id)),"whatsapp");
     onClose();
   }
 
@@ -5338,12 +5488,13 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+": "+errMsg)}));
+        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok);
       }catch(e){
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1,lastError:g.name+": "+e.message}));
+        onMarkSmsResult&&onMarkSmsResult(g.id, false);
       }
       await new Promise(r=>setTimeout(r,150));
     }
-    onMarkSent&&onMarkSent(toSend.flatMap(t=>t.guests.map(g=>g.id)));
     setSmsSending(false);
   }
 
@@ -5362,7 +5513,7 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
     const c=document.createElement("canvas");
     drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
     await shareMsg(phone,msg,c,waWin);
-    onMarkSent&&onMarkSent([guest.id]);
+    onMarkSent&&onMarkSent([guest.id],"whatsapp");
     setSingleGuest(null);
     setSingleStep("list");
   }
@@ -5382,10 +5533,11 @@ function NotInvDrawerBody({ notInvTables, onClose, onMarkSent, obData, hall, car
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
-        onMarkSent&&onMarkSent([guest.id]);
+        onMarkSmsResult&&onMarkSmsResult(guest.id, true);
         setSingleGuest(null);
         setSingleStep("list");
       } else {
+        onMarkSmsResult&&onMarkSmsResult(guest.id, false);
         alert("⚠️ SMS göndərilmədi: "+(j.error||j.errtext||"naməlum xəta"));
       }
     }catch(e){
