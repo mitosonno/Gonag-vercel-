@@ -2762,6 +2762,7 @@ function HallBuilderPanel({ onClose, onSaved }){
   async function saveHall(){
     if(!venueName.trim()||!hallName.trim()){ alert("Restoran və zal adını yazın 🙏"); return; }
     if(wallEdges.length<3){ alert("Ən azı 3 divar xətti çəkin (nöqtələri bir-birinə toxunub birləşdirin) 🙏"); return; }
+    if(tables.length<1){ alert("Ən azı 1 masa qeyd edin 🙏 (Masa rejiminə keçib kətana klikləyin)"); return; }
     setSaving(true);
     try{
       let venueId = null;
@@ -3067,6 +3068,9 @@ export default function App(){
   });
   const [meclisOpen, setMeclisOpen] = useState(false);
   const [currentEvId, setCurrentEvId] = useState(null);
+  useEffect(()=>{
+    if(currentEvId){ try{ localStorage.setItem("gonag_last_active_evid", currentEvId); }catch(e){} }
+  },[currentEvId]);
 
   const [msgs, setMsgs] = useState([{
     role:"agent",text:"Salam! 👋 GONAG.AZ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
@@ -3283,6 +3287,14 @@ export default function App(){
         // localStorage-i də güncəllə
         try{ localStorage.setItem("gonag_events_v2", JSON.stringify(evs.slice(0,20))); }catch(e){}
         try{ window.storage.set("gonag_events_v2", JSON.stringify(evs.slice(0,20))); }catch(e){}
+        // Yarımçıq qalan son aktiv məclisi avtomatik davam etdir (istifadəçi əl ilə "Məclislərim"ə girmədən)
+        try{
+          const lastActiveId = localStorage.getItem("gonag_last_active_evid");
+          if(lastActiveId){
+            const found = evs.find(e=>e.id===lastActiveId && e.status!=="done" && e.status!=="tamamlandı");
+            if(found) loadEvent(found);
+          }
+        }catch(e){}
       } else {
         // Supabase boşdur, localStorage-dən yüklə
         if(!storageLoaded) loadFromStorage(null);
@@ -4527,6 +4539,7 @@ ${savedEvsList||"Yoxdur"}`;
             setMeclisOpen(false);
             // Əvvəlcə aktiv məclisi saxla
             if(currentEvId) saveCurrentEvent({status:"natamam"});
+            try{ localStorage.removeItem("gonag_last_active_evid"); }catch(e){}
             setEvType(null); setObStep("type"); setObData({});
             setTables([]); setHall(null); setCurrentEvId(null);
             setHist([]);
