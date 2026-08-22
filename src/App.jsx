@@ -81,6 +81,28 @@ Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz mü
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
 
+function contactsSupported(){
+  return typeof navigator!=="undefined" && "contacts" in navigator && "ContactsManager" in window;
+}
+
+async function pickContact(){
+  try{
+    const props = ["name","tel"];
+    const opts = {multiple:false};
+    const contacts = await navigator.contacts.select(props, opts);
+    if(!contacts || contacts.length===0) return null;
+    const c = contacts[0];
+    const name = (c.name && c.name[0]) || "";
+    let phone = (c.tel && c.tel[0]) || "";
+    phone = phone.replace(/\D/g,"");
+    if(phone.startsWith("994")) phone = phone.slice(3);
+    if(phone.startsWith("0")) phone = phone.slice(1);
+    return {name, phone};
+  }catch(e){
+    return null;
+  }
+}
+
 function printAll(tables, obData, hall){
   const evName = (obData&&obData.boy&&obData.girl) ? (obData.boy+" & "+obData.girl)
     : ((obData&&obData.name)||(obData&&obData.company)||"Məclis");
@@ -1818,11 +1840,22 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               </div>
 
               {/* Ad Soyad */}
-              <input ref={slotRef} value={slotName} onChange={e=>setSlotName(e.target.value)}
-                placeholder="Ad Soyad"
-                style={{display:"block",width:"100%",boxSizing:"border-box",padding:"8px 11px",marginBottom:8,
-                  background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",
-                  borderRadius:11,color:"#211A16",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif"}}/>
+              <div style={{display:"flex",gap:6,marginBottom:8}}>
+                <input ref={slotRef} value={slotName} onChange={e=>setSlotName(e.target.value)}
+                  placeholder="Ad Soyad"
+                  style={{flex:1,display:"block",boxSizing:"border-box",padding:"8px 11px",
+                    background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",
+                    borderRadius:11,color:"#211A16",fontSize:12,outline:"none",fontFamily:"'Inter',sans-serif"}}/>
+                {contactsSupported()&&(
+                  <button onClick={async()=>{
+                      const c = await pickContact();
+                      if(c&&c.name){ setSlotName(c.name); if(c.phone) setSlotPhone(c.phone); }
+                    }}
+                    style={{padding:"0 10px",borderRadius:11,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.12)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    📇 Kontakt
+                  </button>
+                )}
+              </div>
 
               {/* Telefon nömrəsi */}
               <div style={{display:"flex",gap:6,marginBottom:4,alignItems:"center"}}>
@@ -4513,6 +4546,15 @@ ${savedEvsList||"Yoxdur"}`;
                     <input autoFocus value={chatWizard.name} onChange={e=>setChatWizard(w=>({...w,name:e.target.value}))}
                       placeholder="Ad Soyad" onKeyDown={e=>{if(e.key==="Enter"&&chatWizard.name.trim())setChatWizard(w=>({...w,step:"phone"}));}}
                       style={{padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.55)",background:"rgba(255,255,255,.55)",fontSize:12,outline:"none",color:"#211A16"}}/>
+                    {contactsSupported()&&(
+                      <button onClick={async()=>{
+                          const c = await pickContact();
+                          if(c&&c.name){ setChatWizard(w=>({...w,name:c.name,phone:c.phone||w.phone,step:c.phone?"gender":"phone"})); }
+                        }}
+                        style={{padding:"8px",borderRadius:12,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.12)",color:"#5B84B0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                        📇 Kontaktdan seç
+                      </button>
+                    )}
                     <button disabled={!chatWizard.name.trim()} onClick={()=>setChatWizard(w=>({...w,step:"phone"}))}
                       style={{padding:"9px",borderRadius:12,border:"none",background:chatWizard.name.trim()?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.15)",
                         color:chatWizard.name.trim()?"#fff":"rgba(33,26,22,.35)",fontSize:12,fontWeight:700,cursor:chatWizard.name.trim()?"pointer":"default"}}>Növbəti →</button>
@@ -5194,6 +5236,7 @@ ${savedEvsList||"Yoxdur"}`;
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
           onOpenMyInvite={()=>setMyInviteOpen(true)}
+          onGoToSchema={()=>{ closeTopPanel(); pushPanel("schema"); setSchemaOpen(true); }}
           onPrint={()=>printAll(tables,obData,hall)}
         />
       )}
@@ -5375,7 +5418,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
@@ -5386,6 +5429,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   const [senderName, setSenderName] = useState("");
   const [senderTitle, setSenderTitle] = useState("xanım");
   const [pulse, setPulse] = useState(true);
+  const [sendComplete, setSendComplete] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
   const [smsProgress, setSmsProgress] = useState({done:0,total:0,failed:0,lastError:""});
   const canvasRef = useRef(null);
@@ -5483,7 +5527,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       }
     }
     onMarkSent&&onMarkSent(toSend.flatMap(t=>t.guests.map(g=>g.id)),"whatsapp");
-    onClose();
+    setSendComplete(true);
   }
 
   async function sendBulkSMS(){
@@ -5515,6 +5559,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       await new Promise(r=>setTimeout(r,150));
     }
     setSmsSending(false);
+    setSendComplete(true);
   }
 
   async function sendSingle(){
@@ -5778,6 +5823,22 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               </div>
             )}
           </div>
+          {sendComplete?(
+            <div style={{padding:"14px 16px 36px",flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{textAlign:"center",padding:"14px",borderRadius:14,background:"rgba(76,154,110,.1)",border:"1px solid rgba(76,154,110,.3)"}}>
+                <div style={{fontSize:24,marginBottom:4}}>✅</div>
+                <div style={{fontSize:13,fontWeight:700,color:"#4C9A6E"}}>Göndərildi!</div>
+              </div>
+              <button onClick={()=>{ setSendComplete(false); onGoToSchema&&onGoToSchema(); }}
+                style={{padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                🗺️ Sxemə qayıt
+              </button>
+              <button onClick={()=>{ setSendComplete(false); setStep("select"); }}
+                style={{padding:"12px",borderRadius:12,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:"pointer"}}>
+                Yenidən göndər
+              </button>
+            </div>
+          ):(
           <div style={{padding:"10px 14px 36px",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setStep("preview")} disabled={smsSending} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:smsSending?"default":"pointer"}}>← Geri</button>
@@ -5791,6 +5852,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               {smsSending?"Göndərilir...":"📩 SMS ilə göndər (1 kliklə hamısına)"}
             </button>
           </div>
+          )}
         </>
       )}
 
