@@ -5238,6 +5238,8 @@ ${savedEvsList||"Yoxdur"}`;
           onOpenMyInvite={()=>setMyInviteOpen(true)}
           onGoToSchema={()=>{ closeTopPanel(); pushPanel("schema"); setSchemaOpen(true); }}
           onPrint={()=>printAll(tables,obData,hall)}
+          myInviteShablon={myInviteShablon}
+          myInviteMedia={myInviteIncludeMedia?myInviteMedia:null}
         />
       )}
 
@@ -5418,12 +5420,12 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
-  const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
   const [step, setStep] = useState("select"); // "select"|"shablon"|"preview"|"confirm"
   const [previewTbl, setPreviewTbl] = useState(null);
   const [senderName, setSenderName] = useState("");
@@ -5630,34 +5632,71 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       </div>
 
       {/* HOME */}
-      {panel==="home"&&(
+      {panel==="home"&&(()=>{
+        const hasDesign = myInviteShablon!=null || myInviteMedia;
+        const allGuests = (notInvTables||[]).flatMap(t=>(t.guests||[]).map(g=>({...g,tableId:t.id})));
+        const pending = allGuests.filter(g=>g.phone && !g.smsStatus && !g.waStatus);
+        return (
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:12,padding:"24px 16px"}}>
-          <button onClick={()=>setPanel("bulk")}
-            style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(193,56,42,.3)",
-              background:"linear-gradient(155deg,rgba(193,56,42,.16),rgba(193,56,42,.05))",backdropFilter:"blur(16px) saturate(150%)",
-              boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
-              textAlign:"left",cursor:"pointer",color:"#211A16"}}>
-            <div style={{fontSize:26,marginBottom:8}}>📨</div>
-            <div style={{fontSize:15,fontWeight:700,color:"#C1382A",marginBottom:4}}>Dəvətnamələri göndər</div>
-            <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Masaları seç → şablon → hamısına birdəfəlik göndər</div>
-          </button>
-          <button onClick={()=>setPanel("single")}
-            style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(91,132,176,.3)",
-              background:"linear-gradient(155deg,rgba(91,132,176,.16),rgba(91,132,176,.05))",backdropFilter:"blur(16px) saturate(150%)",
-              boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
-              textAlign:"left",cursor:"pointer",color:"#211A16"}}>
-            <div style={{fontSize:26,marginBottom:8}}>👤</div>
-            <div style={{fontSize:15,fontWeight:700,color:"#5B84B0",marginBottom:4}}>Tək-tək göndər</div>
-            <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
-          </button>
-          <div style={{display:"flex",gap:10,marginTop:4}}>
-            {onOpenMyInvite&&(
-              <button onClick={onOpenMyInvite} style={{flex:1,padding:"14px 12px",borderRadius:16,border:"1px solid rgba(212,175,90,.3)",
-                background:"rgba(212,175,90,.1)",textAlign:"center",cursor:"pointer",color:"#8A6B1E"}}>
-                <div style={{fontSize:18,marginBottom:4}}>🎬</div>
-                <div style={{fontSize:11,fontWeight:700}}>Mənim dəvətnamələrim</div>
+          {!hasDesign?(
+            <button onClick={onOpenMyInvite}
+              style={{padding:"26px 20px",borderRadius:22,border:"1px solid rgba(212,175,90,.4)",
+                background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.05))",backdropFilter:"blur(16px) saturate(150%)",
+                boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
+                textAlign:"center",cursor:"pointer",color:"#211A16"}}>
+              <div style={{fontSize:30,marginBottom:8}}>🎬</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#8A6B1E",marginBottom:4}}>Əvvəlcə dəvətnamə dizaynını seçin</div>
+              <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Öz video/şəklinizi yükləyin, ya da hazır şablonlardan birini seçin</div>
+            </button>
+          ):(
+            <>
+              <button onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:16,
+                border:"1px solid rgba(212,175,90,.3)",background:"rgba(212,175,90,.08)",cursor:"pointer",textAlign:"left"}}>
+                <span style={{fontSize:18}}>🎬</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#8A6B1E"}}>
+                    Seçilmiş dizayn: {myInviteMedia?(myInviteMedia.type==="video"?"Öz videonuz":"Öz şəkliniz")+(myInviteShablon!=null?" + "+DEVETNAME_SHABLONLAR[myInviteShablon].ad:""):myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon].ad:"—"}
+                  </div>
+                  <div style={{fontSize:9.5,color:"rgba(33,26,22,.45)"}}>Dəyişmək üçün toxunun</div>
+                </div>
               </button>
-            )}
+
+              <button onClick={()=>setPanel("bulk")}
+                style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(193,56,42,.3)",
+                  background:"linear-gradient(155deg,rgba(193,56,42,.16),rgba(193,56,42,.05))",backdropFilter:"blur(16px) saturate(150%)",
+                  boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
+                  textAlign:"left",cursor:"pointer",color:"#211A16"}}>
+                <div style={{fontSize:26,marginBottom:8}}>📨</div>
+                <div style={{fontSize:15,fontWeight:700,color:"#C1382A",marginBottom:4}}>Toplu göndər</div>
+                <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Masaları seç → hamısına birdəfəlik göndər</div>
+              </button>
+              <button onClick={()=>setPanel("single")}
+                style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(91,132,176,.3)",
+                  background:"linear-gradient(155deg,rgba(91,132,176,.16),rgba(91,132,176,.05))",backdropFilter:"blur(16px) saturate(150%)",
+                  boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
+                  textAlign:"left",cursor:"pointer",color:"#211A16"}}>
+                <div style={{fontSize:26,marginBottom:8}}>👤</div>
+                <div style={{fontSize:15,fontWeight:700,color:"#5B84B0",marginBottom:4}}>Tək-tək adla göndər</div>
+                <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
+              </button>
+
+              {pending.length>0&&(
+                <div style={{padding:"14px 16px",borderRadius:18,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.08)"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#8A6B1E",marginBottom:8}}>
+                    ⏳ {pending.length} qonağa hələ göndərilməyib
+                  </div>
+                  <button onClick={()=>{
+                      setSelTbls(new Set(pending.map(g=>g.tableId)));
+                      setPanel("bulk"); setStep("select");
+                    }}
+                    style={{width:"100%",padding:"10px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#D4AF5A,#B8923E)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                    Yalnız onlara göndər
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+          <div style={{display:"flex",gap:10,marginTop:4}}>
             {onPrint&&(
               <button onClick={onPrint} style={{flex:1,padding:"14px 12px",borderRadius:16,border:"1px solid rgba(150,120,80,.25)",
                 background:"rgba(150,120,80,.08)",textAlign:"center",cursor:"pointer",color:"#6B6259"}}>
@@ -5667,7 +5706,8 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* BULK — STEP: select */}
       {panel==="bulk"&&step==="select"&&(
@@ -5720,9 +5760,13 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(255,255,255,.35)"}}>
-            <button onClick={()=>selTbls.size>0&&setStep("shablon")} disabled={selTbls.size===0}
+            <button onClick={()=>{
+                if(selTbls.size===0) return;
+                if(myInviteShablon!=null){ setPreviewTbl(notInvTables.find(t=>selTbls.has(t.id))); setStep("preview"); }
+                else setStep("shablon");
+              }} disabled={selTbls.size===0}
               style={{width:"100%",padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",background:selTbls.size>0?"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))":"rgba(255,255,255,.35)",backdropFilter:selTbls.size>0?"blur(20px)":"blur(10px)",color:selTbls.size>0?"#F5EEE0":"rgba(33,26,22,.4)",fontSize:13,fontWeight:800,cursor:selTbls.size>0?"pointer":"default",boxShadow:selTbls.size>0?"0 1px 0 rgba(255,255,255,.12) inset":"none"}}>
-              Şablon seç → ({selTbls.size} masa)
+              {myInviteShablon!=null?"Davam et":"Şablon seç"} → ({selTbls.size} masa)
             </button>
           </div>
         </>
