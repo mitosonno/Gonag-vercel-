@@ -10,31 +10,62 @@ const NAV = [
   { id: "dashboard", label: "İcmal", icon: "📊" },
   { id: "users", label: "İstifadəçilər", icon: "👥" },
   { id: "events", label: "Məclislər", icon: "🎉" },
-  { id: "guests", label: "Qonaq axtarışı", icon: "🔍" },
+  { id: "guests", label: "Qonaqlar", icon: "🔍" },
 ];
 
-function StatCard({ label, value, icon, accent }){
+function useIsMobile(){
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+  useEffect(()=>{
+    function onResize(){ setW(window.innerWidth); }
+    window.addEventListener("resize", onResize);
+    return ()=>window.removeEventListener("resize", onResize);
+  },[]);
+  return w <= 860;
+}
+
+function StatCard({ label, value, icon, accent, mobile }){
   return (
-    <div style={{flex:1,minWidth:150,padding:"20px 22px",borderRadius:18,
-      background:"linear-gradient(155deg,rgba(255,255,255,.9),rgba(255,255,255,.65))",
-      border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 8px 24px -12px rgba(30,20,10,.15)"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <span style={{fontSize:11,color:"#6B6259",fontWeight:600,letterSpacing:.3}}>{label}</span>
-        <span style={{fontSize:18,opacity:.7}}>{icon}</span>
+    <div style={{padding: mobile?"14px 14px":"20px 22px",borderRadius: mobile?14:18,
+      background:"linear-gradient(155deg,rgba(255,255,255,.95),rgba(255,255,255,.75))",
+      border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 6px 18px -10px rgba(30,20,10,.18)",
+      minWidth:0}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:mobile?6:10}}>
+        <span style={{fontSize:mobile?9.5:11,color:"#6B6259",fontWeight:700,letterSpacing:.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{label}</span>
+        <span style={{fontSize:mobile?14:18,opacity:.7,flexShrink:0,marginLeft:4}}>{icon}</span>
       </div>
-      <div style={{fontFamily:"'Fraunces',serif",fontSize:32,fontWeight:700,color:accent||"#211A16"}}>{value}</div>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:mobile?24:32,fontWeight:700,color:accent||"#211A16"}}>{value}</div>
     </div>
   );
 }
 
+// Cədvəl sətri — mobil kart, desktop cədvəl sətri kimi işləyə bilən universal komponent
+function DataRow({ fields, mobile, onClick, accentField }){
+  if(mobile){
+    return (
+      <div onClick={onClick} style={{padding:"13px 15px",borderRadius:14,background:"rgba(255,255,255,.55)",
+        border:"1px solid rgba(255,255,255,.5)",marginBottom:8,cursor:onClick?"pointer":"default"}}>
+        {fields.map((f,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+            padding:i>0?"6px 0 0":"0",borderTop:i>0?"1px solid rgba(150,120,80,.08)":"none",marginTop:i>0?6:0}}>
+            <span style={{fontSize:10,color:"#6B6259",fontWeight:600}}>{f.label}</span>
+            <span style={{fontSize:13,color:f.accent?"#C1382A":"#211A16",fontWeight:f.bold?700:500,textAlign:"right"}}>{f.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null; // desktop halında ayrıca <tr> yazılır (aşağıda)
+}
+
 function Th({ children }){
-  return <th style={{textAlign:"left",padding:"10px 14px",fontSize:10.5,fontWeight:700,color:"#6B6259",letterSpacing:.4,textTransform:"uppercase",borderBottom:"1px solid rgba(150,120,80,.15)"}}>{children}</th>;
+  return <th style={{textAlign:"left",padding:"10px 14px",fontSize:10.5,fontWeight:700,color:"#6B6259",letterSpacing:.4,textTransform:"uppercase",borderBottom:"1px solid rgba(150,120,80,.15)",whiteSpace:"nowrap"}}>{children}</th>;
 }
 function Td({ children, style }){
-  return <td style={{padding:"12px 14px",fontSize:13,color:"#211A16",borderBottom:"1px solid rgba(150,120,80,.08)",...style}}>{children}</td>;
+  return <td style={{padding:"12px 14px",fontSize:13,color:"#211A16",borderBottom:"1px solid rgba(150,120,80,.08)",whiteSpace:"nowrap",...style}}>{children}</td>;
 }
 
 export default function AdminPanel(){
+  const isMobile = useIsMobile();
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
@@ -98,6 +129,16 @@ export default function AdminPanel(){
     return data.guests.filter(g=>(g.name||"").toLowerCase().includes(q)||(g.phone||"").includes(q)).slice(0,100);
   },[data, search]);
 
+  const GLOBAL_CSS = `
+    *{box-sizing:border-box;}
+    ::-webkit-scrollbar{height:6px;width:6px;}
+    ::-webkit-scrollbar-thumb{background:rgba(150,120,80,.25);border-radius:3px;}
+    .admin-scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    @media (max-width:860px){
+      .admin-stat-grid{grid-template-columns:repeat(2,1fr)!important;}
+    }
+  `;
+
   // ── Yüklənir ──
   if(!authChecked){
     return (
@@ -157,100 +198,148 @@ export default function AdminPanel(){
     return (
       <div style={{position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"#F5EFE0"}}>
         <div style={{width:32,height:32,border:"3px solid rgba(193,56,42,.2)",borderTopColor:"#C1382A",borderRadius:"50%",animation:"aload .8s linear infinite"}}/>
+        <style>{"@keyframes aload{to{transform:rotate(360deg)}}"}</style>
       </div>
     );
   }
 
   return (
-    <div style={{position:"fixed",inset:0,display:"flex",background:"#F7F1E4",fontFamily:"'Inter',sans-serif"}}>
-      {/* Sidebar */}
-      <div style={{width:220,flexShrink:0,background:"linear-gradient(180deg,#1A1512,#241C17)",display:"flex",flexDirection:"column",padding:"22px 14px"}}>
-        <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:700,color:"#F5EEE0",padding:"0 10px",marginBottom:28}}>
-          GONAG<span style={{color:"#D4AF5A"}}>.AZ</span>
-          <div style={{fontSize:10,color:"rgba(245,238,224,.4)",fontWeight:400,marginTop:2}}>Admin Panel</div>
+    <div style={{position:"fixed",inset:0,display:"flex",flexDirection:isMobile?"column":"row",background:"#F7F1E4",fontFamily:"'Inter',sans-serif"}}>
+      <style>{GLOBAL_CSS}</style>
+
+      {/* Desktop sidebar */}
+      {!isMobile&&(
+        <div style={{width:220,flexShrink:0,background:"linear-gradient(180deg,#1A1512,#241C17)",display:"flex",flexDirection:"column",padding:"22px 14px"}}>
+          <div style={{fontFamily:"'Fraunces',serif",fontSize:19,fontWeight:700,color:"#F5EEE0",padding:"0 10px",marginBottom:28}}>
+            GONAG<span style={{color:"#D4AF5A"}}>.AZ</span>
+            <div style={{fontSize:10,color:"rgba(245,238,224,.4)",fontWeight:400,marginTop:2}}>Admin Panel</div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:3}}>
+            {NAV.map(n=>(
+              <button key={n.id} onClick={()=>{setTab(n.id);setSearch("");}}
+                style={{display:"flex",alignItems:"center",gap:10,padding:"11px 12px",borderRadius:12,border:"none",cursor:"pointer",textAlign:"left",
+                  background:tab===n.id?"rgba(212,175,90,.15)":"transparent",
+                  color:tab===n.id?"#D4AF5A":"rgba(245,238,224,.65)",fontSize:13,fontWeight:tab===n.id?700:500}}>
+                <span>{n.icon}</span>{n.label}
+              </button>
+            ))}
+          </div>
+          <div style={{flex:1}}/>
+          <div style={{padding:"0 10px 8px",fontSize:11,color:"rgba(245,238,224,.4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{session.user.email}</div>
+          <button onClick={()=>supabase.auth.signOut()}
+            style={{padding:"10px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(245,238,224,.6)",fontSize:12,cursor:"pointer",textAlign:"left"}}>
+            🚪 Çıxış
+          </button>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:3}}>
-          {NAV.map(n=>(
-            <button key={n.id} onClick={()=>{setTab(n.id);setSearch("");}}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"11px 12px",borderRadius:12,border:"none",cursor:"pointer",textAlign:"left",
-                background:tab===n.id?"rgba(212,175,90,.15)":"transparent",
-                color:tab===n.id?"#D4AF5A":"rgba(245,238,224,.65)",fontSize:13,fontWeight:tab===n.id?700:500}}>
-              <span>{n.icon}</span>{n.label}
-            </button>
-          ))}
+      )}
+
+      {/* Mobile top bar */}
+      {isMobile&&(
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px",
+          background:"linear-gradient(180deg,#1A1512,#241C17)",flexShrink:0}}>
+          <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:"#F5EEE0"}}>
+            GONAG<span style={{color:"#D4AF5A"}}>.AZ</span>
+          </div>
+          <button onClick={()=>supabase.auth.signOut()}
+            style={{padding:"6px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,.15)",background:"transparent",color:"rgba(245,238,224,.65)",fontSize:11,cursor:"pointer"}}>
+            🚪 Çıxış
+          </button>
         </div>
-        <div style={{flex:1}}/>
-        <div style={{padding:"0 10px 8px",fontSize:11,color:"rgba(245,238,224,.4)"}}>{session.user.email}</div>
-        <button onClick={()=>supabase.auth.signOut()}
-          style={{padding:"10px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(245,238,224,.6)",fontSize:12,cursor:"pointer",textAlign:"left"}}>
-          🚪 Çıxış
-        </button>
-      </div>
+      )}
 
       {/* Main content */}
-      <div style={{flex:1,overflow:"auto",padding:"28px 32px"}}>
+      <div style={{flex:1,overflow:"auto",padding:isMobile?"16px 14px 90px":"28px 32px",minWidth:0}}>
         {tab==="dashboard"&&(
           <>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#211A16",marginBottom:20}}>İcmal</div>
-            <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:28}}>
-              <StatCard label="ÜMUMİ İSTİFADƏÇİ" value={data.stats.totalUsers} icon="👥"/>
-              <StatCard label="ÜMUMİ MƏCLİS" value={data.stats.totalEvents} icon="🎉"/>
-              <StatCard label="BUGÜNKÜ QONAQ" value={data.stats.todayGuests} icon="✨" accent="#C1382A"/>
-              <StatCard label="ÜMUMİ QONAQ" value={data.stats.totalGuests} icon="👤" accent="#4C9A6E"/>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:isMobile?14:20}}>İcmal</div>
+            <div className="admin-stat-grid" style={{display:"grid",gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:isMobile?10:16,marginBottom:isMobile?20:28}}>
+              <StatCard label="İSTİFADƏÇİ" value={data.stats.totalUsers} icon="👥" mobile={isMobile}/>
+              <StatCard label="MƏCLİS" value={data.stats.totalEvents} icon="🎉" mobile={isMobile}/>
+              <StatCard label="BUGÜN" value={data.stats.todayGuests} icon="✨" accent="#C1382A" mobile={isMobile}/>
+              <StatCard label="ÜMUMİ QONAQ" value={data.stats.totalGuests} icon="👤" accent="#4C9A6E" mobile={isMobile}/>
             </div>
-            <div style={{background:"rgba(255,255,255,.6)",borderRadius:18,padding:20,border:"1px solid rgba(255,255,255,.6)"}}>
-              <div style={{fontSize:14,fontWeight:700,color:"#211A16",marginBottom:14}}>Son yaradılan məclislər</div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr><Th>Cütlük/Ad</Th><Th>Zal</Th><Th>Masa</Th><Th>Qonaq</Th><Th>Tarix</Th></tr></thead>
-                <tbody>
-                  {data.events.slice(0,8).map(e=>(
-                    <tr key={e.id}>
-                      <Td>{e.couple||"—"}</Td>
-                      <Td>{e.hallName||"—"}</Td>
-                      <Td>{e.tableCount}</Td>
-                      <Td>{e.guestCount}</Td>
-                      <Td style={{color:"#6B6259",fontSize:11}}>{(e.createdAt||"").slice(0,10)}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{background:"rgba(255,255,255,.6)",borderRadius:isMobile?14:18,padding:isMobile?14:20,border:"1px solid rgba(255,255,255,.6)"}}>
+              <div style={{fontSize:isMobile?13:14,fontWeight:700,color:"#211A16",marginBottom:14}}>Son yaradılan məclislər</div>
+              {isMobile?(
+                data.events.slice(0,8).map(e=>(
+                  <DataRow key={e.id} mobile fields={[
+                    {label:"Cütlük/Ad",value:e.couple||"—",bold:true},
+                    {label:"Zal",value:e.hallName||"—"},
+                    {label:"Masa/Qonaq",value:e.tableCount+" / "+e.guestCount},
+                    {label:"Tarix",value:(e.createdAt||"").slice(0,10)},
+                  ]}/>
+                ))
+              ):(
+                <div className="admin-scroll-x">
+                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                    <thead><tr><Th>Cütlük/Ad</Th><Th>Zal</Th><Th>Masa</Th><Th>Qonaq</Th><Th>Tarix</Th></tr></thead>
+                    <tbody>
+                      {data.events.slice(0,8).map(e=>(
+                        <tr key={e.id}>
+                          <Td>{e.couple||"—"}</Td>
+                          <Td>{e.hallName||"—"}</Td>
+                          <Td>{e.tableCount}</Td>
+                          <Td>{e.guestCount}</Td>
+                          <Td style={{color:"#6B6259",fontSize:11}}>{(e.createdAt||"").slice(0,10)}</Td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </>
         )}
 
         {tab==="users"&&(
           <>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#211A16",marginBottom:16}}>İstifadəçilər ({data.users.length})</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:14}}>İstifadəçilər ({data.users.length})</div>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 E-poçt üzrə axtar..."
-              style={{width:"100%",maxWidth:360,padding:"11px 15px",borderRadius:12,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:16}}/>
-            <div style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)",overflow:"hidden"}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr><Th>E-poçt</Th><Th>Qeydiyyat</Th><Th>Son giriş</Th><Th>Məclis sayı</Th><Th>Ümumi qonaq</Th></tr></thead>
-                <tbody>
-                  {filteredUsers.map(u=>(
-                    <tr key={u.id} onClick={()=>setExpandedUser(expandedUser===u.id?null:u.id)} style={{cursor:"pointer"}}>
-                      <Td style={{fontWeight:600}}>{u.email}</Td>
-                      <Td style={{color:"#6B6259",fontSize:11}}>{(u.created_at||"").slice(0,10)}</Td>
-                      <Td style={{color:"#6B6259",fontSize:11}}>{u.last_sign_in_at?u.last_sign_in_at.slice(0,10):"—"}</Td>
-                      <Td>{u.eventCount}</Td>
-                      <Td style={{color:"#C1382A",fontWeight:700}}>{u.totalGuests}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              style={{width:"100%",maxWidth:isMobile?"100%":360,padding:"11px 15px",borderRadius:12,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:14}}/>
+
+            {isMobile?(
+              filteredUsers.map(u=>(
+                <div key={u.id}>
+                  <DataRow mobile onClick={()=>setExpandedUser(expandedUser===u.id?null:u.id)} fields={[
+                    {label:"E-poçt",value:u.email,bold:true},
+                    {label:"Qeydiyyat",value:(u.created_at||"").slice(0,10)},
+                    {label:"Məclis",value:u.eventCount},
+                    {label:"Qonaq",value:u.totalGuests,accent:true,bold:true},
+                  ]}/>
+                </div>
+              ))
+            ):(
+              <div className="admin-scroll-x" style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)"}}>
+                <table style={{width:"100%",borderCollapse:"collapse"}}>
+                  <thead><tr><Th>E-poçt</Th><Th>Qeydiyyat</Th><Th>Son giriş</Th><Th>Məclis sayı</Th><Th>Ümumi qonaq</Th></tr></thead>
+                  <tbody>
+                    {filteredUsers.map(u=>(
+                      <tr key={u.id} onClick={()=>setExpandedUser(expandedUser===u.id?null:u.id)} style={{cursor:"pointer"}}>
+                        <Td style={{fontWeight:600}}>{u.email}</Td>
+                        <Td style={{color:"#6B6259",fontSize:11}}>{(u.created_at||"").slice(0,10)}</Td>
+                        <Td style={{color:"#6B6259",fontSize:11}}>{u.last_sign_in_at?u.last_sign_in_at.slice(0,10):"—"}</Td>
+                        <Td>{u.eventCount}</Td>
+                        <Td style={{color:"#C1382A",fontWeight:700}}>{u.totalGuests}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {expandedUser&&(()=>{
               const evs = data.events.filter(e=>e.sessionId===expandedUser);
               const u = data.users.find(x=>x.id===expandedUser);
               return (
-                <div style={{marginTop:16,padding:18,background:"rgba(212,175,90,.08)",borderRadius:16,border:"1px solid rgba(212,175,90,.25)"}}>
-                  <div style={{fontSize:13,fontWeight:700,marginBottom:10}}>{u&&u.email} — məclisləri ({evs.length})</div>
+                <div style={{marginTop:14,padding:16,background:"rgba(212,175,90,.08)",borderRadius:16,border:"1px solid rgba(212,175,90,.25)"}}>
+                  <div style={{fontSize:13,fontWeight:700,marginBottom:10,wordBreak:"break-all"}}>{u&&u.email} — məclisləri ({evs.length})</div>
                   {evs.map(e=>(
-                    <div key={e.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(150,120,80,.1)",fontSize:12}}>
+                    <div key={e.id} style={{display:"flex",flexWrap:"wrap",justifyContent:"space-between",gap:4,padding:"8px 0",borderBottom:"1px solid rgba(150,120,80,.1)",fontSize:12}}>
                       <span>{e.couple||e.type} — {e.hallName||"zal seçilməyib"}</span>
                       <span style={{color:"#6B6259"}}>{e.guestCount} qonaq · {e.tableCount} masa</span>
                     </div>
                   ))}
+                  {evs.length===0&&<div style={{fontSize:12,color:"#6B6259"}}>Hələ məclis yaratmayıb</div>}
                 </div>
               );
             })()}
@@ -259,58 +348,101 @@ export default function AdminPanel(){
 
         {tab==="events"&&(
           <>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#211A16",marginBottom:16}}>Məclislər ({data.events.length})</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:14}}>Məclislər ({data.events.length})</div>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cütlük adı və ya zal üzrə axtar..."
-              style={{width:"100%",maxWidth:360,padding:"11px 15px",borderRadius:12,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:16}}/>
-            <div style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)",overflow:"hidden"}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr><Th>Cütlük/Ad</Th><Th>Növ</Th><Th>Zal</Th><Th>Masa</Th><Th>Qonaq</Th><Th>Status</Th><Th>Tarix</Th></tr></thead>
-                <tbody>
-                  {filteredEvents.map(e=>(
-                    <tr key={e.id}>
-                      <Td style={{fontWeight:600}}>{e.couple||"—"}</Td>
-                      <Td>{e.type||"—"}</Td>
-                      <Td>{e.hallName||"—"}</Td>
-                      <Td>{e.tableCount}</Td>
-                      <Td>{e.guestCount}</Td>
-                      <Td><span style={{padding:"3px 9px",borderRadius:10,fontSize:10,fontWeight:700,
-                        background:e.status==="done"?"rgba(76,154,110,.15)":"rgba(212,175,90,.15)",
-                        color:e.status==="done"?"#4C9A6E":"#8A6B1E"}}>{e.status||"natamam"}</span></Td>
-                      <Td style={{color:"#6B6259",fontSize:11}}>{(e.createdAt||"").slice(0,10)}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              style={{width:"100%",maxWidth:isMobile?"100%":360,padding:"11px 15px",borderRadius:12,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:14}}/>
+
+            {isMobile?(
+              filteredEvents.map(e=>(
+                <DataRow key={e.id} mobile fields={[
+                  {label:"Cütlük/Ad",value:e.couple||"—",bold:true},
+                  {label:"Növ",value:e.type||"—"},
+                  {label:"Zal",value:e.hallName||"—"},
+                  {label:"Masa/Qonaq",value:e.tableCount+" / "+e.guestCount},
+                  {label:"Status",value:e.status||"natamam"},
+                  {label:"Tarix",value:(e.createdAt||"").slice(0,10)},
+                ]}/>
+              ))
+            ):(
+              <div className="admin-scroll-x" style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)"}}>
+                <table style={{width:"100%",borderCollapse:"collapse"}}>
+                  <thead><tr><Th>Cütlük/Ad</Th><Th>Növ</Th><Th>Zal</Th><Th>Masa</Th><Th>Qonaq</Th><Th>Status</Th><Th>Tarix</Th></tr></thead>
+                  <tbody>
+                    {filteredEvents.map(e=>(
+                      <tr key={e.id}>
+                        <Td style={{fontWeight:600}}>{e.couple||"—"}</Td>
+                        <Td>{e.type||"—"}</Td>
+                        <Td>{e.hallName||"—"}</Td>
+                        <Td>{e.tableCount}</Td>
+                        <Td>{e.guestCount}</Td>
+                        <Td><span style={{padding:"3px 9px",borderRadius:10,fontSize:10,fontWeight:700,
+                          background:e.status==="done"?"rgba(76,154,110,.15)":"rgba(212,175,90,.15)",
+                          color:e.status==="done"?"#4C9A6E":"#8A6B1E"}}>{e.status||"natamam"}</span></Td>
+                        <Td style={{color:"#6B6259",fontSize:11}}>{(e.createdAt||"").slice(0,10)}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
 
         {tab==="guests"&&(
           <>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:700,color:"#211A16",marginBottom:16}}>Qonaq axtarışı</div>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Ad və ya telefon nömrəsi ilə axtarın..." autoFocus
-              style={{width:"100%",maxWidth:420,padding:"13px 17px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:14,outline:"none",marginBottom:16}}/>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:14}}>Qonaq axtarışı</div>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Ad və ya telefon nömrəsi..."
+              style={{width:"100%",maxWidth:isMobile?"100%":420,padding:"13px 17px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:14,outline:"none",marginBottom:14}}/>
             {!search&&<div style={{fontSize:12,color:"#6B6259",marginBottom:12}}>Son 50 qonaq göstərilir — axtarış üçün yazın</div>}
-            <div style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)",overflow:"hidden"}}>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr><Th>Ad</Th><Th>Telefon</Th><Th>Say</Th><Th>Masa</Th><Th>Məclis</Th><Th>Zal</Th></tr></thead>
-                <tbody>
-                  {filteredGuests.map((g,i)=>(
-                    <tr key={i}>
-                      <Td style={{fontWeight:600}}>{g.name}</Td>
-                      <Td>{g.phone||"—"}</Td>
-                      <Td>{g.count}</Td>
-                      <Td>{g.tableId}</Td>
-                      <Td>{g.couple||"—"}</Td>
-                      <Td>{g.hallName||"—"}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+
+            {isMobile?(
+              filteredGuests.map((g,i)=>(
+                <DataRow key={i} mobile fields={[
+                  {label:"Ad",value:g.name,bold:true},
+                  {label:"Telefon",value:g.phone||"—"},
+                  {label:"Say/Masa",value:g.count+" nəfər / Masa "+g.tableId},
+                  {label:"Məclis",value:g.couple||"—"},
+                  {label:"Zal",value:g.hallName||"—"},
+                ]}/>
+              ))
+            ):(
+              <div className="admin-scroll-x" style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)"}}>
+                <table style={{width:"100%",borderCollapse:"collapse"}}>
+                  <thead><tr><Th>Ad</Th><Th>Telefon</Th><Th>Say</Th><Th>Masa</Th><Th>Məclis</Th><Th>Zal</Th></tr></thead>
+                  <tbody>
+                    {filteredGuests.map((g,i)=>(
+                      <tr key={i}>
+                        <Td style={{fontWeight:600}}>{g.name}</Td>
+                        <Td>{g.phone||"—"}</Td>
+                        <Td>{g.count}</Td>
+                        <Td>{g.tableId}</Td>
+                        <Td>{g.couple||"—"}</Td>
+                        <Td>{g.hallName||"—"}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {/* Mobile bottom nav */}
+      {isMobile&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,display:"flex",
+          background:"linear-gradient(0deg,#1A1512,#241C17)",padding:"8px 6px calc(8px + env(safe-area-inset-bottom))",
+          boxShadow:"0 -4px 20px rgba(0,0,0,.25)",zIndex:10}}>
+          {NAV.map(n=>(
+            <button key={n.id} onClick={()=>{setTab(n.id);setSearch("");}}
+              style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+                border:"none",background:"transparent",cursor:"pointer"}}>
+              <span style={{fontSize:17,opacity:tab===n.id?1:.5}}>{n.icon}</span>
+              <span style={{fontSize:9,fontWeight:tab===n.id?700:500,color:tab===n.id?"#D4AF5A":"rgba(245,238,224,.5)"}}>{n.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
