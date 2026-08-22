@@ -4690,7 +4690,7 @@ ${savedEvsList||"Yoxdur"}`;
 
       {/* MƏNİM DƏVƏTNAMƏLƏRİM */}
       {myInviteOpen&&(
-        <div className="ov" onClick={()=>setMyInviteOpen(false)}>
+        <div className="ov" style={{zIndex:300}} onClick={()=>setMyInviteOpen(false)}>
           <div className="rsp" onClick={e=>e.stopPropagation()} style={{maxWidth:420}}>
             <div className="rsh">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
