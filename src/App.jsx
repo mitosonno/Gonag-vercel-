@@ -1230,16 +1230,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                 </div>
               );
             })}
-
-          {/* Legend */}
-          <div style={{position:"absolute",bottom:4,left:6,display:"flex",gap:5,flexWrap:"wrap",pointerEvents:"none"}}>
-            {[["#7aade8","Oğlan"],["#e87aad","Qız"],["#50c878","Dolu"],["#b57aff","Extra"],["#ff4444","Yönəlt"]].map(([c,l])=>(
-              <span key={l} style={{display:"flex",alignItems:"center",gap:2,fontSize:7,color:"rgba(33,26,22,.4)"}}>
-                <span style={{width:5,height:5,borderRadius:"50%",background:c,display:"inline-block"}}/>
-                {l}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -1615,10 +1605,10 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.4)",
               backdropFilter:"blur(8px)",
               color:shareMode?"#5B84B0":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            📤 Masanı yönəlt
+            📤 Başqasına göndər
           </button>
           <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"7px 13px",borderRadius:14,border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            {editMode?"✓ Bitir":"✏️ Düzəlt"}
+            {editMode?"✓ Bitir":"✏️ Masanı sürüşdür"}
           </button>
         </div>
       </div>
@@ -1798,6 +1788,13 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 </button>
               );
             })}
+            <button onClick={()=>{setEditLbl(true);setLblVal(exTbl.label&&exTbl.label!=="__extra__"?exTbl.label:"");}}
+              style={{flex:1,padding:"7px 4px",borderRadius:12,fontSize:10.5,fontWeight:700,cursor:"pointer",
+                border:"1px solid rgba(91,132,176,.4)",
+                background:"rgba(91,132,176,.14)",
+                color:"#5B84B0"}}>
+              ✏️ Özüm yazım
+            </button>
           </div>
 
           {/* TableSVG */}
