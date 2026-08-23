@@ -5755,8 +5755,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {/* HOME */}
       {panel==="home"&&(()=>{
         const hasDesign = myInviteShablon!=null || myInviteMedia;
-        const allGuests = (notInvTables||[]).flatMap(t=>(t.guests||[]).map(g=>({...g,tableId:t.id})));
-        const pending = allGuests.filter(g=>g.phone && !g.smsStatus && !g.waStatus);
         return (
         <div style={{flex:1,display:"flex",flexDirection:"column",gap:12,padding:"24px 16px"}}>
           {!hasDesign?(
@@ -5771,17 +5769,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </button>
           ):(
             <>
-              <button onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:16,
-                border:"1px solid rgba(212,175,90,.3)",background:"rgba(212,175,90,.08)",cursor:"pointer",textAlign:"left"}}>
-                <span style={{fontSize:18}}>🎬</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#8A6B1E"}}>
-                    Seçilmiş dizayn: {myInviteMedia?(myInviteMedia.type==="video"?"Öz videonuz":"Öz şəkliniz")+(myInviteShablon!=null?" + "+DEVETNAME_SHABLONLAR[myInviteShablon].ad:""):myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon].ad:"—"}
-                  </div>
-                  <div style={{fontSize:9.5,color:"rgba(33,26,22,.45)"}}>Dəyişmək üçün toxunun</div>
-                </div>
-              </button>
-
               <button onClick={()=>setPanel("bulk")}
                 style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(193,56,42,.3)",
                   background:"linear-gradient(155deg,rgba(193,56,42,.16),rgba(193,56,42,.05))",backdropFilter:"blur(16px) saturate(150%)",
@@ -5800,21 +5787,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                 <div style={{fontSize:15,fontWeight:700,color:"#5B84B0",marginBottom:4}}>Tək-tək adla göndər</div>
                 <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
               </button>
-
-              {pending.length>0&&(
-                <div style={{padding:"14px 16px",borderRadius:18,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.08)"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:"#8A6B1E",marginBottom:8}}>
-                    ⏳ {pending.length} qonağa hələ göndərilməyib
-                  </div>
-                  <button onClick={()=>{
-                      setSelTbls(new Set(pending.map(g=>g.tableId)));
-                      setPanel("bulk"); setStep("select");
-                    }}
-                    style={{width:"100%",padding:"10px",borderRadius:12,border:"none",background:"linear-gradient(155deg,#D4AF5A,#B8923E)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                    Yalnız onlara göndər
-                  </button>
-                </div>
-              )}
             </>
           )}
           <div style={{display:"flex",gap:10,marginTop:4}}>
