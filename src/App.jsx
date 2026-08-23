@@ -1499,6 +1499,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [popupMoveTgt, setPopupMoveTgt] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [shareMode, setShareMode] = useState(false);
+  const [helpTip, setHelpTip] = useState(null); // "share"|"edit"|null
   const [shareSelected, setShareSelected] = useState(new Set());
   const [shareResult, setShareResult] = useState(null);
   const [slotInput, setSlotInput] = useState(null);
@@ -1584,6 +1585,12 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{totG}</div>
               <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
             </div>
+            {hall&&hall.totalGuests>0&&(
+              <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#8A6B1E"}}>{hall.totalGuests}</div>
+                <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>GÖZLƏNİLƏN</div>
+              </div>
+            )}
             <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
               <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
               <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
@@ -1615,12 +1622,8 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset",borderRadius:22,padding:"14px 16px"}}>
         <div>
           <div style={{fontFamily:"'Fraunces',serif",fontSize:17,color:"#211A16",fontWeight:600}}>{hall&&hall.name||"Sxem"}</div>
-          <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginTop:3,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:.3}}>
-            {hall&&hall.totalGuests&&<span style={{marginRight:6}}>{hall.totalGuests} NƏFƏR ·</span>}
-            {tables.length} MASA · {pct||0}% DOLU
-          </div>
         </div>
-        <div style={{display:"flex",gap:7}}>
+        <div style={{display:"flex",gap:5,alignItems:"center"}}>
           <button onClick={function(){setShareMode(function(s){return !s;}); setShareResult(null); setShareSelected(new Set());}}
             style={{padding:"7px 12px",borderRadius:14,
               border:"1px solid "+(shareMode?"rgba(91,132,176,.5)":"rgba(255,255,255,.5)"),
@@ -1629,11 +1632,26 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               color:shareMode?"#5B84B0":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             📤 Başqasına göndər
           </button>
+          <button onClick={()=>setHelpTip(helpTip==="share"?null:"share")}
+            style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
           <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"7px 13px",borderRadius:14,border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
             {editMode?"✓ Bitir":"✏️ Masanı sürüşdür"}
           </button>
+          <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
+            style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
         </div>
       </div>
+
+      {helpTip&&(
+        <div style={{marginBottom:10,padding:"11px 14px",borderRadius:14,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)",fontSize:11.5,color:"#211A16",lineHeight:1.5}}>
+          {helpTip==="share"?(
+            <><b>📤 Başqasına göndər</b> — Bir və ya bir neçə masanı seçib, o masaların qonaq siyahısını doldurmağı <b>başqa bir adama</b> (məs. bacınıza, qardaşınıza) həvalə edə bilərsiniz. Onlara link göndərirsiniz, onlar öz telefonlarından həmin masaların qonaqlarını özləri əlavə edir.</>
+          ):(
+            <><b>✏️ Masanı sürüşdür</b> — Masaların zal içindəki <b>yerini dəyişmək</b> üçündür (sürüşdürüb düzgün yerə qoymaq). Qonaq əlavə etmək üçün deyil — sadəcə masaların vizual düzülüşünü düzəltmək üçündür.</>
+          )}
+          <button onClick={()=>setHelpTip(null)} style={{display:"block",marginTop:8,fontSize:10,color:"#5B84B0",background:"none",border:"none",cursor:"pointer",fontWeight:700}}>Bağla</button>
+        </div>
+      )}
 
       {/* YÖNƏLT PANEL */}
       {shareMode&&(
@@ -1783,7 +1801,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                     <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
-                    <span style={{fontSize:11,color:"#5B84B0"}}>✏️</span>
+                    <span style={{fontSize:10.5,color:"#5B84B0",fontWeight:600}}>Masaya ad qoyun ✏️</span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:4,marginTop:4}}>
                     <span style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>
@@ -1810,13 +1828,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 </button>
               );
             })}
-            <button onClick={()=>{setEditLbl(true);setLblVal(exTbl.label&&exTbl.label!=="__extra__"?exTbl.label:"");}}
-              style={{flex:1,padding:"7px 4px",borderRadius:12,fontSize:10.5,fontWeight:700,cursor:"pointer",
-                border:"1px solid rgba(91,132,176,.4)",
-                background:"rgba(91,132,176,.14)",
-                color:"#5B84B0"}}>
-              ✏️ Özüm yazım
-            </button>
           </div>
 
           {/* TableSVG */}
