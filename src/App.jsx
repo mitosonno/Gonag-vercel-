@@ -1564,40 +1564,44 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
         const cap = tables.reduce((s,t)=>s+t.seats,0);
         return (
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,padding:"13px 15px",borderRadius:20,
+          <div style={{marginBottom:10,padding:"13px 15px",borderRadius:20,
             background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
             border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
-            <div style={{width:42,height:42,borderRadius:"50%",border:"1.5px solid #D4AF5A",background:"rgba(212,175,90,.1)",
-              display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:600,color:"#8A6B1E",flexShrink:0}}>
-              {initials}
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
-              <div style={{fontSize:9.5,color:"rgba(33,26,22,.5)",marginTop:2}}>
-                {hall&&hall.name} {obData.date?" · "+obData.date:""}
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:42,height:42,borderRadius:"50%",border:"1.5px solid #D4AF5A",background:"rgba(212,175,90,.1)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:600,color:"#8A6B1E",flexShrink:0}}>
+                {initials}
               </div>
-            </div>
-            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
-              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>MASA</div>
-            </div>
-            <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#211A16"}}>{totG}</div>
-              <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
-            </div>
-            {hall&&hall.totalGuests>0&&(
-              <div style={{textAlign:"center",padding:"0 8px",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:700,color:"#8A6B1E"}}>{hall.totalGuests}</div>
-                <div style={{fontSize:7,color:"rgba(33,26,22,.5)"}}>GÖZLƏNİLƏN</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
+                <div style={{fontSize:9.5,color:"rgba(33,26,22,.5)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                  {hall&&hall.name} {obData.date?" · "+obData.date:""}
+                </div>
               </div>
-            )}
-            <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
-              <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
-              <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
-                strokeDasharray={2*Math.PI*13} strokeDashoffset={2*Math.PI*13*(1-(pct||0)/100)}
-                strokeLinecap="round" transform="rotate(-90 17 17)"/>
-              <text x="17" y="20" textAnchor="middle" fontFamily="'IBM Plex Mono',monospace" fontSize="8" fontWeight="700" fill="#211A16">{pct||0}%</text>
-            </svg>
+              <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
+                <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
+                <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
+                  strokeDasharray={2*Math.PI*13} strokeDashoffset={2*Math.PI*13*(1-(pct||0)/100)}
+                  strokeLinecap="round" transform="rotate(-90 17 17)"/>
+                <text x="17" y="20" textAnchor="middle" fontFamily="'IBM Plex Mono',monospace" fontSize="8" fontWeight="700" fill="#211A16">{pct||0}%</text>
+              </svg>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:10,paddingTop:9,borderTop:"1px solid rgba(255,255,255,.5)"}}>
+              <div style={{flex:1,textAlign:"center"}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+                <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>MASA</div>
+              </div>
+              <div style={{flex:1,textAlign:"center",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+                <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{totG}</div>
+                <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
+              </div>
+              {hall&&hall.totalGuests>0&&(
+                <div style={{flex:1,textAlign:"center",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#8A6B1E"}}>{hall.totalGuests}</div>
+                  <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>GÖZLƏNİLƏN</div>
+                </div>
+              )}
+            </div>
           </div>
         );
       })()}
@@ -3326,6 +3330,7 @@ export default function App(){
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
+  const [fullPreviewShablon, setFullPreviewShablon] = useState(null); // index üçün tam ekran önizləmə
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
   const [agentSlotTable, setAgentSlotTable] = useState(null);
@@ -4801,7 +4806,13 @@ ${savedEvsList||"Yoxdur"}`;
                       border:"2px solid "+(myInviteShablon===i?"#C1382A":"rgba(255,255,255,.5)"),
                       background:"rgba(255,255,255,.4)"}}
                     onClick={()=>setMyInviteShablon(i)}>
-                    <MiniShablonPreview shablon={s} obData={obData}/>
+                    <div style={{position:"relative"}}>
+                      <MiniShablonPreview shablon={s} obData={obData}/>
+                      <button onClick={e=>{e.stopPropagation();setFullPreviewShablon(i);}}
+                        style={{position:"absolute",top:6,right:6,width:26,height:26,borderRadius:"50%",
+                          background:"rgba(20,15,10,.55)",backdropFilter:"blur(4px)",border:"none",color:"#fff",
+                          fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>👁</button>
+                    </div>
                     <div style={{padding:"8px 6px",textAlign:"center"}}>
                       <div style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16",marginBottom:6}}>{s.ad}</div>
                       <button onClick={e=>{e.stopPropagation();setMyInviteShablon(i);}}
@@ -4856,6 +4867,30 @@ ${savedEvsList||"Yoxdur"}`;
                 ✓ Bəyəndim — Yadda saxla
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Şablonun tam ekran önizləməsi */}
+      {fullPreviewShablon!=null&&(
+        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(15,10,6,.94)",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}
+          onClick={()=>setFullPreviewShablon(null)}>
+          <div style={{position:"absolute",top:20,left:0,right:0,textAlign:"center",color:"rgba(245,238,224,.7)",fontSize:13,fontWeight:600}}>
+            {DEVETNAME_SHABLONLAR[fullPreviewShablon].ad}
+          </div>
+          <div style={{width:"100%",maxWidth:340,borderRadius:16,overflow:"hidden",boxShadow:"0 30px 60px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
+            <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[fullPreviewShablon]} obData={obData}/>
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:20}}>
+            <button onClick={()=>setFullPreviewShablon(null)}
+              style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
+              Bağla
+            </button>
+            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); }}
+              style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              ✓ Bunu seç
+            </button>
           </div>
         </div>
       )}
@@ -5910,7 +5945,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               ))}
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep("shablon")} style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"rgba(33,26,22,.6)",fontSize:12,cursor:"pointer"}}>🔄 Şablon dəyiş</button>
+              <button onClick={()=>onOpenMyInvite&&onOpenMyInvite()} style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"rgba(33,26,22,.6)",fontSize:12,cursor:"pointer"}}>🔄 Dizaynı dəyiş</button>
               <button onClick={()=>setStep("confirm")}
                 style={{flex:2,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
                 Göndər → ({selTbls.size})
@@ -6051,7 +6086,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           </div>
           <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setSingleStep("shablon")} disabled={smsSending} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:12,cursor:smsSending?"default":"pointer"}}>🔄 Dəyişdir</button>
+              <button onClick={()=>onOpenMyInvite&&onOpenMyInvite()} disabled={smsSending} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:12,cursor:smsSending?"default":"pointer"}}>🔄 Dizaynı dəyiş</button>
               <button onClick={sendSingle} disabled={smsSending}
                 style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#4C9A6E",fontSize:14,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1}}>
                 📱 WhatsApp
