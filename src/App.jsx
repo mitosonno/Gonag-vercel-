@@ -2366,7 +2366,13 @@ const DEVETNAME_SHABLONLAR = [
   { id:"qizili", ad:"Qızılı Klassik", bg:"#0a0700", accent:"#c9a84c", text:"#f2e8d0", sub:"rgba(242,232,208,.6)", tableBg:"#0e0a04" },
   { id:"romantik", ad:"Romantik", bg:"#1a0a12", accent:"#e87aad", text:"#f9c7d8", sub:"rgba(249,199,216,.65)", tableBg:"#0e0a04" },
   { id:"goy", ad:"Göy Zümrüd", bg:"#020d1a", accent:"#7aade8", text:"#b5d4f4", sub:"rgba(181,212,244,.65)", tableBg:"#0e0a04" },
-  { id:"ag", ad:"Ağ Zərif", bg:"#faf8f2", accent:"#c9a84c", text:"#2a1f06", sub:"rgba(42,31,6,.65)", tableBg:"#fff8e8" }
+  { id:"ag", ad:"Ağ Zərif", bg:"#faf8f2", accent:"#c9a84c", text:"#2a1f06", sub:"rgba(42,31,6,.65)", tableBg:"#fff8e8" },
+  { id:"salvi", ad:"Salvi Minimal", bg:"#f4f1eb", accent:"#6b7d5c", text:"#2b2f26", sub:"rgba(43,47,38,.6)", tableBg:"#ffffff" },
+  { id:"terrakota", ad:"Terrakota", bg:"#faf4ef", accent:"#c0603f", text:"#3a2117", sub:"rgba(58,33,23,.6)", tableBg:"#fff9f5" },
+  { id:"charcoal", ad:"Charcoal Qızıl", bg:"#111214", accent:"#d4af5a", text:"#f0efec", sub:"rgba(240,239,236,.55)", tableBg:"#17181b" },
+  { id:"dusty", ad:"Toz Göy", bg:"#eef1f4", accent:"#4d6a86", text:"#1e2a35", sub:"rgba(30,42,53,.6)", tableBg:"#ffffff" },
+  { id:"blush", ad:"Blush Neytral", bg:"#f7efec", accent:"#b98a7a", text:"#3a2c26", sub:"rgba(58,44,38,.6)", tableBg:"#fffaf8" },
+  { id:"meshe", ad:"Dərin Meşə", bg:"#0c1410", accent:"#7fa88a", text:"#e7efe9", sub:"rgba(231,239,233,.55)", tableBg:"#101a15" }
 ];
 
 function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
@@ -2374,7 +2380,11 @@ function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext("2d");
   const S=shablon;
-  const isLight=S.id==="ag";
+  const isLight=(()=>{
+    const hex=S.bg.replace("#","");
+    const r=parseInt(hex.substring(0,2),16), g=parseInt(hex.substring(2,4),16), b=parseInt(hex.substring(4,6),16);
+    return (r+g+b)/3 > 150;
+  })();
   ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
   if(!isLight){
     for(let i=0;i<50;i++){
@@ -4794,9 +4804,19 @@ ${savedEvsList||"Yoxdur"}`;
                 ))}
               </div>
 
-              <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12}}>
+              <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12,marginBottom:14}}>
                 💡 {myInviteMedia&&myInviteIncludeMedia?"Seçdiyiniz şablon + öz "+(myInviteMedia.type==="video"?"videonuz":"şəkliniz")+" birgə göndəriləcək.":"Yalnız seçdiyiniz şablon göndəriləcək (video/şəkil əlavə etmək istəsəniz yuxarıdakı qutunu işarələyin)."}
               </div>
+
+              <button onClick={()=>{
+                  if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
+                  setMyInviteOpen(false);
+                }}
+                style={{width:"100%",padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
+                  background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
+                  boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
+                ✓ Yadda saxla və davam et
+              </button>
             </div>
           </div>
         </div>
