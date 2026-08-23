@@ -4804,6 +4804,33 @@ ${savedEvsList||"Yoxdur"}`;
                 ))}
               </div>
 
+              {myInviteShablon!=null&&(
+                <div style={{marginBottom:16,padding:14,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:10,textAlign:"center"}}>
+                    👁 Tam önizləmə — qonaq belə görəcək
+                  </div>
+                  <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+                    <div style={{width:140,borderRadius:12,overflow:"hidden",border:"1px solid rgba(150,120,80,.2)",boxShadow:"0 6px 16px -8px rgba(60,40,20,.3)"}}>
+                      <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[myInviteShablon]} obData={obData}/>
+                      <div style={{padding:"4px",textAlign:"center",fontSize:8.5,color:"#6B6259",background:"rgba(255,255,255,.7)"}}>Bizim şablon</div>
+                    </div>
+                    {myInviteMedia&&myInviteIncludeMedia&&(
+                      <div style={{width:140,borderRadius:12,overflow:"hidden",border:"1px solid rgba(76,154,110,.35)",boxShadow:"0 6px 16px -8px rgba(60,40,20,.3)"}}>
+                        {myInviteMedia.type==="video"?(
+                          <video src={myInviteMedia.url} style={{width:"100%",aspectRatio:"2/3",objectFit:"cover",display:"block"}} muted/>
+                        ):(
+                          <img src={myInviteMedia.url} style={{width:"100%",aspectRatio:"2/3",objectFit:"cover",display:"block"}}/>
+                        )}
+                        <div style={{padding:"4px",textAlign:"center",fontSize:8.5,color:"#4C9A6E",background:"rgba(76,154,110,.1)",fontWeight:700}}>+ Sizin {myInviteMedia.type==="video"?"videonuz":"şəkliniz"}</div>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{textAlign:"center",marginTop:10,fontSize:10,color:"rgba(33,26,22,.5)"}}>
+                    Bəyənmədinizsə aşağıdan başqa şablon seçin, ya da yeni video/şəkil yükləyin
+                  </div>
+                </div>
+              )}
+
               <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12,marginBottom:14}}>
                 💡 {myInviteMedia&&myInviteIncludeMedia?"Seçdiyiniz şablon + öz "+(myInviteMedia.type==="video"?"videonuz":"şəkliniz")+" birgə göndəriləcək.":"Yalnız seçdiyiniz şablon göndəriləcək (video/şəkil əlavə etmək istəsəniz yuxarıdakı qutunu işarələyin)."}
               </div>
@@ -4815,7 +4842,7 @@ ${savedEvsList||"Yoxdur"}`;
                 style={{width:"100%",padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
                   background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
                   boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
-                ✓ Yadda saxla və davam et
+                ✓ Bəyəndim — Yadda saxla
               </button>
             </div>
           </div>
