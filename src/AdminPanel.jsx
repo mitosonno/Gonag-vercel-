@@ -82,29 +82,29 @@ function Td({ children, style }){
   return <td style={{padding:"12px 14px",fontSize:13,color:"#211A16",borderBottom:"1px solid rgba(150,120,80,.08)",whiteSpace:"nowrap",...style}}>{children}</td>;
 }
 
-function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin }){
-  const [venueName, setVenueName] = useState("");
-  const [hallName, setHallName] = useState("");
-  const [capacity, setCapacity] = useState("150");
-  const [photoUrl, setPhotoUrl] = useState(null);
+function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin, editHall }){
+  const [venueName, setVenueName] = useState(editHall?editHall.venue_name||"":"");
+  const [hallName, setHallName] = useState(editHall?editHall.name||"":"");
+  const [capacity, setCapacity] = useState(editHall?String(editHall.capacity||150):"150");
+  const [photoUrl, setPhotoUrl] = useState(editHall?editHall.photo_url||null:null);
   const [mode, setMode] = useState("wall");
-  const [wallPoints, setWallPoints] = useState([]); // [{id,x,y}]
-  const [wallEdges, setWallEdges] = useState([]); // [{id,from,to}]
+  const [wallPoints, setWallPoints] = useState(editHall?(editHall.wall_path||[]):[]); // [{id,x,y}]
+  const [wallEdges, setWallEdges] = useState(editHall?(editHall.wall_edges||[]):[]); // [{id,from,to}]
   const [selectedPoint, setSelectedPoint] = useState(null);
-  const [zones, setZones] = useState([]);
-  const [tables, setTables] = useState([]);
-  const [columns, setColumns] = useState([]);
+  const [zones, setZones] = useState(editHall?((editHall.elements||[]).map((z,i)=>({id:Date.now()+i,x:z.xPct,y:z.yPct,w:z.w,h:z.h,label:z.label,type:z.type}))):[]);
+  const [tables, setTables] = useState(editHall?((editHall.layout||[]).map(t=>({id:t.id,x:t.xPct,y:t.yPct,seats:t.seats,label:t.label||""}))):[]);
+  const [columns, setColumns] = useState(editHall?((editHall.columns||[]).map(c=>({id:c.id,x:c.xPct,y:c.yPct}))):[]);
   const [tableEditId, setTableEditId] = useState(null);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [mapsUrl, setMapsUrl] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [makePublic, setMakePublic] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(editHall?editHall.video_url||"":"");
+  const [mapsUrl, setMapsUrl] = useState(editHall?editHall.maps_url||"":"");
+  const [contactPhone, setContactPhone] = useState(editHall?editHall.contact_phone||"":"");
+  const [makePublic, setMakePublic] = useState(editHall?!!editHall.is_public:false);
   const [snapOn, setSnapOn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [zoneLabelInput, setZoneLabelInput] = useState(null);
   const [existingVenues, setExistingVenues] = useState([]); // [{name, halls:[names]}]
   const [showExistingVenues, setShowExistingVenues] = useState(false);
-  const [infoCollapsed, setInfoCollapsed] = useState(false);
+  const [infoCollapsed, setInfoCollapsed] = useState(!!editHall);
   useEffect(function(){
     sbFetch("halls?select=name,venue_name&order=venue_name").then(rows=>{
       if(!rows) return;
@@ -234,14 +234,27 @@ function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin }){
       const layout = tables.map(t=>({id:t.id,xPct:t.x,yPct:t.y,seats:t.seats,label:t.label||""}));
       const elements = zones.map(z=>({type:z.type,xPct:z.x,yPct:z.y,w:z.w,h:z.h,label:z.label}));
       const columnsData = columns.map(c=>({id:c.id,xPct:c.x,yPct:c.y}));
-      const createdHall = await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
+      const payload = {
         venue_id:venueId, venue_name:venueName.trim(), name:hallName.trim(),
         capacity:parseInt(capacity)||150, layout:layout, elements:elements,
         wall_path:wallPoints, wall_edges:wallEdges, columns:columnsData, photo_url:photoUrl||null, video_url:videoUrl.trim()||null, has_layout:true,
-        created_by:currentUserId||null, is_public:isAdmin?makePublic:false,
         maps_url:mapsUrl.trim()||null, contact_phone:contactPhone.trim()||null
-      })});
-      alert("✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
+      };
+      let createdHall;
+      if(editHall){
+        // Redaktə — service-role vasitəsilə yenilə (sahiblərindən asılı olmayaraq)
+        await fetch("/api/admin-halls?id="+editHall.id,{
+          method:"PATCH",
+          headers:{"Content-Type":"application/json","Authorization":"Bearer "+_adminAccessToken},
+          body:JSON.stringify({...payload, is_public:isAdmin?makePublic:editHall.is_public})
+        });
+        createdHall = [{...editHall, ...payload}];
+      } else {
+        createdHall = await sbFetch("halls",{method:"POST",prefer:"return=representation",headers:{"Prefer":"return=representation"},body:JSON.stringify({
+          ...payload, created_by:currentUserId||null, is_public:isAdmin?makePublic:false
+        })});
+      }
+      alert(editHall?"✅ Zal yeniləndi!":"✅ Zal saxlanıldı! İndi restoran siyahısında görünəcək.");
       if(onSaved) onSaved(createdHall && createdHall[0]);
       onClose();
     }catch(e){ alert("Xəta baş verdi, yenidən cəhd edin."); }
@@ -549,6 +562,18 @@ export default function AdminPanel(){
   const [search, setSearch] = useState("");
   const [expandedUser, setExpandedUser] = useState(null);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
+  const [managedHalls, setManagedHalls] = useState([]);
+  const [hallsLoading, setHallsLoading] = useState(false);
+  const [editingHall, setEditingHall] = useState(null);
+
+  function loadManagedHalls(){
+    if(!session) return;
+    setHallsLoading(true);
+    fetch("/api/admin-halls", { headers: { Authorization: "Bearer " + session.access_token } })
+      .then(r=>r.json())
+      .then(j=>{ if(j.ok) setManagedHalls(j.halls); })
+      .finally(()=>setHallsLoading(false));
+  }
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data})=>{
@@ -898,29 +923,125 @@ export default function AdminPanel(){
           </>
         )}
 
-        {tab==="halls"&&(
+        {tab==="halls"&&(()=>{
+          if(managedHalls.length===0 && !hallsLoading) loadManagedHalls();
+          return (
           <>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:6}}>Zal Builder</div>
             <div style={{fontSize:12,color:"#6B6259",marginBottom:16}}>
               Bura yaratdığınız zallar <b>bütün istifadəçilər üçün ictimai</b> olacaq (aşağıdakı işarəni seçsəniz), ya da yalnız sizin admin hesabınızda qalacaq.
             </div>
-            <button onClick={()=>{ _adminAccessToken = session.access_token; setHallBuilderOpen(true); }}
+            <button onClick={()=>{ _adminAccessToken = session.access_token; setEditingHall(null); setHallBuilderOpen(true); }}
               style={{padding:"18px 20px",borderRadius:18,border:"1px solid rgba(76,154,110,.35)",
-                background:"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))",cursor:"pointer",textAlign:"left",color:"#211A16"}}>
+                background:"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))",cursor:"pointer",textAlign:"left",color:"#211A16",marginBottom:20}}>
               <div style={{fontSize:22,marginBottom:6}}>🛠</div>
               <div style={{fontSize:14,fontWeight:700,color:"#4C9A6E"}}>Yeni zal qur</div>
               <div style={{fontSize:11,color:"rgba(33,26,22,.55)"}}>Divar, masa, zona quraşdırıb ictimai/məxfi saxlayın</div>
             </button>
+
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:10}}>Bütün zallar ({managedHalls.length}) {hallsLoading&&"— yüklənir..."}</div>
+            {isMobile?(
+              managedHalls.map(h=>(
+                <div key={h.id} style={{padding:"13px 15px",borderRadius:14,background:"rgba(255,255,255,.6)",border:"1px solid rgba(255,255,255,.5)",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700}}>{h.venue_name} — {h.name}</div>
+                      <div style={{fontSize:10,color:"#6B6259"}}>{h.ownerEmail} · {h.capacity} nəfər</div>
+                    </div>
+                    <span style={{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:8,
+                      background:h.is_public?"rgba(76,154,110,.15)":"rgba(150,120,80,.12)",
+                      color:h.is_public?"#4C9A6E":"#6B6259"}}>{h.is_public?"İctimai":"Məxfi"}</span>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={async()=>{
+                        await fetch("/api/admin-halls?id="+h.id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({is_public:!h.is_public})});
+                        setManagedHalls(hs=>hs.map(x=>x.id===h.id?{...x,is_public:!x.is_public}:x));
+                      }}
+                      style={{flex:1,padding:"7px",borderRadius:9,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.1)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                      {h.is_public?"Gizlət":"Göstər"}
+                    </button>
+                    <button onClick={async()=>{
+                        _adminAccessToken = session.access_token;
+                        const r = await fetch("/api/admin-halls?id="+h.id,{headers:{Authorization:"Bearer "+session.access_token}});
+                        const j = await r.json();
+                        if(j.ok&&j.hall){ setEditingHall(j.hall); setHallBuilderOpen(true); }
+                      }}
+                      style={{flex:1,padding:"7px",borderRadius:9,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                      Redaktə
+                    </button>
+                    <button onClick={async()=>{
+                        if(!confirm("Bu zal silinsin? Geri qaytarıla bilməz.")) return;
+                        await fetch("/api/admin-halls?id="+h.id,{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({id:h.id})});
+                        setManagedHalls(hs=>hs.filter(x=>x.id!==h.id));
+                      }}
+                      style={{flex:1,padding:"7px",borderRadius:9,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                      Sil
+                    </button>
+                  </div>
+                </div>
+              ))
+            ):(
+              <div className="admin-scroll-x" style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)"}}>
+                <table style={{width:"100%",borderCollapse:"collapse"}}>
+                  <thead><tr><Th>Restoran</Th><Th>Zal</Th><Th>Sahib</Th><Th>Tutum</Th><Th>Status</Th><Th>Əməliyyat</Th></tr></thead>
+                  <tbody>
+                    {managedHalls.map(h=>(
+                      <tr key={h.id}>
+                        <Td style={{fontWeight:600}}>{h.venue_name}</Td>
+                        <Td>{h.name}</Td>
+                        <Td style={{fontSize:11,color:"#6B6259"}}>{h.ownerEmail}</Td>
+                        <Td>{h.capacity}</Td>
+                        <Td>
+                          <span style={{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:10,
+                            background:h.is_public?"rgba(76,154,110,.15)":"rgba(150,120,80,.12)",
+                            color:h.is_public?"#4C9A6E":"#6B6259"}}>{h.is_public?"İctimai":"Məxfi"}</span>
+                        </Td>
+                        <Td>
+                          <div style={{display:"flex",gap:5}}>
+                            <button onClick={async()=>{
+                                await fetch("/api/admin-halls?id="+h.id,{method:"PATCH",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({is_public:!h.is_public})});
+                                setManagedHalls(hs=>hs.map(x=>x.id===h.id?{...x,is_public:!x.is_public}:x));
+                              }}
+                              style={{padding:"5px 9px",borderRadius:8,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.1)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                              {h.is_public?"Gizlət":"Göstər"}
+                            </button>
+                            <button onClick={async()=>{
+                                _adminAccessToken = session.access_token;
+                                const r = await fetch("/api/admin-halls?id="+h.id,{headers:{Authorization:"Bearer "+session.access_token}});
+                                const j = await r.json();
+                                if(j.ok&&j.hall){ setEditingHall(j.hall); setHallBuilderOpen(true); }
+                              }}
+                              style={{padding:"5px 9px",borderRadius:8,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                              Redaktə
+                            </button>
+                            <button onClick={async()=>{
+                                if(!confirm("Bu zal silinsin? Geri qaytarıla bilməz.")) return;
+                                await fetch("/api/admin-halls?id="+h.id,{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token},body:JSON.stringify({id:h.id})});
+                                setManagedHalls(hs=>hs.filter(x=>x.id!==h.id));
+                              }}
+                              style={{padding:"5px 9px",borderRadius:8,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:10,fontWeight:700,cursor:"pointer"}}>
+                              Sil
+                            </button>
+                          </div>
+                        </Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
-        )}
+          );
+        })()}
       </div>
 
       {hallBuilderOpen&&(
         <HallBuilderPanel
           currentUserId={session&&session.user?session.user.id:null}
           isAdmin={true}
-          onClose={()=>setHallBuilderOpen(false)}
-          onSaved={()=>{ setHallBuilderOpen(false); }}
+          editHall={editingHall}
+          onClose={()=>{ setHallBuilderOpen(false); setEditingHall(null); }}
+          onSaved={()=>{ setHallBuilderOpen(false); setEditingHall(null); setManagedHalls([]); }}
         />
       )}
 
