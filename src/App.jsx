@@ -3214,16 +3214,23 @@ export default function App(){
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(()=>{
+    let settled = false;
+    // Təhlükəsizlik: 6 saniyədən sonra hələ cavab gəlməyibsə, məcburi davam et (sonsuz yüklənməni önləyir)
+    const failSafe = setTimeout(()=>{ if(!settled){ settled=true; setAuthChecked(true); } }, 6000);
     supabase.auth.getSession().then(({data})=>{
+      if(settled) return; settled=true; clearTimeout(failSafe);
       setSession(data.session);
       if(data.session) setCurrentAccessToken(data.session.access_token);
       setAuthChecked(true);
+    }).catch(()=>{
+      if(settled) return; settled=true; clearTimeout(failSafe);
+      setAuthChecked(true); // xəta olsa belə, giriş ekranına düşsün, sonsuz yüklənmə olmasın
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession)=>{
       setSession(newSession);
       setCurrentAccessToken(newSession ? newSession.access_token : null);
     });
-    return ()=>{ listener&&listener.subscription&&listener.subscription.unsubscribe(); };
+    return ()=>{ clearTimeout(failSafe); listener&&listener.subscription&&listener.subscription.unsubscribe(); };
   },[]);
 
   // ── Məclislərim ──
