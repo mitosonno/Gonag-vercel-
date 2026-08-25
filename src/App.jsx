@@ -81,6 +81,27 @@ Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz mü
 
 function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
 
+function NavIcon({ type }){
+  const common = { width:19, height:19, viewBox:"0 0 24 24", fill:"none", stroke:"#6B6259", strokeWidth:1.6 };
+  if(type==="schema") return (
+    <svg {...common}>
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/>
+      <circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/>
+    </svg>
+  );
+  if(type==="invite") return (
+    <svg {...common}><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+  );
+  if(type==="stats") return (
+    <svg {...common}><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>
+  );
+  if(type==="meclis") return (
+    <svg {...common}><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+  );
+  return null;
+}
+
 function contactsSupported(){
   return typeof navigator!=="undefined" && "contacts" in navigator && "ContactsManager" in window;
 }
@@ -4717,16 +4738,16 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.25)",backdropFilter:"blur(10px)"}}>
             {[
-              {key:"schema", icon:"🗺️", label:"Zalın sxemi", enabled:hasS, cnt:tables.length,
+              {key:"schema", label:"Zalın sxemi", enabled:hasS, cnt:tables.length,
                 hint:"Əvvəlcə məclis yaradın və restoran seçin 🙏",
                 onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); if(schemaTutStep===0) setSchemaTutStep(1); }},
-              {key:"invite", icon:"📨", label:"Dəvətnamələr", enabled:tables.length>0&&totG>0,
+              {key:"invite", label:"Dəvətnamələr", enabled:tables.length>0&&totG>0,
                 hint:tables.length===0?"Əvvəlcə zal sxemini qurun 🙏":"Əvvəlcə masalara qonaq əlavə edin 🙏",
                 onClick:()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }},
-              {key:"stats", icon:"📊", label:"Statistika", enabled:totG>0,
+              {key:"stats", label:"Statistika", enabled:totG>0,
                 hint:"Statistika üçün əvvəlcə qonaq əlavə edin 🙏",
                 onClick:()=>{ pushPanel("stats"); setStatsOpen(true); }},
-              {key:"meclis", icon:"📋", label:"Məclislərim", enabled:true, cnt:savedEvents.length,
+              {key:"meclis", label:"Məclislərim", enabled:true, cnt:savedEvents.length,
                 onClick:()=>{ pushPanel("meclis"); setMeclisOpen(true); }},
             ].map(it=>(
               <button key={it.key} onClick={()=>{
@@ -4736,7 +4757,7 @@ ${savedEvsList||"Yoxdur"}`;
                 style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
                   border:"none",background:"transparent",cursor:"pointer",position:"relative",
                   opacity:it.enabled?1:0.4}}>
-                <span style={{fontSize:19}}>{it.icon}</span>
+                <NavIcon type={it.key}/>
                 <span style={{fontSize:10,fontWeight:600,color:"#6B6259"}}>{it.label}</span>
                 {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
               </button>
