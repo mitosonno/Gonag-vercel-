@@ -85,7 +85,7 @@ function Td({ children, style }){
 function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin, editHall }){
   const [venueName, setVenueName] = useState(editHall?editHall.venue_name||"":"");
   const [hallName, setHallName] = useState(editHall?editHall.name||"":"");
-  const [capacity, setCapacity] = useState(editHall?String(editHall.capacity||150):"150");
+  const [capacity, setCapacity] = useState(editHall?String(editHall.capacity||""):"");
   const [photoUrl, setPhotoUrl] = useState(editHall?editHall.photo_url||null:null);
   const [mode, setMode] = useState("wall");
   const [wallPoints, setWallPoints] = useState(editHall?(editHall.wall_path||[]):[]); // [{id,x,y}]
@@ -220,6 +220,7 @@ function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin, editHall }
 
   async function saveHall(){
     if(!venueName.trim()||!hallName.trim()){ alert("Restoran və zal adını yazın 🙏"); return; }
+    if(!capacity.trim()||parseInt(capacity)<1){ alert("Zalın ümumi tutumunu yazın 🙏 (neçə nəfər sığır)"); return; }
     if(wallEdges.length<3){ alert("Ən azı 3 divar xətti çəkin (nöqtələri bir-birinə toxunub birləşdirin) 🙏"); return; }
     if(tables.length<1){ alert("Ən azı 1 masa qeyd edin 🙏 (Masa rejiminə keçib kətana klikləyin)"); return; }
     setSaving(true);
@@ -289,8 +290,20 @@ function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin, editHall }
             style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
           <input value={hallName} onChange={e=>setHallName(e.target.value)} placeholder="Zal adı"
             style={{flex:1,padding:"9px 12px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
-          <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Tutum" type="number"
-            style={{width:74,padding:"9px 8px",borderRadius:12,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",fontSize:12,outline:"none",color:"#211A16"}}/>
+        </div>
+        <div>
+          <label style={{fontSize:10,fontWeight:700,color:"#8A6B1E",display:"block",marginBottom:4}}>👥 Zalın ümumi tutumu (nəfər) — MÜTLƏQ</label>
+          <input value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Məsələn: 200" type="number"
+            style={{width:"100%",padding:"11px 14px",borderRadius:12,border:"1.5px solid "+(capacity?"rgba(212,175,90,.5)":"rgba(193,56,42,.4)"),background:"rgba(255,255,255,.6)",backdropFilter:"blur(8px)",fontSize:15,fontWeight:700,outline:"none",color:"#211A16"}}/>
+          {tables.length>0&&(()=>{
+            const calc = tables.reduce((s,t)=>s+(t.seats||0),0);
+            const mismatch = capacity && parseInt(capacity)!==calc;
+            return (
+              <div style={{fontSize:9.5,marginTop:4,color:mismatch?"#C1382A":"#6B6259"}}>
+                Masalardan hesablanan: {calc} nəfər{mismatch?" — fərqlidir, yoxlayın":""}
+              </div>
+            );
+          })()}
         </div>
         {existingVenues.length>0&&!venueName.trim()&&(
           <button onClick={()=>setShowExistingVenues(s=>!s)}
