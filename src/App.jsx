@@ -3448,9 +3448,29 @@ export default function App(){
     if(saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(()=>{
       saveCurrentEvent({tables:tabRef.current});
-    }, 1500);
+    }, 600);
     return ()=>clearTimeout(saveTimerRef.current);
   },[tables, hall, obData, evType, currentEvId]);
+
+  // İstifadəçi tətbiqdən çıxanda/arxaya keçəndə gözləyən saxlamanı DƏRHAL bitir —
+  // 1.5 saniyəlik gecikmə bitmədən bağlansa belə, məlumat itməsin
+  useEffect(()=>{
+    function flushPendingSave(){
+      if(saveTimerRef.current && currentEvId){
+        clearTimeout(saveTimerRef.current);
+        saveCurrentEvent({tables:tabRef.current});
+      }
+    }
+    function onVisibilityChange(){ if(document.visibilityState==="hidden") flushPendingSave(); }
+    window.addEventListener("beforeunload", flushPendingSave);
+    window.addEventListener("pagehide", flushPendingSave);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return ()=>{
+      window.removeEventListener("beforeunload", flushPendingSave);
+      window.removeEventListener("pagehide", flushPendingSave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  },[currentEvId]);
 
   useEffect(()=>{
     if(!sessionId) return;
