@@ -241,7 +241,25 @@ async function sbFetch(path, options={}){
       ...(options.headers||{})
     }
   });
-  if(!res.ok){ const e=await res.text(); console.error("SB error:",e); return null; }
+  if(!res.ok){
+    const e=await res.text(); console.error("SB error:",e);
+    // Token köhnəlmiş/etibarsız ola bilər (401/403) — anon açarla bir də cəhd et,
+    // ictimai (RLS-lə açıq) məlumat üçün bu, kifayət edir
+    if((res.status===401||res.status===403) && _currentAccessToken){
+      const retryRes = await fetch(SB_URL + "/rest/v1/" + path, {
+        ...options,
+        headers: {
+          "apikey": SB_KEY,
+          "Authorization": "Bearer " + SB_KEY,
+          "Content-Type": "application/json",
+          "Prefer": options.prefer||"",
+          ...(options.headers||{})
+        }
+      });
+      if(retryRes.ok){ try{ return await retryRes.json(); }catch{return null;} }
+    }
+    return null;
+  }
   try{ return await res.json(); }catch{return null;}
 }
 
@@ -3793,8 +3811,18 @@ export default function App(){
     let full = hallObj;
     if(hallObj._lightweight){
       setMsgs(m=>[...m,{role:"agent",text:"Zal detalları yüklənir...",qrs:[]}]);
-      const fetched = await fetchHallFull(hallObj.id);
-      if(fetched) full = fetched;
+      try{
+        const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),8000));
+        const fetched = await Promise.race([fetchHallFull(hallObj.id), timeout]);
+        if(fetched){
+          full = fetched;
+        } else {
+          setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənə bilmədi (masalar boş görünə bilər). Zəhmət olmasa yenidən sınayın, ya da sxemdən özünüz masa əlavə edin.",qrs:[]}]);
+        }
+      }catch(e){
+        // 8 saniyədən sonra hələ cavab yoxdursa, yüngül data ilə davam et — sonsuz gözləmə olmasın
+        setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları tam yüklənmədi, amma davam edirik. (Masalar boş ola bilər — sxemdən özünüz əlavə edin)",qrs:[]}]);
+      }
     }
     const h = {
       _venueName: rest.name, name: full.name,
