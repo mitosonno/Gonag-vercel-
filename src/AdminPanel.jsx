@@ -78,6 +78,33 @@ function DataRow({ fields, mobile, onClick, accentField }){
 function Th({ children }){
   return <th style={{textAlign:"left",padding:"10px 14px",fontSize:10.5,fontWeight:700,color:"#6B6259",letterSpacing:.4,textTransform:"uppercase",borderBottom:"1px solid rgba(150,120,80,.15)",whiteSpace:"nowrap"}}>{children}</th>;
 }
+function exportGuestsExcel(guests, genderLabel){
+  const headers = ["Ad","Telefon","Say","Cins","Məclis","Zal","Tarix","SMS statusu","WhatsApp","RSVP"];
+  const rows = guests.map(g=>[
+    g.name, g.phone, g.count, g.gender==="kishi"?"Kişi":g.gender==="qadin"?"Qadın":"—",
+    g.couple, g.hallName, (g.eventCreatedAt||"").slice(0,10),
+    g.smsStatus==="sent"?"Çatıb":g.smsStatus==="failed"?"Çatmayıb":"—",
+    g.waStatus==="sent"?"Göndərilib":"—",
+    g.rsvpStatus==="attending"?"Gəlir":g.rsvpStatus==="not_attending"?"Gəlmir":"Gözləyir"
+  ]);
+  const csv = [headers, ...rows].map(r=>r.map(c=>'"'+String(c||"").replace(/"/g,'""')+'"').join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "qonaqlar_"+(genderLabel!=="all"?genderLabel+"_":"")+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function StatBox({ label, value, color, small }){
+  return (
+    <div style={{textAlign:"center",padding:small?"10px 6px":"14px 8px",borderRadius:12,background:"rgba(255,255,255,.7)",border:"1px solid rgba(150,120,80,.15)"}}>
+      <div style={{fontFamily:"'Fraunces',serif",fontSize:small?16:20,fontWeight:700,color:color||"#211A16"}}>{value}</div>
+      <div style={{fontSize:8.5,color:"#a89a80",fontWeight:600,marginTop:2,letterSpacing:.3}}>{label}</div>
+    </div>
+  );
+}
 function Td({ children, style }){
   return <td style={{padding:"12px 14px",fontSize:13,color:"#211A16",borderBottom:"1px solid rgba(150,120,80,.08)",whiteSpace:"nowrap",...style}}>{children}</td>;
 }
@@ -573,6 +600,10 @@ export default function AdminPanel(){
   const [loadErr, setLoadErr] = useState("");
   const [tab, setTab] = useState("dashboard");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [guestGenderFilter, setGuestGenderFilter] = useState("all"); // "all"|"kishi"|"qadin"
   const [expandedUser, setExpandedUser] = useState(null);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
   const [managedHalls, setManagedHalls] = useState([]);
@@ -627,16 +658,23 @@ export default function AdminPanel(){
   const filteredEvents = useMemo(()=>{
     if(!data) return [];
     const q = search.trim().toLowerCase();
-    if(!q) return data.events;
-    return data.events.filter(e=>(e.couple||"").toLowerCase().includes(q)||(e.hallName||"").toLowerCase().includes(q));
-  },[data, search]);
+    let list = data.events;
+    if(q) list = list.filter(e=>(e.couple||"").toLowerCase().includes(q)||(e.hallName||"").toLowerCase().includes(q));
+    if(dateFrom) list = list.filter(e=>(e.createdAt||"").slice(0,10)>=dateFrom);
+    if(dateTo) list = list.filter(e=>(e.createdAt||"").slice(0,10)<=dateTo);
+    return list;
+  },[data, search, dateFrom, dateTo]);
 
   const filteredGuests = useMemo(()=>{
     if(!data) return [];
     const q = search.trim().toLowerCase();
-    if(!q) return data.guests.slice(0,50);
-    return data.guests.filter(g=>(g.name||"").toLowerCase().includes(q)||(g.phone||"").includes(q)).slice(0,100);
-  },[data, search]);
+    let list = data.guests;
+    if(q) list = list.filter(g=>(g.name||"").toLowerCase().includes(q)||(g.phone||"").includes(q));
+    if(dateFrom) list = list.filter(g=>(g.eventCreatedAt||"").slice(0,10)>=dateFrom);
+    if(dateTo) list = list.filter(g=>(g.eventCreatedAt||"").slice(0,10)<=dateTo);
+    if(guestGenderFilter!=="all") list = list.filter(g=>g.gender===guestGenderFilter);
+    return q||dateFrom||dateTo||guestGenderFilter!=="all" ? list.slice(0,300) : list.slice(0,50);
+  },[data, search, dateFrom, dateTo, guestGenderFilter]);
 
   const GLOBAL_CSS = `
     *{box-sizing:border-box;}
@@ -857,52 +895,153 @@ export default function AdminPanel(){
 
         {tab==="events"&&(
           <>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:14}}>Məclislər ({data.events.length})</div>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cütlük adı və ya zal üzrə axtar..."
-              style={{width:"100%",maxWidth:isMobile?"100%":360,padding:"11px 15px",borderRadius:12,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:14}}/>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:6}}>Məclislərim</div>
+            <div style={{fontSize:12,color:"#6B6259",marginBottom:16}}>{filteredEvents.length} məclis {(dateFrom||dateTo)?"seçilmiş tarix aralığında":"cəmi"}</div>
 
-            {isMobile?(
-              filteredEvents.map(e=>(
-                <DataRow key={e.id} mobile fields={[
-                  {label:"Cütlük/Ad",value:e.couple||"—",bold:true},
-                  {label:"Növ",value:e.type||"—"},
-                  {label:"Zal",value:e.hallName||"—"},
-                  {label:"Masa/Qonaq",value:e.tableCount+" / "+e.guestCount},
-                  {label:"Status",value:e.status||"natamam"},
-                  {label:"Tarix",value:(e.createdAt||"").slice(0,10)},
-                ]}/>
-              ))
-            ):(
-              <div className="admin-scroll-x" style={{background:"rgba(255,255,255,.6)",borderRadius:18,border:"1px solid rgba(255,255,255,.6)"}}>
-                <table style={{width:"100%",borderCollapse:"collapse"}}>
-                  <thead><tr><Th>Cütlük/Ad</Th><Th>Növ</Th><Th>Zal</Th><Th>Masa</Th><Th>Qonaq</Th><Th>Status</Th><Th>Tarix</Th></tr></thead>
-                  <tbody>
-                    {filteredEvents.map(e=>(
-                      <tr key={e.id}>
-                        <Td style={{fontWeight:600}}>{e.couple||"—"}</Td>
-                        <Td>{e.type||"—"}</Td>
-                        <Td>{e.hallName||"—"}</Td>
-                        <Td>{e.tableCount}</Td>
-                        <Td>{e.guestCount}</Td>
-                        <Td><span style={{padding:"3px 9px",borderRadius:10,fontSize:10,fontWeight:700,
-                          background:e.status==="done"?"rgba(76,154,110,.15)":"rgba(212,175,90,.15)",
-                          color:e.status==="done"?"#4C9A6E":"#8A6B1E"}}>{e.status||"natamam"}</span></Td>
-                        <Td style={{color:"#6B6259",fontSize:11}}>{(e.createdAt||"").slice(0,10)}</Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Cütlük adı və ya zal..."
+                style={{flex:isMobile?"1 1 100%":"1 1 220px",padding:"10px 14px",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none"}}/>
+              <div style={{display:"flex",gap:6,alignItems:"center",background:"#fff",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",padding:"6px 10px"}}>
+                <span style={{fontSize:11,color:"#8a7548"}}>Tarix:</span>
+                <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}
+                  style={{border:"none",fontSize:12,outline:"none",background:"transparent",color:"#211A16"}}/>
+                <span style={{fontSize:11,color:"#a89a80"}}>—</span>
+                <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}
+                  style={{border:"none",fontSize:12,outline:"none",background:"transparent",color:"#211A16"}}/>
+                {(dateFrom||dateTo)&&(
+                  <button onClick={()=>{setDateFrom("");setDateTo("");}} style={{border:"none",background:"none",color:"#C1382A",fontSize:14,cursor:"pointer",padding:"0 4px"}}>✕</button>
+                )}
               </div>
-            )}
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}}>
+              {filteredEvents.map(e=>{
+                const rsvpTotal=(e.attending||0)+(e.notAttending||0)+(e.pending||0);
+                const attendPct = rsvpTotal>0 ? Math.round((e.attending||0)/rsvpTotal*100) : 0;
+                return (
+                  <div key={e.id} onClick={()=>setSelectedEvent(e)}
+                    style={{background:"linear-gradient(155deg,rgba(255,255,255,.85),rgba(255,255,255,.55))",
+                      border:"1px solid rgba(212,175,90,.25)",borderRadius:16,padding:"16px 18px",cursor:"pointer",
+                      boxShadow:"0 8px 24px -16px rgba(60,40,20,.3)",transition:"transform .15s"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                      <div>
+                        <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:"#211A16"}}>{e.couple||"Adsız məclis"}</div>
+                        <div style={{fontSize:10.5,color:"#8a7548",marginTop:2}}>{e.hallName||"Zal seçilməyib"} · {(e.createdAt||"").slice(0,10)}</div>
+                      </div>
+                      <span style={{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:8,
+                        background:e.status==="done"?"rgba(76,154,110,.15)":"rgba(212,175,90,.15)",
+                        color:e.status==="done"?"#4C9A6E":"#8A6B1E",whiteSpace:"nowrap"}}>{e.status==="done"?"Tamamlanıb":"Davam edir"}</span>
+                    </div>
+                    <div style={{display:"flex",gap:14,paddingTop:10,borderTop:"1px solid rgba(150,120,80,.12)"}}>
+                      <div><div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#211A16"}}>{e.guestCount}</div><div style={{fontSize:8.5,color:"#a89a80",fontWeight:600}}>QONAQ</div></div>
+                      <div><div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#5B84B0"}}>{e.kishiCount||0}</div><div style={{fontSize:8.5,color:"#a89a80",fontWeight:600}}>KİŞİ</div></div>
+                      <div><div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#C9668A"}}>{e.qadinCount||0}</div><div style={{fontSize:8.5,color:"#a89a80",fontWeight:600}}>QADIN</div></div>
+                      <div><div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#4C9A6E"}}>{attendPct}%</div><div style={{fontSize:8.5,color:"#a89a80",fontWeight:600}}>GƏLİR</div></div>
+                    </div>
+                  </div>
+                );
+              })}
+              {filteredEvents.length===0&&(
+                <div style={{gridColumn:"1/-1",textAlign:"center",padding:40,color:"#a89a80",fontSize:13}}>Bu meyarlara uyğun məclis tapılmadı</div>
+              )}
+            </div>
           </>
         )}
+
+        {selectedEvent&&(()=>{
+          const e=selectedEvent;
+          const eventGuests = data.guests.filter(g=>g.eventId===e.id);
+          const rsvpTotal=(e.attending||0)+(e.notAttending||0)+(e.pending||0);
+          return (
+            <div style={{position:"fixed",inset:0,zIndex:600,background:"rgba(20,15,10,.55)",display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",padding:isMobile?0:20}}
+              onClick={()=>setSelectedEvent(null)}>
+              <div onClick={ev=>ev.stopPropagation()} style={{width:"100%",maxWidth:560,maxHeight:isMobile?"88vh":"85vh",overflowY:"auto",
+                background:"#FBF8F1",borderRadius:isMobile?"20px 20px 0 0":18,padding:"22px 24px 28px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}}>
+                  <div>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:21,fontWeight:700,color:"#211A16"}}>{e.couple||"Adsız məclis"}</div>
+                    <div style={{fontSize:11.5,color:"#8a7548",marginTop:3}}>{e.hallName||"—"} · {(e.createdAt||"").slice(0,10)}</div>
+                  </div>
+                  <button onClick={()=>setSelectedEvent(null)} style={{width:28,height:28,borderRadius:"50%",border:"1px solid rgba(150,120,80,.25)",background:"#fff",cursor:"pointer",fontSize:13,color:"#6B6259"}}>✕</button>
+                </div>
+
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
+                  <StatBox label="Ümumi qonaq" value={e.guestCount} color="#211A16"/>
+                  <StatBox label="Kişi" value={e.kishiCount||0} color="#5B84B0"/>
+                  <StatBox label="Qadın" value={e.qadinCount||0} color="#C9668A"/>
+                </div>
+
+                <div style={{fontSize:10.5,fontWeight:700,color:"#8a7548",letterSpacing:1,textTransform:"uppercase",marginBottom:8,marginTop:6}}>RSVP — gəliş statusu</div>
+                <div style={{display:"flex",height:10,borderRadius:6,overflow:"hidden",marginBottom:8,background:"rgba(150,120,80,.12)"}}>
+                  {rsvpTotal>0&&<>
+                    <div style={{width:((e.attending||0)/rsvpTotal*100)+"%",background:"#4C9A6E"}}/>
+                    <div style={{width:((e.notAttending||0)/rsvpTotal*100)+"%",background:"#C1382A"}}/>
+                    <div style={{width:((e.pending||0)/rsvpTotal*100)+"%",background:"#D4AF5A"}}/>
+                  </>}
+                </div>
+                <div style={{display:"flex",gap:14,marginBottom:18,fontSize:11}}>
+                  <span style={{color:"#4C9A6E",fontWeight:700}}>● Gəlir: {e.attending||0}</span>
+                  <span style={{color:"#C1382A",fontWeight:700}}>● Gəlmir: {e.notAttending||0}</span>
+                  <span style={{color:"#8A6B1E",fontWeight:700}}>● Gözləyir: {e.pending||0}</span>
+                </div>
+
+                <div style={{fontSize:10.5,fontWeight:700,color:"#8a7548",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Dəvətnamə çatdırılması</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:18}}>
+                  <StatBox label="SMS çatıb" value={e.smsSent||0} color="#4C9A6E" small/>
+                  <StatBox label="SMS çatmayıb" value={e.smsFailed||0} color="#C1382A" small/>
+                  <StatBox label="WhatsApp" value={e.waSent||0} color="#25D366" small/>
+                </div>
+
+                <div style={{fontSize:10.5,fontWeight:700,color:"#8a7548",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Qonaq siyahısı ({eventGuests.length})</div>
+                <div style={{maxHeight:220,overflowY:"auto",border:"1px solid rgba(150,120,80,.15)",borderRadius:12}}>
+                  {eventGuests.map((g,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 12px",borderBottom:i<eventGuests.length-1?"1px solid rgba(150,120,80,.08)":"none"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:7}}>
+                        <span style={{fontSize:13}}>{g.gender==="kishi"?"👨":g.gender==="qadin"?"👩":"👤"}</span>
+                        <span style={{fontSize:12.5,color:"#211A16",fontWeight:600}}>{g.name}</span>
+                      </div>
+                      <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                        <span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:6,
+                          background:g.rsvpStatus==="attending"?"rgba(76,154,110,.15)":g.rsvpStatus==="not_attending"?"rgba(193,56,42,.12)":"rgba(212,175,90,.12)",
+                          color:g.rsvpStatus==="attending"?"#4C9A6E":g.rsvpStatus==="not_attending"?"#C1382A":"#8A6B1E"}}>
+                          {g.rsvpStatus==="attending"?"Gəlir":g.rsvpStatus==="not_attending"?"Gəlmir":"Gözləyir"}
+                        </span>
+                        <span style={{fontSize:9,color:g.smsStatus==="sent"?"#4C9A6E":"#a89a80"}}>{g.smsStatus==="sent"?"✓SMS":""}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {tab==="guests"&&(
           <>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:14}}>Qonaq axtarışı</div>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Ad və ya telefon nömrəsi..."
               style={{width:"100%",maxWidth:isMobile?"100%":420,padding:"13px 17px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:14,outline:"none",marginBottom:14}}/>
-            {!search&&<div style={{fontSize:12,color:"#6B6259",marginBottom:12}}>Son 50 qonaq göstərilir — axtarış üçün yazın</div>}
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12,alignItems:"center"}}>
+              <div style={{display:"flex",gap:6,alignItems:"center",background:"#fff",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",padding:"6px 10px"}}>
+                <span style={{fontSize:11,color:"#8a7548"}}>Tarix:</span>
+                <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{border:"none",fontSize:12,outline:"none",background:"transparent"}}/>
+                <span style={{fontSize:11,color:"#a89a80"}}>—</span>
+                <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{border:"none",fontSize:12,outline:"none",background:"transparent"}}/>
+              </div>
+              <div style={{display:"flex",gap:4}}>
+                {[["all","Hamısı"],["kishi","👨 Kişi"],["qadin","👩 Qadın"]].map(([v,l])=>(
+                  <button key={v} onClick={()=>setGuestGenderFilter(v)}
+                    style={{padding:"7px 12px",borderRadius:9,border:"1px solid "+(guestGenderFilter===v?"rgba(212,175,90,.5)":"rgba(150,120,80,.2)"),
+                      background:guestGenderFilter===v?"rgba(212,175,90,.15)":"#fff",color:guestGenderFilter===v?"#8A6B1E":"#6B6259",
+                      fontSize:11.5,fontWeight:600,cursor:"pointer"}}>{l}</button>
+                ))}
+              </div>
+              <button onClick={()=>exportGuestsExcel(filteredGuests, guestGenderFilter)}
+                style={{padding:"7px 14px",borderRadius:9,border:"1px solid rgba(76,154,110,.35)",background:"rgba(76,154,110,.1)",color:"#4C9A6E",fontSize:11.5,fontWeight:700,cursor:"pointer"}}>
+                📥 Excel-ə yüklə ({filteredGuests.length})
+              </button>
+            </div>
+            {!search&&<div style={{fontSize:12,color:"#6B6259",marginBottom:12}}>Son 50 qonaq göstərilir — axtarış üçün yazın (filtr aktivdirsə daha çoxu görünür)</div>}
 
             {isMobile?(
               filteredGuests.map((g,i)=>(
