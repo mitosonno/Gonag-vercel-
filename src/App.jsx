@@ -5729,7 +5729,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-        const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+" Ətraflı: "+rsvpLink+" - GONAG.AZ";
+        const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -5777,7 +5777,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const code=await createRsvp(guest,tbl);
       const rsvpLink=baseUrl+"/rsvp/"+code;
       const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+" Ətraflı: "+rsvpLink+" - GONAG.AZ";
+      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
