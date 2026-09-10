@@ -2293,7 +2293,11 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
         <div style={{fontSize:40,marginBottom:12}}>🎊</div>
         <div style={{fontSize:16,fontWeight:700,color:"#211A16"}}>Hələ məclis yoxdur</div>
         <div style={{fontSize:12,color:"rgba(33,26,22,.5)",marginBottom:20,marginTop:4}}>Gul Agent ilə yeni məclis yaradın</div>
-        <button onClick={onClose} style={{padding:"10px 28px",borderRadius:16,border:"1px solid rgba(193,56,42,.3)",background:"linear-gradient(155deg,rgba(193,56,42,.2),rgba(193,56,42,.08))",color:"#C1382A",fontSize:13,fontWeight:700,cursor:"pointer"}}>Bağla</button>
+        <button onClick={()=>{onClose();if(onNewEvent)onNewEvent();}}
+          style={{width:"100%",padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8}}>
+          ✨ Yeni Məclis Yarat
+        </button>
+        <button onClick={onClose} style={{padding:"9px 28px",borderRadius:16,border:"1px solid rgba(193,56,42,.3)",background:"transparent",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer"}}>Bağla</button>
       </div>
     </div>
   );
