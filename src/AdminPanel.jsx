@@ -29,6 +29,7 @@ const NAV = [
   { id: "events", label: "Məclislər", icon: "🎉" },
   { id: "guests", label: "Qonaqlar", icon: "🔍" },
   { id: "halls", label: "Zal Builder", icon: "🛠" },
+  { id: "mitoad", label: "MitoAd", icon: "📣" },
 ];
 
 function useIsMobile(){
@@ -604,6 +605,13 @@ export default function AdminPanel(){
   const [dateTo, setDateTo] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [guestGenderFilter, setGuestGenderFilter] = useState("all"); // "all"|"kishi"|"qadin"
+  const [mitoCompany, setMitoCompany] = useState("");
+  const [mitoMessage, setMitoMessage] = useState("");
+  const [mitoLink, setMitoLink] = useState("");
+  const [mitoAudience, setMitoAudience] = useState("all"); // "all"|"kishi"|"qadin"
+  const [mitoSending, setMitoSending] = useState(false);
+  const [mitoProgress, setMitoProgress] = useState({done:0,total:0,failed:0});
+  const [mitoConfirm, setMitoConfirm] = useState(false);
   const [expandedUser, setExpandedUser] = useState(null);
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
   const [managedHalls, setManagedHalls] = useState([]);
@@ -675,6 +683,33 @@ export default function AdminPanel(){
     if(guestGenderFilter!=="all") list = list.filter(g=>g.gender===guestGenderFilter);
     return q||dateFrom||dateTo||guestGenderFilter!=="all" ? list.slice(0,300) : list.slice(0,50);
   },[data, search, dateFrom, dateTo, guestGenderFilter]);
+
+  const mitoAudiencePhones = useMemo(()=>{
+    if(!data) return [];
+    let list = data.guests.filter(g=>g.phone);
+    if(mitoAudience!=="all") list = list.filter(g=>g.gender===mitoAudience);
+    const seen = new Set();
+    const unique = [];
+    list.forEach(g=>{ if(!seen.has(g.phone)){ seen.add(g.phone); unique.push(g); } });
+    return unique;
+  },[data, mitoAudience]);
+
+  async function sendMitoAd(){
+    setMitoSending(true);
+    setMitoProgress({done:0,total:mitoAudiencePhones.length,failed:0});
+    const fullText = mitoMessage.trim()+(mitoLink.trim()?"\n\n"+mitoLink.trim():"")+(mitoCompany.trim()?"\n\n- "+mitoCompany.trim():"");
+    for(const g of mitoAudiencePhones){
+      try{
+        const r = await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:g.phone,text:fullText})});
+        const j = await r.json().catch(()=>({ok:false}));
+        setMitoProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1)}));
+      }catch(e){
+        setMitoProgress(p=>({...p,done:p.done+1,failed:p.failed+1}));
+      }
+      await new Promise(res=>setTimeout(res,180));
+    }
+    setMitoSending(false);
+  }
 
   const GLOBAL_CSS = `
     *{box-sizing:border-box;}
@@ -1185,6 +1220,81 @@ export default function AdminPanel(){
           </>
           );
         })()}
+
+        {tab==="mitoad"&&(
+          <>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:6}}>📣 MitoAd</div>
+            <div style={{fontSize:12,color:"#6B6259",marginBottom:6,maxWidth:520}}>Qonaqlara xüsusi mesaj/link göndərin — reklam, elan və ya xüsusi kampaniya üçün.</div>
+            <div style={{fontSize:11,color:"#C1382A",marginBottom:18,maxWidth:520,padding:"9px 12px",background:"rgba(193,56,42,.06)",borderRadius:10,border:"1px solid rgba(193,56,42,.15)"}}>
+              ⚠️ Bu nömrələr toy dəvətnaməsi üçün toplanıb — göndərəcəyiniz məzmunun münasib və gözlənilən olduğuna əmin olun.
+            </div>
+
+            <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1.2fr 1fr",gap:20}}>
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:"#8a7548",display:"block",marginBottom:5}}>Şirkət/Göndərən adı</label>
+                <input value={mitoCompany} onChange={e=>setMitoCompany(e.target.value)} placeholder="Məs: GONAG.AZ"
+                  style={{width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:14}}/>
+
+                <label style={{fontSize:11,fontWeight:700,color:"#8a7548",display:"block",marginBottom:5}}>Mesaj mətni</label>
+                <textarea value={mitoMessage} onChange={e=>setMitoMessage(e.target.value)} placeholder="Mesajınızı yazın..." rows={5}
+                  style={{width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:14,fontFamily:"inherit",resize:"vertical"}}/>
+
+                <label style={{fontSize:11,fontWeight:700,color:"#8a7548",display:"block",marginBottom:5}}>Link (istəyə bağlı)</label>
+                <input value={mitoLink} onChange={e=>setMitoLink(e.target.value)} placeholder="https://..."
+                  style={{width:"100%",padding:"11px 14px",borderRadius:11,border:"1px solid rgba(150,120,80,.2)",background:"#fff",fontSize:13,outline:"none",marginBottom:18}}/>
+
+                <label style={{fontSize:11,fontWeight:700,color:"#8a7548",display:"block",marginBottom:6}}>Auditoriya</label>
+                <div style={{display:"flex",gap:6,marginBottom:18}}>
+                  {[["all","Hamısı"],["kishi","👨 Kişi"],["qadin","👩 Qadın"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>setMitoAudience(v)}
+                      style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid "+(mitoAudience===v?"rgba(212,175,90,.5)":"rgba(150,120,80,.2)"),
+                        background:mitoAudience===v?"rgba(212,175,90,.15)":"#fff",color:mitoAudience===v?"#8A6B1E":"#6B6259",
+                        fontSize:12.5,fontWeight:700,cursor:"pointer"}}>{l}</button>
+                  ))}
+                </div>
+
+                {mitoSending?(
+                  <div>
+                    <div style={{fontSize:12,color:"#6B6259",marginBottom:8}}>Göndərilir: {mitoProgress.done}/{mitoProgress.total} ({mitoProgress.failed} uğursuz)</div>
+                    <div style={{height:8,borderRadius:5,background:"rgba(150,120,80,.15)",overflow:"hidden"}}>
+                      <div style={{height:"100%",width:(mitoProgress.total>0?(mitoProgress.done/mitoProgress.total*100):0)+"%",background:"#4C9A6E",transition:"width .3s"}}/>
+                    </div>
+                  </div>
+                ):mitoConfirm?(
+                  <div style={{padding:"14px",borderRadius:12,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.3)"}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#8A6B1E",marginBottom:10}}>
+                      {mitoAudiencePhones.length} nömrəyə SMS göndərilsin?
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>setMitoConfirm(false)} style={{flex:1,padding:"11px",borderRadius:10,border:"1px solid rgba(33,26,22,.15)",background:"transparent",color:"#6B6259",fontSize:12.5,cursor:"pointer"}}>Ləğv et</button>
+                      <button onClick={()=>{setMitoConfirm(false);sendMitoAd();}} style={{flex:2,padding:"11px",borderRadius:10,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>✓ Bəli, göndər</button>
+                    </div>
+                  </div>
+                ):(
+                  <button onClick={()=>setMitoConfirm(true)} disabled={!mitoMessage.trim()||mitoAudiencePhones.length===0}
+                    style={{width:"100%",padding:"13px",borderRadius:12,border:"none",
+                      background:(!mitoMessage.trim()||mitoAudiencePhones.length===0)?"rgba(150,120,80,.2)":"linear-gradient(155deg,#D4AF5A,#B8923E)",
+                      color:(!mitoMessage.trim()||mitoAudiencePhones.length===0)?"#a89a80":"#fff",fontSize:13.5,fontWeight:800,
+                      cursor:(!mitoMessage.trim()||mitoAudiencePhones.length===0)?"default":"pointer"}}>
+                    📤 {mitoAudiencePhones.length} nömrəyə göndər
+                  </button>
+                )}
+              </div>
+
+              <div>
+                <label style={{fontSize:11,fontWeight:700,color:"#8a7548",display:"block",marginBottom:6}}>Önizləmə</label>
+                <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.9),rgba(255,255,255,.6))",border:"1px solid rgba(150,120,80,.2)",borderRadius:14,padding:"16px 18px",minHeight:140,whiteSpace:"pre-wrap",fontSize:12.5,color:"#211A16",lineHeight:1.6}}>
+                  {mitoMessage.trim()||<span style={{color:"#a89a80"}}>Mesaj mətnini yazın...</span>}
+                  {mitoLink.trim()&&<><br/><br/><span style={{color:"#5B84B0"}}>{mitoLink}</span></>}
+                  {mitoCompany.trim()&&<><br/><br/>- {mitoCompany}</>}
+                </div>
+                <div style={{marginTop:14,fontSize:11,color:"#6B6259"}}>
+                  Seçilmiş auditoriya: <b style={{color:"#211A16"}}>{mitoAudiencePhones.length}</b> unikal nömrə
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {hallBuilderOpen&&(
