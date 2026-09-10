@@ -114,11 +114,13 @@ async function pickContact(){
     if(!contacts || contacts.length===0) return null;
     const c = contacts[0];
     const name = (c.name && c.name[0]) || "";
-    let phone = (c.tel && c.tel[0]) || "";
-    phone = phone.replace(/\D/g,"");
-    if(phone.startsWith("994")) phone = phone.slice(3);
-    if(phone.startsWith("0")) phone = phone.slice(1);
-    return {name, phone};
+    const phones = (c.tel||[]).map(p=>{
+      let ph = p.replace(/\D/g,"");
+      if(ph.startsWith("994")) ph = ph.slice(3);
+      if(ph.startsWith("0")) ph = ph.slice(1);
+      return ph;
+    }).filter(Boolean);
+    return {name, phones};
   }catch(e){
     return null;
   }
@@ -253,6 +255,8 @@ async function sbSaveEvent(ev){
       hall: ev.hall||null,
       msgs: (ev.msgs||[]).slice(-10),
       hist: (ev.hist||[]).slice(-10),
+      myInviteShablon: ev.myInviteShablon!=null?ev.myInviteShablon:null,
+      myInviteMedia: ev.myInviteMedia||null,
       totalGuests: ev.totalGuests||0,
       savedAt: ev.savedAt||Date.now()
     },
@@ -1193,16 +1197,18 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     opacity:allInvited?0.45:1,transition:"opacity .3s"}}
                   className={pulseId===t.id?"tpulse":longPressSelected.has(t.id)?"lp-selected":""}>
 
-                  {/* Masa adı — üstdə, oturacaqlarla qarışmasın */}
-                  {t.label&&t.label!=="__extra__"&&(
+                  {/* Masa adı və tərəf — üstdə, oturacaqlarla qarışmasın, aydın görünür */}
+                  {((t.label&&t.label!=="__extra__")||side)&&(
                     <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(11,S*0.24),fontWeight:800,
+                      fontSize:Math.max(10,S*0.2),fontWeight:800,
                       color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
                       background:"rgba(255,253,247,.95)",padding:"3px 10px",borderRadius:9,
-                      border:"1px solid rgba(212,175,90,.3)",
+                      border:"1px solid "+(side==="Oğlan evi"?"rgba(178,58,46,.35)":side==="Qız evi"?"rgba(138,107,30,.35)":"rgba(212,175,90,.3)"),
                       boxShadow:"0 2px 6px rgba(60,40,20,.22)",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:5,zIndex:8}}>
-                      {t.label}
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:5,zIndex:8,
+                      display:"flex",alignItems:"center",gap:5}}>
+                      {t.label&&t.label!=="__extra__"&&<span>{t.label}</span>}
+                      {side&&side!=="Ümumi"&&<span style={{fontSize:"0.85em",opacity:.85}}>{t.label&&t.label!=="__extra__"?"· ":""}{side}</span>}
                     </div>
                   )}
 
@@ -1247,12 +1253,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                             {isExtra?"E":t.id}
                           </div>
                         </div>
-                        {side&&side!=="Ümumi"&&(
-                          <div style={{position:"absolute",left:"50%",bottom:"6%",transform:"translateX(-50%)",
-                            fontSize:Math.max(7,S*0.12),fontWeight:700,color:statusColor,whiteSpace:"nowrap"}}>
-                            {side==="Oğlan evi"?"Oğlan":"Qız"}
-                          </div>
-                        )}
                       </div>
                     );
                   })()}
@@ -1525,6 +1525,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [shareResult, setShareResult] = useState(null);
   const [slotInput, setSlotInput] = useState(null);
   const [slotName, setSlotName] = useState("");
+  const [phoneChoice, setPhoneChoice] = useState(null); // {phones, onPick}
   const [slotPhone, setSlotPhone] = useState("");
   const [slotCount, setSlotCount] = useState("1");
   const [slotGender, setSlotGender] = useState("");
@@ -1576,6 +1577,22 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
   return (
     <div style={{minHeight:0}}>
+      {phoneChoice&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setPhoneChoice(null)}>
+          <div style={{width:"100%",maxWidth:420,background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 32px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12,textAlign:"center"}}>Hansı nömrə?</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {phoneChoice.phones.map((ph,i)=>(
+                <button key={i} onClick={()=>phoneChoice.onPick(ph)}
+                  style={{padding:"13px",borderRadius:12,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.08)",color:"#211A16",fontSize:14,fontWeight:600,cursor:"pointer"}}>
+                  +994 {ph}
+                </button>
+              ))}
+              <button onClick={()=>setPhoneChoice(null)} style={{padding:"10px",borderRadius:12,border:"none",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Ləğv et</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Cütlük kartı */}
       {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
         const title = obData.boy&&obData.girl ? obData.boy+" & "+obData.girl : (obData.name||obData.company||"");
@@ -1885,7 +1902,12 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 {contactsSupported()&&(
                   <button onClick={async()=>{
                       const c = await pickContact();
-                      if(c&&c.name){ setSlotName(c.name); if(c.phone) setSlotPhone(c.phone); }
+                      if(!c||!c.name) return;
+                      if(c.phones.length<=1){
+                        setSlotName(c.name); if(c.phones[0]) setSlotPhone(c.phones[0]);
+                      } else {
+                        setPhoneChoice({phones:c.phones, onPick:(ph)=>{ setSlotName(c.name); setSlotPhone(ph); setPhoneChoice(null); }});
+                      }
                     }}
                     style={{padding:"0 10px",borderRadius:11,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.12)",color:"#5B84B0",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>
                     📇 Kontakt
@@ -3323,6 +3345,7 @@ export default function App(){
   const [pickerDate, setPickerDate] = useState("");
   const [pickerTime, setPickerTime] = useState("19:00");
   const [chatWizard, setChatWizard] = useState(null); // {tableId, step, name, phone, gender, count}
+  const [phoneChoice, setPhoneChoice] = useState(null); // {phones, onPick}
   const [chatLongPress, setChatLongPress] = useState(new Set()); // seçilmiş masa ID-ləri
   const [chatWizardPickerOpen, setChatWizardPickerOpen] = useState(false);
   const [chatLongPressResult, setChatLongPressResult] = useState(null); // {code, tblIds}
@@ -3574,6 +3597,8 @@ export default function App(){
       tables: overrides.tables||tabRef.current,
       msgs: overrides.msgs||(msgs.slice(-20)),
       hist: overrides.hist||hist.slice(-20),
+      myInviteShablon: overrides.myInviteShablon!==undefined?overrides.myInviteShablon:myInviteShablon,
+      myInviteMedia: overrides.myInviteMedia!==undefined?overrides.myInviteMedia:(myInviteIncludeMedia?myInviteMedia:null),
       totalGuests: (overrides.tables||tabRef.current).reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1),0),0),
       status: overrides.status||"natamam",
       savedAt: Date.now(),
@@ -4660,7 +4685,16 @@ ${savedEvsList||"Yoxdur"}`;
                     {contactsSupported()&&(
                       <button onClick={async()=>{
                           const c = await pickContact();
-                          if(c&&c.name){ setChatWizard(w=>({...w,name:c.name,phone:c.phone||w.phone,step:c.phone?"gender":"phone"})); }
+                          if(!c||!c.name) return;
+                          if(c.phones.length<=1){
+                            const ph = c.phones[0]||"";
+                            setChatWizard(w=>({...w,name:c.name,phone:ph||w.phone,step:ph?"gender":"phone"}));
+                          } else {
+                            setPhoneChoice({phones:c.phones, onPick:(ph)=>{
+                              setChatWizard(w=>({...w,name:c.name,phone:ph,step:"gender"}));
+                              setPhoneChoice(null);
+                            }});
+                          }
                         }}
                         style={{padding:"8px",borderRadius:12,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.12)",color:"#5B84B0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                         📇 Kontaktdan seç
@@ -4798,6 +4832,23 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
         </div>
       </div>
+
+      {phoneChoice&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setPhoneChoice(null)}>
+          <div style={{width:"100%",maxWidth:420,background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 32px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12,textAlign:"center"}}>Hansı nömrə?</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {phoneChoice.phones.map((ph,i)=>(
+                <button key={i} onClick={()=>phoneChoice.onPick(ph)}
+                  style={{padding:"13px",borderRadius:12,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.08)",color:"#211A16",fontSize:14,fontWeight:600,cursor:"pointer"}}>
+                  +994 {ph}
+                </button>
+              ))}
+              <button onClick={()=>setPhoneChoice(null)} style={{padding:"10px",borderRadius:12,border:"none",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Ləğv et</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MƏNİM DƏVƏTNAMƏLƏRİM */}
       {myInviteOpen&&(
@@ -5712,6 +5763,45 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     setSendComplete(true);
   }
 
+  async function sendBulkBoth(){
+    const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
+    const baseUrl=window.location.origin;
+    const toSend=notInvTables.filter(t=>selTbls.has(t.id));
+    const targets=[];
+    toSend.forEach(tbl=>(tbl.guests||[]).forEach(g=>{
+      const phone=(g.phone||"").replace(/\D/g,"");
+      if(phone) targets.push({g,tbl,phone});
+    }));
+    setSmsSending(true);
+    setSmsProgress({done:0,total:targets.length,failed:0,lastError:""});
+    for(const {g,tbl,phone} of targets){
+      const waWin = window.open("about:blank","_blank");
+      const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+      const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
+      try{
+        const code=await createRsvp(g,tbl); // eyni link — hər iki kanal üçün
+        const rsvpLink=baseUrl+"/rsvp/"+code;
+        const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
+        const c=document.createElement("canvas");
+        drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
+        await shareMsg(phone,waMsg,c,waWin);
+
+        const smsText="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
+        const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
+        const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
+        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+" (SMS): "+errMsg)}));
+        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok);
+        onMarkSent&&onMarkSent([g.id],"whatsapp");
+      }catch(e){
+        setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1,lastError:g.name+": "+e.message}));
+      }
+      await new Promise(r=>setTimeout(r,800));
+    }
+    setSmsSending(false);
+    setSendComplete(true);
+  }
+
   async function sendBulkSMS(){
     const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
     const baseUrl=window.location.origin;
@@ -6048,6 +6138,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <button onClick={sendBulkSMS} disabled={smsSending}
               style={{padding:"13px",borderRadius:12,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
               {smsSending?"Göndərilir...":"📩 SMS ilə göndər (1 kliklə hamısına)"}
+            </button>
+            <button onClick={sendBulkBoth} disabled={smsSending}
+              style={{padding:"13px",borderRadius:12,border:"1px solid rgba(212,175,90,.4)",background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.06))",color:"#8A6B1E",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
+              {smsSending?"Göndərilir...":"📱📩 WhatsApp + SMS birlikdə"}
             </button>
           </div>
           )}

@@ -13,6 +13,20 @@ async function sbFetch(path, opts={}) {
   try{ return await res.json(); }catch{ return null; }
 }
 
+// İndeks App.jsx-dəki DEVETNAME_SHABLONLAR ilə eynidir — dəvətnamə önizləməsi üçün
+const SHABLON_COLORS = [
+  { bg:"#0a0700", accent:"#c9a84c", text:"#f2e8d0" },
+  { bg:"#1a0a12", accent:"#e87aad", text:"#f9c7d8" },
+  { bg:"#020d1a", accent:"#7aade8", text:"#b5d4f4" },
+  { bg:"#faf8f2", accent:"#c9a84c", text:"#2a1f06" },
+  { bg:"#f4f1eb", accent:"#6b7d5c", text:"#2b2f26" },
+  { bg:"#faf4ef", accent:"#c0603f", text:"#3a2117" },
+  { bg:"#111214", accent:"#d4af5a", text:"#f0efec" },
+  { bg:"#eef1f4", accent:"#4d6a86", text:"#1e2a35" },
+  { bg:"#f7efec", accent:"#b98a7a", text:"#3a2c26" },
+  { bg:"#0c1410", accent:"#7fa88a", text:"#e7efe9" }
+];
+
 function TableCircle({ tableId, seats=10, guests=[], label="" }){
   const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
   const W=320, r=82, cx=160, cy=160;
@@ -271,6 +285,8 @@ export default function RsvpPage(){
   const [copied, setCopied] = useState(false);
   const [tebrikOpen, setTebrikOpen] = useState(false);
   const [tebrikText, setTebrikText] = useState("Təəssüf ki gələ bilməyəcəyinizi bildirdiniz. Ən xoş arzularımız sizinlədir! 🌹");
+  const [inviteShablon, setInviteShablon] = useState(null);
+  const [inviteMedia, setInviteMedia] = useState(null);
 
   useEffect(()=>{ if(code) load(); else setStatus("error"); },[code]);
 
@@ -285,6 +301,9 @@ export default function RsvpPage(){
       if(!evs||!evs.length){ setStatus("error"); return; }
       const ev = evs[0];
       setEventData(ev);
+      const meta = (ev.tables&&ev.tables._meta)||{};
+      setInviteShablon(meta.myInviteShablon!=null?meta.myInviteShablon:null);
+      setInviteMedia(meta.myInviteMedia||null);
       const allRows = (ev.tables&&ev.tables.rows)||[];
       const tbl = allRows.find(t=>t.id===r.table_id);
       setTableData(tbl);
@@ -358,6 +377,32 @@ export default function RsvpPage(){
           <div style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>Hörmətli <span style={{color:"#f2e8d0",fontWeight:600}}>{guestName}</span>,</div>
           <div style={{fontSize:13,color:"rgba(255,255,255,.4)",marginTop:4}}>toy mərasiminə dəvət olunursunuz!</div>
         </div>
+
+        {/* Dəvətnamə önizləməsi — sistemin şablonu + istifadəçinin öz video/şəkli (varsa) */}
+        {(inviteShablon!=null||inviteMedia)&&(
+          <div style={{margin:"0 16px 16px",display:"flex",flexDirection:"column",gap:10}}>
+            {inviteShablon!=null&&SHABLON_COLORS[inviteShablon]&&(()=>{
+              const S=SHABLON_COLORS[inviteShablon];
+              return (
+                <div style={{borderRadius:16,overflow:"hidden",border:"1px solid "+S.accent+"40",
+                  background:"linear-gradient(155deg,"+S.bg+","+S.bg+"cc)",padding:"28px 20px",textAlign:"center"}}>
+                  <div style={{fontSize:10,letterSpacing:3,color:S.accent,fontWeight:700,marginBottom:10}}>DƏVƏTNAMƏ</div>
+                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:S.text,marginBottom:6}}>{evName}</div>
+                  {evDate&&<div style={{fontSize:12,color:S.accent}}>{evDate}</div>}
+                </div>
+              );
+            })()}
+            {inviteMedia&&(
+              <div style={{borderRadius:16,overflow:"hidden",border:"1px solid rgba(201,168,76,.25)"}}>
+                {inviteMedia.type==="video"?(
+                  <video src={inviteMedia.url} controls style={{width:"100%",display:"block"}}/>
+                ):(
+                  <img src={inviteMedia.url} style={{width:"100%",display:"block"}}/>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tarix və Zal */}
         <div style={{margin:"0 16px 16px",background:"rgba(201,168,76,.06)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,overflow:"hidden"}}>
