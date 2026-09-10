@@ -3812,16 +3812,16 @@ export default function App(){
     if(hallObj._lightweight){
       setMsgs(m=>[...m,{role:"agent",text:"Zal detalları yüklənir...",qrs:[]}]);
       try{
-        const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),8000));
+        const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error("8 saniyə gözlədi, cavab gəlmədi")),8000));
         const fetched = await Promise.race([fetchHallFull(hallObj.id), timeout]);
         if(fetched){
           full = fetched;
         } else {
-          setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənə bilmədi (masalar boş görünə bilər). Zəhmət olmasa yenidən sınayın, ya da sxemdən özünüz masa əlavə edin.",qrs:[]}]);
+          setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənə bilmədi — server boş cavab qaytardı (id: "+hallObj.id+"). Zəhmət olmasa yenidən sınayın.",qrs:[]}]);
         }
       }catch(e){
-        // 8 saniyədən sonra hələ cavab yoxdursa, yüngül data ilə davam et — sonsuz gözləmə olmasın
-        setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları tam yüklənmədi, amma davam edirik. (Masalar boş ola bilər — sxemdən özünüz əlavə edin)",qrs:[]}]);
+        console.error("fetchHallFull error:", e);
+        setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənərkən xəta: "+(e&&e.message||"naməlum")+" (id: "+hallObj.id+")",qrs:[]}]);
       }
     }
     const h = {
