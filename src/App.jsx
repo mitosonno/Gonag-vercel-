@@ -721,7 +721,7 @@ function HallPlanSVG({ hallName, venueName, width, height }){
   );
 }
 
-function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable }){
+function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable, sessionId }){
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
   const zoomRef = useRef(1);
@@ -1340,7 +1340,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
                     method:"POST",
                     headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
-                    body:JSON.stringify({code:code,session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
+                    body:JSON.stringify({code:code,session_id:sessionId||"gonag_user_main",table_ids:tblIds,status:"active"})
                   }).catch(function(){});
                 }catch(e){}
               }} style={{width:"100%",padding:"11px",borderRadius:15,border:"1px solid rgba(193,56,42,.3)",
@@ -1511,7 +1511,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -1810,6 +1810,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         editMode={editMode}
         layoutMode={layoutMode}
         onAddTable={onAddTable}
+        sessionId={sessionId}
         onLabelSide={(id,lbl,side,extra)=>{
           if(extra){
             const tbl=tables.find(x=>x.id===id);
@@ -2524,7 +2525,7 @@ function MiniShablonPreview({ shablon, obData }){
   return <canvas ref={canvasRef} style={{width:"100%",aspectRatio:"2/3",borderRadius:"9px 9px 0 0",display:"block"}}/>;
 }
 
-function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumber, setCardNumber }){
+function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumber, setCardNumber, sessionId }){
   const tables2use = allTables && allTables.length>0 ? allTables.filter(t=>(t.guests||[]).length>0) : (tbl?[tbl]:[]);
   const [activeTblIdx, setActiveTblIdx] = useState(0);
   const activeTbl = tables2use[activeTblIdx] || tbl;
@@ -2561,11 +2562,10 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
 
   async function createRsvp(guest, tbl){
     const code = Math.random().toString(36).slice(2,10)+Date.now().toString(36);
-    const sessionId = localStorage.getItem("gonag_session_id")||"gonag_user_main";
     const res = await fetch(SB_URL2+"/rest/v1/rsvp",{
       method:"POST",
       headers:{apikey:SB_KEY2,Authorization:"Bearer "+SB_KEY2,"Content-Type":"application/json",Prefer:"return=representation"},
-      body:JSON.stringify({code, session_id:sessionId, table_id:tbl.id, guest_name:guest.name, guest_phone:guest.phone||""})
+      body:JSON.stringify({code, session_id:sessionId||"gonag_user_main", table_id:tbl.id, guest_name:guest.name, guest_phone:guest.phone||""})
     });
     if(res.ok) return code;
     return null;
@@ -4539,7 +4539,7 @@ ${savedEvsList||"Yoxdur"}`;
                                       fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/invite_links",{
                                         method:"POST",
                                         headers:{"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json","Prefer":"return=representation"},
-                                        body:JSON.stringify({code,session_id:"gonag_user_main",table_ids:tblIds,status:"active"})
+                                        body:JSON.stringify({code,session_id:sessionId||"gonag_user_main",table_ids:tblIds,status:"active"})
                                       }).catch(()=>{});
                                     }catch(e){}
                                   }}
@@ -5021,6 +5021,7 @@ ${savedEvsList||"Yoxdur"}`;
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
           onClose={closeTopPanel}
+          sessionId={sessionId}
         />
       )}
       {meclisOpen&&(
@@ -5223,6 +5224,7 @@ ${savedEvsList||"Yoxdur"}`;
                 pct={pct}
                 obData={obData}
                 evType={evType}
+                sessionId={sessionId}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
@@ -5475,6 +5477,7 @@ ${savedEvsList||"Yoxdur"}`;
           onPrint={()=>printAll(tables,obData,hall)}
           myInviteShablon={myInviteShablon}
           myInviteMedia={myInviteIncludeMedia?myInviteMedia:null}
+          sessionId={sessionId}
         />
       )}
 
@@ -5655,7 +5658,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
@@ -5714,11 +5717,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
 
   async function createRsvp(guest, tbl){
     const code=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
-    const sessionId=localStorage.getItem("gonag_session_id")||"gonag_user_main";
     await fetch("https://dpvoluttxelwnqcfnsbh.supabase.co/rest/v1/rsvp",{
       method:"POST",
       headers:{apikey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368",Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368","Content-Type":"application/json",Prefer:"return=representation"},
-      body:JSON.stringify({code,session_id:sessionId,table_id:tbl.id,guest_name:guest.name,guest_phone:guest.phone||""})
+      body:JSON.stringify({code,session_id:sessionId||"gonag_user_main",table_id:tbl.id,guest_name:guest.name,guest_phone:guest.phone||""})
     });
     return code;
   }
