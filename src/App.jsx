@@ -5108,7 +5108,7 @@ ${savedEvsList||"Yoxdur"}`;
               {(()=>{
                 const q = restSearch.trim().toLowerCase();
                 const allRests = [...customHalls.map(r=>({...r,_custom:true})), ...RESTAURANTS.map(r=>({...r,_custom:false}))];
-                const filtered = q ? allRests.filter(r=>r.name.toLowerCase().includes(q)) : allRests.slice(0,3);
+                const filtered = q ? allRests.filter(r=>r.name.toLowerCase().includes(q)) : allRests.slice(0,5);
                 if(filtered.length===0){
                   return <div style={{textAlign:"center",padding:20,fontSize:12,color:"#6B6259"}}>Bu adda restoran tapılmadı</div>;
                 }
@@ -5116,9 +5116,9 @@ ${savedEvsList||"Yoxdur"}`;
                   <RestCard key={(r._custom?"c":"")+r.id} rest={r} onPick={r._custom?(rr,h)=>pickCustomHall(rr,h):pickHall}/>
                 );
               })()}
-              {!restSearch.trim()&&(customHalls.length+RESTAURANTS.length)>3&&(
+              {!restSearch.trim()&&(customHalls.length+RESTAURANTS.length)>5&&(
                 <div style={{textAlign:"center",fontSize:10.5,color:"#6B6259",marginTop:4}}>
-                  Daha çox restoran üçün yuxarıda axtarın ({customHalls.length+RESTAURANTS.length-3} əlavə)
+                  Daha çox restoran üçün yuxarıda axtarın ({customHalls.length+RESTAURANTS.length-5} əlavə)
                 </div>
               )}
             </div>
@@ -5677,7 +5677,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   const shabRefs = [useRef(null),useRef(null),useRef(null),useRef(null)];
   // Tək-tək göndər
   const [singleGuest, setSingleGuest] = useState(null); // {guest, tbl}
-  const [singleShablon, setSingleShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [singleShablon, setSingleShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
   const [singleStep, setSingleStep] = useState("list"); // "list"|"shablon"|"preview"|"sending"
   const singleCanvasRef = useRef(null);
 
@@ -5887,6 +5887,39 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       }
     }catch(e){
       alert("⚠️ SMS göndərilmədi: "+e.message);
+    }
+    setSmsSending(false);
+  }
+
+  async function sendSingleBoth(){
+    if(!singleGuest) return;
+    const {guest,tbl}=singleGuest;
+    const phone=(guest.phone||"").replace(/\D/g,"");
+    if(!phone){ alert("Bu qonağın telefon nömrəsi yoxdur"); return; }
+    setSmsSending(true);
+    const waWin = window.open("about:blank","_blank");
+    try{
+      const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
+      const baseUrl=window.location.origin;
+      const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
+      const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
+      const code=await createRsvp(guest,tbl); // eyni link — hər iki kanal üçün
+      const rsvpLink=baseUrl+"/rsvp/"+code;
+
+      const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
+      const c=document.createElement("canvas");
+      drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
+      await shareMsg(phone,waMsg,c,waWin);
+
+      const smsText="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
+      const j=await r.json().catch(()=>({ok:false}));
+      onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok);
+      onMarkSent&&onMarkSent([guest.id],"whatsapp");
+      setSingleGuest(null);
+      setSingleStep("list");
+    }catch(e){
+      alert("⚠️ Xəta: "+e.message);
     }
     setSmsSending(false);
   }
@@ -6174,7 +6207,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                     {sent?(
                       <div style={{fontSize:11,color:"rgba(76,154,110,.9)",fontWeight:600}}>✓ Göndərilib</div>
                     ):phone?(
-                      <button onClick={()=>{setSingleGuest({guest:g,tbl:t});setSingleStep("shablon");}}
+                      <button onClick={()=>{
+                          setSingleGuest({guest:g,tbl:t});
+                          setSingleStep(myInviteShablon!=null?"preview":"shablon");
+                        }}
                         style={{padding:"7px 12px",borderRadius:9,border:"none",background:"rgba(76,154,110,.35)",color:"#4C9A6E",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>
                         📱 Göndər
                       </button>
@@ -6222,7 +6258,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <div style={{padding:"14px 16px 32px",flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
               <div style={{textAlign:"center",padding:"14px",borderRadius:14,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.3)"}}>
                 <div style={{fontSize:13,fontWeight:700,color:"#8A6B1E"}}>
-                  {singleGuest.guest.name} adına {singleConfirm==="whatsapp"?"WhatsApp":"SMS"} ilə göndərilsin?
+                  {singleGuest.guest.name} adına {singleConfirm==="whatsapp"?"WhatsApp":singleConfirm==="sms"?"SMS":"WhatsApp + SMS"} ilə göndərilsin?
                 </div>
               </div>
               <div style={{display:"flex",gap:8}}>
@@ -6230,7 +6266,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                   style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:smsSending?"default":"pointer"}}>
                   Ləğv et
                 </button>
-                <button onClick={()=>{ const c=singleConfirm; setSingleConfirm(null); if(c==="whatsapp") sendSingle(); else sendSingleSMS(); }} disabled={smsSending}
+                <button onClick={()=>{ const c=singleConfirm; setSingleConfirm(null); if(c==="whatsapp") sendSingle(); else if(c==="sms") sendSingleSMS(); else sendSingleBoth(); }} disabled={smsSending}
                   style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
                   {smsSending?"Göndərilir...":"✓ Bəli, göndər"}
                 </button>
@@ -6248,6 +6284,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <button onClick={()=>setSingleConfirm("sms")} disabled={smsSending}
               style={{padding:"12px",borderRadius:11,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
               📩 SMS ilə göndər
+            </button>
+            <button onClick={()=>setSingleConfirm("both")} disabled={smsSending}
+              style={{padding:"12px",borderRadius:11,border:"1px solid rgba(212,175,90,.4)",background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.06))",color:"#8A6B1E",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
+              📱📩 WhatsApp + SMS birlikdə
             </button>
           </div>
           )}
