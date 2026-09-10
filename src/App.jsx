@@ -5668,6 +5668,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   const [pulse, setPulse] = useState(true);
   const [sendComplete, setSendComplete] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
+  const [singleConfirm, setSingleConfirm] = useState(null); // "whatsapp"|"sms"|null
   const [smsProgress, setSmsProgress] = useState({done:0,total:0,failed:0,lastError:""});
   const canvasRef = useRef(null);
   const shabRefs = [useRef(null),useRef(null),useRef(null),useRef(null)];
@@ -6215,19 +6216,39 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",justifyContent:"center",alignItems:"flex-start"}}>
             <canvas ref={singleCanvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
           </div>
+          {singleConfirm?(
+            <div style={{padding:"14px 16px 32px",flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{textAlign:"center",padding:"14px",borderRadius:14,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.3)"}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#8A6B1E"}}>
+                  {singleGuest.guest.name} adına {singleConfirm==="whatsapp"?"WhatsApp":"SMS"} ilə göndərilsin?
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setSingleConfirm(null)} disabled={smsSending}
+                  style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:smsSending?"default":"pointer"}}>
+                  Ləğv et
+                </button>
+                <button onClick={()=>{ const c=singleConfirm; setSingleConfirm(null); if(c==="whatsapp") sendSingle(); else sendSingleSMS(); }} disabled={smsSending}
+                  style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
+                  {smsSending?"Göndərilir...":"✓ Bəli, göndər"}
+                </button>
+              </div>
+            </div>
+          ):(
           <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
             <div style={{display:"flex",gap:8}}>
               <button onClick={()=>onOpenMyInvite&&onOpenMyInvite()} disabled={smsSending} style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:12,cursor:smsSending?"default":"pointer"}}>🔄 Dizaynı dəyiş</button>
-              <button onClick={sendSingle} disabled={smsSending}
+              <button onClick={()=>setSingleConfirm("whatsapp")} disabled={smsSending}
                 style={{flex:2,padding:"13px",borderRadius:11,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#4C9A6E",fontSize:14,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1}}>
                 📱 WhatsApp
               </button>
             </div>
-            <button onClick={sendSingleSMS} disabled={smsSending}
+            <button onClick={()=>setSingleConfirm("sms")} disabled={smsSending}
               style={{padding:"12px",borderRadius:11,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
-              {smsSending?"Göndərilir...":"📩 SMS ilə göndər"}
+              📩 SMS ilə göndər
             </button>
           </div>
+          )}
         </>
       )}
     </div>
