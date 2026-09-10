@@ -44,6 +44,23 @@ export default async function handler(req, res) {
     });
     const events = evRes.ok ? await evRes.json() : [];
 
+    // ── RSVP statuslarını çəkirik (gəlib/gəlmir) — session_id + table_id üzrə map edirik ──
+    const rsvpRes = await fetch(SB_URL + "/rest/v1/rsvp?select=session_id,table_id,status,guest_name", {
+      headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey }
+    });
+    const rsvpRows = rsvpRes.ok ? await rsvpRes.json() : [];
+    const rsvpByKey = {};
+    rsvpRows.forEach(r => {
+      const key = r.session_id + "_" + r.table_id;
+      if (!rsvpByKey[key]) rsvpByKey[key] = [];
+      rsvpByKey[key].push(r);
+    });
+    function findRsvpStatus(sessionId, tableId, guestName) {
+      const list = rsvpByKey[sessionId + "_" + tableId] || [];
+      const match = list.find(r => (r.guest_name || "").toLowerCase() === (guestName || "").toLowerCase());
+      return match ? match.status : "";
+    }
+
     // ── Qonaqları hər məclisdən çıxarıb düzləşdiririk (axtarış üçün) ──
     const guests = [];
     let totalGuestCount = 0;
@@ -56,15 +73,27 @@ export default async function handler(req, res) {
       const meta = tblData._meta || {};
       const actualTables = Array.isArray(tblData) ? tblData : (tblData.rows || []);
       let evGuestCount = 0;
+      let evKishi = 0, evQadin = 0, evInvited = 0, evSmsSent = 0, evSmsFailed = 0, evWaSent = 0;
+      let evAttending = 0, evNotAttending = 0, evPending = 0;
       actualTables.forEach(t => {
         (t.guests || []).forEach(g => {
           const cnt = (g.count || 1) + (g.ushaqCount || 0);
           evGuestCount += cnt;
           totalGuestCount += cnt;
+          if (g.gender === "kishi") evKishi += cnt; else if (g.gender === "qadin") evQadin += cnt;
+          if (g.invited) evInvited += cnt;
+          if (g.smsStatus === "sent") evSmsSent += cnt; else if (g.smsStatus === "failed") evSmsFailed += cnt;
+          if (g.waStatus === "sent") evWaSent += cnt;
+          const rsvpStatus = findRsvpStatus(ev.session_id, t.id, g.name);
+          if (rsvpStatus === "attending") evAttending += cnt;
+          else if (rsvpStatus === "not_attending") evNotAttending += cnt;
+          else evPending += cnt;
           guests.push({
-            name: g.name || "", phone: g.phone || "", count: cnt,
+            name: g.name || "", phone: g.phone || "", count: cnt, gender: g.gender || "",
+            invited: !!g.invited, smsStatus: g.smsStatus || "", waStatus: g.waStatus || "",
+            rsvpStatus,
             tableId: t.id, eventId: ev.id, couple: ev.couple || "", hallName: ev.hall_name || "",
-            sessionId: ev.session_id
+            sessionId: ev.session_id, eventDate: ev.date || "", eventCreatedAt: ev.created_at
           });
           const gCreated = (g.createdAt || ev.created_at || "").slice(0, 10);
           if (gCreated === todayStr) todayGuestCount += cnt;
@@ -73,7 +102,10 @@ export default async function handler(req, res) {
       return {
         id: ev.id, sessionId: ev.session_id, type: ev.type, couple: ev.couple, date: ev.date,
         hallName: ev.hall_name, hallTotal: ev.hall_total, status: ev.status, createdAt: ev.created_at,
-        tableCount: actualTables.length, guestCount: evGuestCount
+        tableCount: actualTables.length, guestCount: evGuestCount,
+        kishiCount: evKishi, qadinCount: evQadin,
+        invitedCount: evInvited, smsSent: evSmsSent, smsFailed: evSmsFailed, waSent: evWaSent,
+        attending: evAttending, notAttending: evNotAttending, pending: evPending
       };
     });
 
