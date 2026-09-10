@@ -1215,18 +1215,18 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     opacity:allInvited?0.45:1,transition:"opacity .3s"}}
                   className={pulseId===t.id?"tpulse":longPressSelected.has(t.id)?"lp-selected":""}>
 
-                  {/* Masa adı və tərəf — üstdə, oturacaqlarla qarışmasın, aydın görünür */}
+                  {/* Masa adı və tərəf — üstdə, oturacaqlarla qarışmasın, yığcam */}
                   {((t.label&&t.label!=="__extra__")||side)&&(
                     <div style={{position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%)",
-                      fontSize:Math.max(10,S*0.2),fontWeight:800,
+                      fontSize:Math.max(8,S*0.15),fontWeight:800,
                       color:side==="Oğlan evi"?"#B23A2E":side==="Qız evi"?"#8A6B1E":"#3D2E1F",
-                      background:"rgba(255,253,247,.95)",padding:"3px 10px",borderRadius:9,
+                      background:"rgba(255,253,247,.95)",padding:"2px 6px",borderRadius:7,
                       border:"1px solid "+(side==="Oğlan evi"?"rgba(178,58,46,.35)":side==="Qız evi"?"rgba(138,107,30,.35)":"rgba(212,175,90,.3)"),
-                      boxShadow:"0 2px 6px rgba(60,40,20,.22)",
-                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.4,marginBottom:5,zIndex:8,
-                      display:"flex",alignItems:"center",gap:5}}>
-                      {t.label&&t.label!=="__extra__"&&<span>{t.label}</span>}
-                      {side&&side!=="Ümumi"&&<span style={{fontSize:"0.85em",opacity:.85}}>{t.label&&t.label!=="__extra__"?"· ":""}{side}</span>}
+                      boxShadow:"0 1px 4px rgba(60,40,20,.18)",
+                      whiteSpace:"nowrap",pointerEvents:"none",lineHeight:1.3,marginBottom:3,zIndex:8,
+                      display:"flex",alignItems:"center",gap:3,maxWidth:60,overflow:"hidden",textOverflow:"ellipsis"}}>
+                      {t.label&&t.label!=="__extra__"&&<span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{t.label}</span>}
+                      {side&&side!=="Ümumi"&&<span style={{fontSize:"0.85em",opacity:.85}}>{t.label&&t.label!=="__extra__"?"·":""}{side==="Oğlan evi"?"Oğlan":side==="Qız evi"?"Qız":side}</span>}
                     </div>
                   )}
 
