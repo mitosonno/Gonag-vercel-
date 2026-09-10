@@ -1137,7 +1137,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               const fpOpen=fpPopup===t.id;
               const side=t.side||"";
               const tc=fu?"#50c878":isExtra?"#b57aff":side==="Oğlan evi"?"#7aade8":side==="Qız evi"?"#e87aad":"#c9a84c";
-              const allInvited=t.guests.length>0&&t.guests.every(g=>g.invited);
+              const occCount=occ(t);
+              const allInvited=t.guests.length>0&&occCount>=t.seats&&t.guests.every(g=>g.invited);
 
               return (
                 <div key={t.id}
@@ -1236,21 +1237,27 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     const statusColor = fu?"#C1382A":side==="Oğlan evi"?"#C1382A":side==="Qız evi"?"#D4AF5A":oc>0?"#B99BD6":"#8FBF9A";
                     const ringColor = longPressSelected.has(t.id)?"#C1382A":fpOpen?"#211A16":isVip?"#D4AF5A":"#C9A25E";
                     const wrapSize = S*1.66;
+                    // Hər fiziki oturacağı öz qonağına uyğunlaşdır (count>1 olan qonaqlar bir neçə yeri tutur)
+                    const seatOwners=[];
+                    (t.guests||[]).forEach(g=>{ for(let k=0;k<(g.count||1);k++) seatOwners.push(g); });
                     return (
                       <div style={{position:"relative",width:wrapSize,height:wrapSize,pointerEvents:"none"}}>
                         {Array.from({length:seats}).map((_,i)=>{
                           const angle=(i/seats)*Math.PI*2 - Math.PI/2;
                           const cx=50+Math.cos(angle)*38, cy=50+Math.sin(angle)*38;
-                          const filled = i<oc;
+                          const owner = seatOwners[i]||null;
+                          const filled = !!owner;
+                          const seatInvited = owner&&owner.invited;
+                          const seatColor = seatInvited?"#4C9A6E":statusColor; // göndərilib=yaşıl, əks halda normal rəng
                           return (
                             <div key={i} style={{
                               position:"absolute",left:cx+"%",top:cy+"%",
                               transform:`translate(-50%,-50%) rotate(${angle+Math.PI/2}rad)`,
                               width:Math.max(3,S*0.15),height:Math.max(4.5,S*0.21),borderRadius:"3px 3px 6px 6px",
-                              background:filled?(isVip?"linear-gradient(180deg,#F3E2B0,#D4AF5A)":`linear-gradient(180deg,${statusColor}CC,${statusColor})`):"linear-gradient(180deg,#EDE6D5,#D8CFB5)",
+                              background:filled?(isVip&&!seatInvited?"linear-gradient(180deg,#F3E2B0,#D4AF5A)":`linear-gradient(180deg,${seatColor}CC,${seatColor})`):"linear-gradient(180deg,#EDE6D5,#D8CFB5)",
                               border:"0.5px solid rgba(150,120,60,.45)",
-                              opacity: filled?1:0.65,
-                              boxShadow: filled?`0 0 3px ${statusColor}88`:"none"
+                              opacity: filled?(seatInvited?0.5:1):0.65,
+                              boxShadow: filled?`0 0 3px ${seatColor}88`:"none"
                             }}/>
                           );
                         })}
