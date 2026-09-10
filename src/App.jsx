@@ -3407,16 +3407,20 @@ export default function App(){
   const [hallBuilderOpen, setHallBuilderOpen] = useState(false);
   const [customHalls, setCustomHalls] = useState([]);
   function refetchCustomHalls(){
-    return sbFetch("halls?select=*&order=created_at.desc").then(rows=>{
+    return sbFetch("halls?select=id,venue_name,name,capacity,created_at&order=created_at.desc").then(rows=>{
       if(!rows) return;
       const byVenue = {};
       rows.forEach(h=>{
         const vname = h.venue_name||"Digər";
         if(!byVenue[vname]) byVenue[vname]={id:"custom_"+vname,name:vname,city:"Bakı",halls:[]};
-        byVenue[vname].halls.push({...h,hasLayout:true,cap:h.capacity});
+        byVenue[vname].halls.push({...h,hasLayout:true,cap:h.capacity,_lightweight:true});
       });
       setCustomHalls(Object.values(byVenue));
     });
+  }
+  async function fetchHallFull(hallId){
+    const rows = await sbFetch("halls?id=eq."+hallId+"&select=*");
+    return rows&&rows[0]?rows[0]:null;
   }
   useEffect(function(){
     refetchCustomHalls(); // tətbiq açılan kimi əvvəlcədən yüklə — "Restoran seç" açanda gecikmə olmasın
@@ -3785,20 +3789,26 @@ export default function App(){
     setLayoutPickOpen({hall:h}); // pass hall directly, don't rely on state
   }
 
-  function pickCustomHall(rest, hallObj){
+  async function pickCustomHall(rest, hallObj){
+    let full = hallObj;
+    if(hallObj._lightweight){
+      setMsgs(m=>[...m,{role:"agent",text:"Zal detalları yüklənir...",qrs:[]}]);
+      const fetched = await fetchHallFull(hallObj.id);
+      if(fetched) full = fetched;
+    }
     const h = {
-      _venueName: rest.name, name: hallObj.name,
+      _venueName: rest.name, name: full.name,
       totalGuests: null, _step:"customTotal",
-      _hallElements: hallObj.elements||[],
-      _wallPath: hallObj.wall_path||[],
-      _wallEdges: hallObj.wall_edges||[],
-      _columns: hallObj.columns||[],
-      _videoUrl: hallObj.video_url||null,
-      _mapsUrl: hallObj.maps_url||null,
-      _contactPhone: hallObj.contact_phone||null,
-      planImageUrl: hallObj.photo_url||null
+      _hallElements: full.elements||[],
+      _wallPath: full.wall_path||[],
+      _wallEdges: full.wall_edges||[],
+      _columns: full.columns||[],
+      _videoUrl: full.video_url||null,
+      _mapsUrl: full.maps_url||null,
+      _contactPhone: full.contact_phone||null,
+      planImageUrl: full.photo_url||null
     };
-    const customTables = (hallObj.layout||[]).map(t=>({
+    const customTables = (full.layout||[]).map(t=>({
       id:t.id, seats:t.seats, label:t.label||"", side:t.side||"",
       guests:[], pos:{xPct:t.xPct, yPct:t.yPct}
     }));
@@ -3807,7 +3817,7 @@ export default function App(){
     setLayoutMode("ready");
     setRestOpen(false);
     const totalCap = customTables.reduce((s,t)=>s+t.seats,0);
-    const msg = `✅ ${rest.name} — ${hallObj.name} seçildi!\n\n🎉 Əla, zal sxemi hazırdır! ${customTables.length} masa qoyulub (ümumi tutum: ${totalCap} nəfər).\n\nİndi struktura əsasən dəqiqləşdirək — ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
+    const msg = `✅ ${rest.name} — ${full.name} seçildi!\n\n🎉 Əla, zal sxemi hazırdır! ${customTables.length} masa qoyulub (ümumi tutum: ${totalCap} nəfər).\n\nİndi struktura əsasən dəqiqləşdirək — ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
     setHist(hh=>[...hh,{role:"assistant",content:msg}]);
   }
