@@ -934,6 +934,12 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const [gridH, setGridH] = useState(300);
   const [pulseId, setPulseId] = useState(null);
   const [showHint, setShowHint] = useState(true);
+  useEffect(()=>{
+    // Komponent hər açılışda (mount) — barmaq işarəsini etibarlı şəkildə göstər
+    const t1 = setTimeout(()=>setShowHint(true), 300);
+    const t2 = setTimeout(()=>setShowHint(false), 2100);
+    return ()=>{ clearTimeout(t1); clearTimeout(t2); };
+  },[]);
   const STAGE_H = 48;
 
   // Native pinch zoom — React bypass, 60fps
@@ -1825,54 +1831,54 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
         const evLabel = evType==="toy"?"Toy":evType==="nishan"?"Nişan":evType==="adgunu"?"Ad günü":evType==="korporativ"?"Korporativ":"Məclis";
         return (
-          <div style={{marginBottom:14,padding:"16px 14px 14px",borderRadius:20,position:"relative",
+          <div style={{marginBottom:10,padding:"11px 12px 10px",borderRadius:16,position:"relative",
             background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
             border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
 
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:9.5,letterSpacing:2.5,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:7}}>
+              <div style={{fontSize:8,letterSpacing:2,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:4}}>
                 {evLabel}{obData&&obData.date?" · "+obData.date:""}
               </div>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.3}}>{title}</div>
-              {hall&&hall.name&&<div style={{fontSize:11.5,color:"#8a7548",marginTop:6}}>{hall.name}</div>}
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.2}}>{title}</div>
+              {hall&&hall.name&&<div style={{fontSize:9.5,color:"#8a7548",marginTop:3}}>{hall.name}</div>}
 
               {countdown&&!countdown.passed&&(
-                <div style={{display:"flex",justifyContent:"center",gap:7,marginTop:14}}>
-                  {[["GÜN",countdown.days],["SAAT",countdown.hours],["DƏQ",countdown.mins],["SAN",countdown.secs]].map(([lbl,val],i)=>(
-                    <div key={lbl} style={{textAlign:"center"}}>
-                      <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,
+                <div style={{display:"flex",justifyContent:"center",gap:5,marginTop:8}}>
+                  {[["G",countdown.days],["S",countdown.hours],["D",countdown.mins],["S",countdown.secs]].map(([lbl,val],i)=>(
+                    <div key={i} style={{textAlign:"center"}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:700,
                         color:i===3?"#C9A25E":"#211A16",
                         background:i===3?"rgba(212,175,90,.14)":"rgba(255,255,255,.55)",
-                        borderRadius:9,padding:"5px 8px",minWidth:32}}>{String(val).padStart(2,"0")}</div>
-                      <div style={{fontSize:7,color:"#8a7548",fontWeight:700,letterSpacing:.4,marginTop:3}}>{lbl}</div>
+                        borderRadius:7,padding:"3px 6px",minWidth:24}}>{String(val).padStart(2,"0")}</div>
+                      <div style={{fontSize:5.5,color:"#8a7548",fontWeight:700,marginTop:2}}>{lbl}</div>
                     </div>
                   ))}
                 </div>
               )}
               {countdown&&countdown.passed&&(
-                <div style={{marginTop:12,fontSize:11,color:"#4C9A6E",fontWeight:700}}>✦ Mübarək olsun!</div>
+                <div style={{marginTop:7,fontSize:9.5,color:"#4C9A6E",fontWeight:700}}>✦ Mübarək olsun!</div>
               )}
             </div>
 
-            <div style={{display:"flex",alignItems:"center",gap:12,marginTop:16,paddingTop:12,borderTop:"1px solid rgba(255,255,255,.5)"}}>
-              <svg width="42" height="42" viewBox="0 0 42 42" style={{flexShrink:0}}>
-                <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(150,120,80,.15)" strokeWidth="3"/>
-                <circle cx="21" cy="21" r="17" fill="none" stroke="#4C9A6E" strokeWidth="3"
-                  strokeDasharray={2*Math.PI*17} strokeDashoffset={2*Math.PI*17*(1-(pct||0)/100)}
-                  strokeLinecap="round" transform="rotate(-90 21 21)"/>
-                <text x="21" y="25" textAnchor="middle" fontFamily="'Fraunces',serif" fontSize="10" fontWeight="700" fill="#211A16">{pct||0}%</text>
+            <div style={{display:"flex",alignItems:"center",gap:9,marginTop:9,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.5)"}}>
+              <svg width="30" height="30" viewBox="0 0 30 30" style={{flexShrink:0}}>
+                <circle cx="15" cy="15" r="12" fill="none" stroke="rgba(150,120,80,.15)" strokeWidth="2.4"/>
+                <circle cx="15" cy="15" r="12" fill="none" stroke="#4C9A6E" strokeWidth="2.4"
+                  strokeDasharray={2*Math.PI*12} strokeDashoffset={2*Math.PI*12*(1-(pct||0)/100)}
+                  strokeLinecap="round" transform="rotate(-90 15 15)"/>
+                <text x="15" y="18.5" textAnchor="middle" fontFamily="'Fraunces',serif" fontSize="7.5" fontWeight="700" fill="#211A16">{pct||0}%</text>
               </svg>
               <div style={{flex:1,display:"flex",justifyContent:"space-around"}}>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
-                  <div style={{fontSize:7,color:"#a89a80",fontWeight:700,letterSpacing:.4,marginTop:1}}>MASA</div>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+                  <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>MASA</div>
                 </div>
                 <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:700,color:"#211A16"}}>
-                    {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:12,fontWeight:500,color:"#a89a80"}}> / {hall.totalGuests}</span>}
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>
+                    {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:9,fontWeight:500,color:"#a89a80"}}> / {hall.totalGuests}</span>}
                   </div>
-                  <div style={{fontSize:7,color:"#a89a80",fontWeight:700,letterSpacing:.4,marginTop:1}}>QONAQ DOLUB</div>
+                  <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>QONAQ</div>
                 </div>
               </div>
             </div>
@@ -1880,42 +1886,39 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         );
       })()}
 
-      {/* Header: əməliyyat düymələri */}
-      <div style={{display:"flex",justifyContent:"center",alignItems:"center",marginBottom:10,gap:8}}>
+      {/* Header: əməliyyat düymələri — bir sırada, yığcam */}
+      <div style={{display:"flex",alignItems:"center",marginBottom:10,gap:5}}>
         <button onClick={function(){setShareMode(function(s){return !s;}); setShareResult(null); setShareSelected(new Set());}}
-          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"11px 10px",borderRadius:14,
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:"8px 4px",borderRadius:11,
             border:"1px solid "+(shareMode?"rgba(91,132,176,.5)":"rgba(255,255,255,.5)"),
             background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.5)",
             backdropFilter:"blur(8px)",
-            color:shareMode?"#5B84B0":"#211A16",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
-          Başqasına göndər
+            color:shareMode?"#5B84B0":"#211A16",fontSize:9.5,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          Göndər
         </button>
-        <button onClick={()=>setHelpTip(helpTip==="share"?null:"share")}
-          style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
         <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)}
-          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"11px 10px",borderRadius:14,
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:"8px 4px",borderRadius:11,
             border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),
             background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.5)",
-            backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#211A16",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+            backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#211A16",fontSize:9.5,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
           {editMode?(
-            <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 6 9 17l-5-5"/></svg>Bitir</>
+            <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 6 9 17l-5-5"/></svg>Bitir</>
           ):(
-            <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Masanı sürüşdür</>
+            <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Sürüşdür</>
           )}
         </button>
-        <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
-          style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
+        {hall&&(hall._videoUrl||hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+          <button onClick={()=>setMediaChoice(true)}
+            style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:"8px 4px",borderRadius:11,
+              border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:9.5,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+            Real görüntü
+          </button>
+        )}
+        <button onClick={()=>setHelpTip(helpTip==="share"?null:"share")}
+          style={{width:20,height:20,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:10,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
       </div>
-
-      {hall&&(hall._videoUrl||hall.planImageUrl||DEMO_HALL.imageUrl)&&(
-        <button onClick={()=>setMediaChoice(true)}
-          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:14,marginBottom:10,
-            border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:12,fontWeight:600,cursor:"pointer"}}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-          Zalın real görüntüsü
-        </button>
-      )}
 
       {mediaChoice&&(
         <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setMediaChoice(false)}>
@@ -2133,7 +2136,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
-            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={occ(exTbl)===0}
+            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={true}
               selectedSlotIdx={slotInput?slotInput.slotIdx:null}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
