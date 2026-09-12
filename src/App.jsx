@@ -598,21 +598,38 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
           </g>
         );
       })()}
-      {/* Center label — nömrə həmişə görünür, ad varsa altında kiçik */}
-      <text x={cx} y={cy-(size>100?9:5)} textAnchor="middle" dominantBaseline="middle"
-        fontSize={size>100?13:9} fill={tc} fontWeight="800">
-        {table.label==="__extra__"?"Extra":String(table.id)}
-      </text>
-      {table.label&&table.label!=="__extra__"&&(
-        <text x={cx} y={cy+(size>100?7:5)} textAnchor="middle" dominantBaseline="middle"
-          fontSize={size>100?7.5:6} fill={tc} opacity="0.75">
-          {table.label.substring(0,10)}
-        </text>
+      {/* Mərkəz — müasir, minimalist: böyük seriflə nömrə, incə xətt, aydın say */}
+      {useChairImage?(
+        <>
+          <text x={cx} y={cy-(size>100?7:4)} textAnchor="middle" dominantBaseline="middle"
+            fontFamily="'Fraunces',serif" fontSize={size>100?22:14} fill="#211A16" fontWeight="700" letterSpacing="-0.5">
+            {table.label==="__extra__"?"Extra":String(table.id)}
+          </text>
+          <line x1={cx-(size>100?11:7)} y1={cy+(size>100?4:3)} x2={cx+(size>100?11:7)} y2={cy+(size>100?4:3)}
+            stroke={tc} strokeWidth="1" opacity="0.7"/>
+          <text x={cx} y={cy+(size>100?15:9)} textAnchor="middle" dominantBaseline="middle"
+            fontFamily="'Inter',sans-serif" fontSize={size>100?9.5:6.5} fill="#8a7548" fontWeight="600" letterSpacing="0.3">
+            {totalOcc} / {table.seats}
+          </text>
+        </>
+      ):(
+        <>
+          <text x={cx} y={cy-(size>100?9:5)} textAnchor="middle" dominantBaseline="middle"
+            fontSize={size>100?13:9} fill={tc} fontWeight="800">
+            {table.label==="__extra__"?"Extra":String(table.id)}
+          </text>
+          {table.label&&table.label!=="__extra__"&&(
+            <text x={cx} y={cy+(size>100?7:5)} textAnchor="middle" dominantBaseline="middle"
+              fontSize={size>100?7.5:6} fill={tc} opacity="0.75">
+              {table.label.substring(0,10)}
+            </text>
+          )}
+          <text x={cx} y={cy+(size>100?21:11)} textAnchor="middle" dominantBaseline="middle"
+            fontSize={size>100?9:6} fill={full?"#50c878":"rgba(201,168,76,.6)"}>
+            {totalOcc}/{table.seats}
+          </text>
+        </>
       )}
-      <text x={cx} y={cy+(size>100?21:11)} textAnchor="middle" dominantBaseline="middle"
-        fontSize={size>100?9:6} fill={full?"#50c878":"rgba(201,168,76,.6)"}>
-        {totalOcc}/{table.seats}
-      </text>
     </svg>
     {/* HTML overlay — stul/insan şəkilləri, SVG-dən tamam ayrı, sadə position:absolute ilə */}
     {useChairImage&&positions.map(p=>{
@@ -634,6 +651,26 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
             animation: !isEmpty ? "seatArriveHtml .6s cubic-bezier(.25,.8,.3,1.3)" : undefined,
           }}
           />
+      );
+    })}
+    {/* Ad etiketləri — HTML overlay, hər qonağın öz yerinin yanında */}
+    {useChairImage&&positions.filter(p=>p.g).map(p=>{
+      const { i, sx, sy, g, isUshaq } = p;
+      const slotKey = (seatOwner[i]&&seatOwner[i].key)||("n"+i);
+      const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
+      const dist = slotR*2.5;
+      const tx = sx+(ndx/nd)*dist, ty = sy+(ndy/nd)*dist;
+      const name = g.name.split(" ")[0].substring(0,9);
+      return (
+        <div key={"lbl_"+slotKey} style={{
+          position:"absolute", left:tx, top:ty,
+          transform:"translate(-50%,-50%)",
+          background:"rgba(255,253,247,.94)", border:"1px solid rgba(150,120,80,.22)",
+          borderRadius:7, padding:"2px 7px",
+          fontSize:9, fontWeight:600, color:"#3D2E1F", fontFamily:"'Inter',sans-serif",
+          whiteSpace:"nowrap", pointerEvents:"none",
+          boxShadow:"0 2px 5px rgba(40,28,16,.14)",
+        }}>{name}</div>
       );
     })}
     </div>
