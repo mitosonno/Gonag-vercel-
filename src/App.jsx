@@ -433,18 +433,43 @@ function parseLine(line){
   return { name:parts[0], phone:parts[1]||"", count:parseInt(parts[2])||1 };
 }
 
-function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false }){
+function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
   const [imgFailed, setImgFailed] = useState({});
   const guests = table.guests||[];
   const n = Math.min(table.seats||10, 16);
   const r = (size/2)*0.52, cx = size/2, cy = size/2;
 
-  // Build slots: adults + children
-  const slots = [];
+  // Slotları qur: hər qonağın ÖZ kliklədiyi yerdə (seatIdx) otursun.
+  // seatIdx yoxdursa (köhnə data), boş yerlərdən birini ardıcıl tut.
+  const seatOwner = new Array(n).fill(null); // n-uzunluqlu, hər biri {g,isUshaq,key}|null
+  const needsFallback = [];
   guests.forEach(g=>{
     const uc = g.ushaqCount||0;
-    for(let i=0;i<(g.count||1);i++) slots.push({g, isUshaq:false, key:g.id+"_a"+i});
-    for(let i=0;i<uc;i++) slots.push({g, isUshaq:true, key:g.id+"_u"+i});
+    const totalSeatsNeeded = (g.count||1)+uc;
+    const parts = [];
+    for(let i=0;i<(g.count||1);i++) parts.push({isUshaq:false, sub:i});
+    for(let i=0;i<uc;i++) parts.push({isUshaq:true, sub:i});
+    if(g.seatIdx!=null && g.seatIdx>=0 && g.seatIdx<n){
+      // Bu qonaq üçün seatIdx-dən başlayaraq, ardıcıl BOŞ yerləri tap (dövr edərək)
+      let placed = 0;
+      for(let off=0; off<n && placed<parts.length; off++){
+        const idx = (g.seatIdx+off)%n;
+        if(seatOwner[idx]===null){
+          const part = parts[placed];
+          seatOwner[idx] = {g, isUshaq:part.isUshaq, key:g.id+(part.isUshaq?"_u":"_a")+part.sub};
+          placed++;
+        }
+      }
+      if(placed<parts.length){ for(let k=placed;k<parts.length;k++) needsFallback.push({g, isUshaq:parts[k].isUshaq, key:g.id+(parts[k].isUshaq?"_u":"_a")+parts[k].sub}); }
+    } else {
+      parts.forEach(part=>needsFallback.push({g, isUshaq:part.isUshaq, key:g.id+(part.isUshaq?"_u":"_a")+part.sub}));
+    }
+  });
+  // Fallback: qalan (seatIdx-siz və ya toqquşan) qonaqları ilk boş yerlərə ardıcıl yerləşdir
+  let fbPtr = 0;
+  needsFallback.forEach(item=>{
+    while(fbPtr<n && seatOwner[fbPtr]!==null) fbPtr++;
+    if(fbPtr<n){ seatOwner[fbPtr]=item; fbPtr++; }
   });
 
   const totalOcc = occ(table);  // use occ() which includes ushaqCount
@@ -518,7 +543,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
       {Array.from({length:n}).map((_,i)=>{
         const a = (i/n)*Math.PI*2 - Math.PI/2;
         const sx = cx+r*Math.cos(a), sy = cy+r*Math.sin(a);
-        const slot = slots[i];
+        const slot = seatOwner[i];
         const isEmpty = !slot;
         const g = slot&&slot.g;
         const isUshaq = slot&&slot.isUshaq;
@@ -531,6 +556,12 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
             if(isEmpty && onSlotClick) onSlotClick(i);
             else if(g && onGuestClick) onGuestClick(g);
           }}>
+            {selectedSlotIdx===i&&(
+              <circle cx={sx} cy={sy} r={slotR*2.3} fill="none" stroke="#C1382A" strokeWidth="2.2" opacity="0.85">
+                <animate attributeName="r" values={(slotR*2)+";"+(slotR*2.5)+";"+(slotR*2)} dur="1.1s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.9;0.5;0.9" dur="1.1s" repeatCount="indefinite"/>
+              </circle>
+            )}
             {useChairImage&&!imgFailed[slotKey]?(
               <image href={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
                 className={!isEmpty?"seat-arrive":undefined}
@@ -2023,6 +2054,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
             <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={occ(exTbl)===0}
+              selectedSlotIdx={slotInput?slotInput.slotIdx:null}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
                 setSlotInput({slotIdx:idx});
@@ -2143,7 +2175,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   setSlotAdding(false);
                   return;
                 }
-                onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||""});
+                onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||"",seatIdx:slotInput.slotIdx});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);
                 setTimeout(()=>setSlotAdding(false),400);
               }} disabled={slotAdding} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
