@@ -496,18 +496,27 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   }
 
   let firstEmptyIdx = -1;
+  // Əvvəlcədən mövqeləri hesabla (həm SVG click-zonaları, həm HTML overlay üçün)
+  const positions = Array.from({length:n}).map((_,i)=>{
+    const a = (i/n)*Math.PI*2 - Math.PI/2;
+    const sx = cx+r*Math.cos(a), sy = cy+r*Math.sin(a);
+    const slot = seatOwner[i];
+    const isEmpty = !slot;
+    if(isEmpty && firstEmptyIdx===-1) firstEmptyIdx = i;
+    return { i, a, sx, sy, slot, isEmpty, g:slot&&slot.g, isUshaq:slot&&slot.isUshaq };
+  });
 
   return (
-    <svg width={size} height={size} style={{display:"block",margin:"0 auto",overflow:"visible"}}>
+    <div style={{position:"relative", width:size, height:size, margin:"0 auto"}}>
+    <svg width={size} height={size} style={{display:"block",overflow:"visible"}}>
       {useChairImage&&(
         <style>{`
-          @keyframes seatArrive {
-            0% { opacity:0; transform:scale(0.3); }
-            55% { opacity:1; transform:scale(1.15); }
-            75% { transform:scale(0.92); }
-            100% { opacity:1; transform:scale(1); }
+          @keyframes seatArriveHtml {
+            0% { opacity:0; transform:translate(-50%,-50%) scale(0.3) rotate(var(--rot)); }
+            55% { opacity:1; transform:translate(-50%,-50%) scale(1.15) rotate(var(--rot)); }
+            75% { transform:translate(-50%,-50%) scale(0.92) rotate(var(--rot)); }
+            100% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(var(--rot)); }
           }
-          .seat-arrive { animation:seatArrive .6s cubic-bezier(.25,.8,.3,1.3); transform-box:fill-box; transform-origin:center; }
           @keyframes fingerTap {
             0%{opacity:0; transform:translate(6px,6px) scale(1.1);}
             12%{opacity:1; transform:translate(0,0) scale(1);}
@@ -539,17 +548,11 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
           opacity="0.8"
         />
       )}
-      {/* Slot circles */}
-      {Array.from({length:n}).map((_,i)=>{
-        const a = (i/n)*Math.PI*2 - Math.PI/2;
-        const sx = cx+r*Math.cos(a), sy = cy+r*Math.sin(a);
-        const slot = seatOwner[i];
-        const isEmpty = !slot;
-        const g = slot&&slot.g;
-        const isUshaq = slot&&slot.isUshaq;
+      {/* Klik zonaları (görünməz dairələr) — real qonaq şəkli yoxdursa, köhnə dairə+emoji rejimi burda göstərilir */}
+      {positions.map(p=>{
+        const { i, a, sx, sy, slot, isEmpty, g, isUshaq } = p;
         const sc = g ? slotColor(g, isUshaq) : "rgba(201,168,76,.3)";
         const slotKey = slot?slot.key:("empty"+i);
-        if(isEmpty && firstEmptyIdx===-1) firstEmptyIdx = i;
         return (
           <g key={slotKey} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
             if(!clickable) return;
@@ -562,13 +565,8 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                 <animate attributeName="opacity" values="0.9;0.5;0.9" dur="1.1s" repeatCount="indefinite"/>
               </circle>
             )}
-            {useChairImage&&!imgFailed[slotKey]?(
-              <image href={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
-                className={!isEmpty?"seat-arrive":undefined}
-                x={sx-slotR*2.2} y={sy-slotR*2.2} width={slotR*4.4} height={slotR*4.4}
-                transform={"rotate("+((a*180/Math.PI)+90)+" "+sx+" "+sy+")"}
-                onError={()=>setImgFailed(f=>({...f,[slotKey]:true}))}
-                style={{cursor:clickable?"pointer":"default"}}/>
+            {useChairImage?(
+              <circle cx={sx} cy={sy} r={slotR*2.2} fill="transparent"/>
             ):(
               <>
                 <circle cx={sx} cy={sy} r={slotR}
@@ -580,25 +578,23 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                 {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
                 {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
                 {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
+                {g&&(()=>{
+                  const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
+                  const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
+                  const name=g.name.split(" ")[0].substring(0,7);
+                  return <text key={"lbl"} x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#211A16" fontWeight="700"
+                    style={{textShadow:"0 1px 3px #000"}}>{name}</text>;
+                })()}
               </>
             )}
-
-            {g&&!useChairImage&&(()=>{
-              const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
-              const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
-              const name=g.name.split(" ")[0].substring(0,7);
-              return <text key={"lbl"} x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#211A16" fontWeight="700"
-                style={{textShadow:"0 1px 3px #000"}}>{name}</text>;
-            })()}
           </g>
         );
       })}
       {showTapHint&&useChairImage&&firstEmptyIdx>=0&&(()=>{
-        const a = (firstEmptyIdx/n)*Math.PI*2 - Math.PI/2;
-        const sx = cx+r*Math.cos(a), sy = cy+r*Math.sin(a);
+        const p = positions[firstEmptyIdx];
         return (
           <g className="finger-hint" style={{pointerEvents:"none"}}>
-            <text x={sx} y={sy+2} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.6}>👆</text>
+            <text x={p.sx} y={p.sy+2} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.6}>👆</text>
           </g>
         );
       })()}
@@ -618,6 +614,29 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         {totalOcc}/{table.seats}
       </text>
     </svg>
+    {/* HTML overlay — stul/insan şəkilləri, SVG-dən tamam ayrı, sadə position:absolute ilə */}
+    {useChairImage&&positions.map(p=>{
+      const { i, a, sx, sy, slot, isEmpty, g, isUshaq } = p;
+      const slotKey = slot?slot.key:("empty"+i);
+      if(imgFailed[slotKey]) return null;
+      const rotDeg = (a*180/Math.PI)+90;
+      const imgSize = slotR*4.4;
+      return (
+        <img key={"ov_"+slotKey}
+          src={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
+          onError={()=>setImgFailed(f=>({...f,[slotKey]:true}))}
+          style={{
+            position:"absolute",
+            left:sx, top:sy,
+            width:imgSize, height:imgSize,
+            transform:"translate(-50%,-50%) rotate("+rotDeg+"deg)",
+            pointerEvents:"none",
+            animation: !isEmpty ? "seatArriveHtml .6s cubic-bezier(.25,.8,.3,1.3)" : undefined,
+          }}
+          />
+      );
+    })}
+    </div>
   );
 }
 
