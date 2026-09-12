@@ -1546,6 +1546,34 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [editMode, setEditMode] = useState(false);
   const [shareMode, setShareMode] = useState(false);
   const [helpTip, setHelpTip] = useState(null); // "share"|"edit"|null
+  const [countdown, setCountdown] = useState(null); // {days,hours,mins,secs}|null
+
+  useEffect(function(){
+    if(!obData||!obData.date) { setCountdown(null); return; }
+    const AZ_MONTHS = {yanvar:0,fevral:1,mart:2,aprel:3,may:4,iyun:5,iyul:6,avqust:7,sentyabr:8,oktyabr:9,noyabr:10,dekabr:11};
+    function parseAzDate(str){
+      const m = str.match(/(\d{1,2})\s+([a-zA-Zəıöüğçş]+)\s+(\d{4})(?:,?\s*(\d{1,2}):(\d{2}))?/i);
+      if(!m) return null;
+      const day=+m[1], monthName=m[2].toLowerCase(), year=+m[3], hh=m[4]?+m[4]:19, mm=m[5]?+m[5]:0;
+      const month = AZ_MONTHS[monthName];
+      if(month===undefined) return null;
+      return new Date(year, month, day, hh, mm, 0);
+    }
+    const target = parseAzDate(obData.date);
+    if(!target){ setCountdown(null); return; }
+    function tick(){
+      const diff = target.getTime() - Date.now();
+      if(diff<=0){ setCountdown({days:0,hours:0,mins:0,secs:0,passed:true}); return; }
+      const days=Math.floor(diff/86400000);
+      const hours=Math.floor((diff%86400000)/3600000);
+      const mins=Math.floor((diff%3600000)/60000);
+      const secs=Math.floor((diff%60000)/1000);
+      setCountdown({days,hours,mins,secs,passed:false});
+    }
+    tick();
+    const iv=setInterval(tick,1000);
+    return ()=>clearInterval(iv);
+  },[obData&&obData.date]);
   const [shareSelected, setShareSelected] = useState(new Set());
   const [shareResult, setShareResult] = useState(null);
   const [slotInput, setSlotInput] = useState(null);
@@ -1618,95 +1646,95 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           </div>
         </div>
       )}
-      {/* Cütlük kartı */}
+      {/* Başlıq: ad, tarix, sayğac, doluluq */}
       {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
-        const title = obData.boy&&obData.girl ? obData.boy+" & "+obData.girl : (obData.name||obData.company||"");
-        const initials = obData.boy&&obData.girl
-          ? (obData.boy[0]||"")+"·"+(obData.girl[0]||"")
-          : (title.split(" ").map(w=>w[0]).slice(0,2).join("")||"?");
+        const title = obData.boy&&obData.girl ? (
+          <>{obData.boy} <span style={{color:"#C9A25E",fontWeight:400,fontStyle:"italic"}}>&amp;</span> {obData.girl}</>
+        ) : (obData.name||obData.company||"");
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
-        const cap = tables.reduce((s,t)=>s+t.seats,0);
+        const evLabel = evType==="toy"?"Toy":evType==="nishan"?"Nişan":evType==="adgunu"?"Ad günü":evType==="korporativ"?"Korporativ":"Məclis";
         return (
-          <div style={{marginBottom:10,padding:"13px 15px",borderRadius:20,
+          <div style={{marginBottom:14,padding:"16px 14px 14px",borderRadius:20,position:"relative",
             background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
             border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:42,height:42,borderRadius:"50%",border:"1.5px solid #D4AF5A",background:"rgba(212,175,90,.1)",
-                display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:600,color:"#8A6B1E",flexShrink:0}}>
-                {initials}
+
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:9.5,letterSpacing:2.5,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:7}}>
+                {evLabel}{obData.date?" · "+obData.date:""}
               </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:14,fontWeight:600,color:"#211A16",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
-                <div style={{fontSize:9.5,color:"rgba(33,26,22,.5)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                  {hall&&hall.name} {obData.date?" · "+obData.date:""}
-                </div>
-              </div>
-              <svg width="34" height="34" viewBox="0 0 34 34" style={{flexShrink:0}}>
-                <circle cx="17" cy="17" r="13" fill="none" stroke="rgba(150,120,80,.2)" strokeWidth="3.2"/>
-                <circle cx="17" cy="17" r="13" fill="none" stroke="#4C9A6E" strokeWidth="3.2"
-                  strokeDasharray={2*Math.PI*13} strokeDashoffset={2*Math.PI*13*(1-(pct||0)/100)}
-                  strokeLinecap="round" transform="rotate(-90 17 17)"/>
-                <text x="17" y="20" textAnchor="middle" fontFamily="'IBM Plex Mono',monospace" fontSize="8" fontWeight="700" fill="#211A16">{pct||0}%</text>
-              </svg>
-            </div>
-            <div style={{display:"flex",gap:6,marginTop:10,paddingTop:9,borderTop:"1px solid rgba(255,255,255,.5)"}}>
-              <div style={{flex:1,textAlign:"center"}}>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
-                <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>MASA</div>
-              </div>
-              <div style={{flex:1,textAlign:"center",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
-                <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{totG}</div>
-                <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>QONAQ</div>
-              </div>
-              {hall&&hall.totalGuests>0&&(
-                <div style={{flex:1,textAlign:"center",borderLeft:"1px solid rgba(255,255,255,.5)"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#8A6B1E"}}>{hall.totalGuests}</div>
-                  <div style={{fontSize:6.5,color:"rgba(33,26,22,.5)"}}>GÖZLƏNİLƏN</div>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.3}}>{title}</div>
+              {hall&&hall.name&&<div style={{fontSize:11.5,color:"#8a7548",marginTop:6}}>{hall.name}</div>}
+
+              {countdown&&!countdown.passed&&(
+                <div style={{display:"flex",justifyContent:"center",gap:7,marginTop:14}}>
+                  {[["GÜN",countdown.days],["SAAT",countdown.hours],["DƏQ",countdown.mins],["SAN",countdown.secs]].map(([lbl,val],i)=>(
+                    <div key={lbl} style={{textAlign:"center"}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,
+                        color:i===3?"#C9A25E":"#211A16",
+                        background:i===3?"rgba(212,175,90,.14)":"rgba(255,255,255,.55)",
+                        borderRadius:9,padding:"5px 8px",minWidth:32}}>{String(val).padStart(2,"0")}</div>
+                      <div style={{fontSize:7,color:"#8a7548",fontWeight:700,letterSpacing:.4,marginTop:3}}>{lbl}</div>
+                    </div>
+                  ))}
                 </div>
               )}
+              {countdown&&countdown.passed&&(
+                <div style={{marginTop:12,fontSize:11,color:"#4C9A6E",fontWeight:700}}>✦ Mübarək olsun!</div>
+              )}
+            </div>
+
+            <div style={{display:"flex",alignItems:"center",gap:12,marginTop:16,paddingTop:12,borderTop:"1px solid rgba(255,255,255,.5)"}}>
+              <svg width="42" height="42" viewBox="0 0 42 42" style={{flexShrink:0}}>
+                <circle cx="21" cy="21" r="17" fill="none" stroke="rgba(150,120,80,.15)" strokeWidth="3"/>
+                <circle cx="21" cy="21" r="17" fill="none" stroke="#4C9A6E" strokeWidth="3"
+                  strokeDasharray={2*Math.PI*17} strokeDashoffset={2*Math.PI*17*(1-(pct||0)/100)}
+                  strokeLinecap="round" transform="rotate(-90 21 21)"/>
+                <text x="21" y="25" textAnchor="middle" fontFamily="'Fraunces',serif" fontSize="10" fontWeight="700" fill="#211A16">{pct||0}%</text>
+              </svg>
+              <div style={{flex:1,display:"flex",justifyContent:"space-around"}}>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+                  <div style={{fontSize:7,color:"#a89a80",fontWeight:700,letterSpacing:.4,marginTop:1}}>MASA</div>
+                </div>
+                <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:700,color:"#211A16"}}>
+                    {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:12,fontWeight:500,color:"#a89a80"}}> / {hall.totalGuests}</span>}
+                  </div>
+                  <div style={{fontSize:7,color:"#a89a80",fontWeight:700,letterSpacing:.4,marginTop:1}}>QONAQ DOLUB</div>
+                </div>
+              </div>
             </div>
           </div>
         );
       })()}
 
-      {/* Naviqasiya: Sxem / Statistika / Dəvətnamə */}
-      {onOpenStats&&onOpenInvite&&(
-        <div style={{display:"flex",gap:5,marginBottom:10,padding:4,borderRadius:16,
-          background:"linear-gradient(155deg,rgba(255,255,255,.5),rgba(255,255,255,.2))",backdropFilter:"blur(14px)",
-          border:"1px solid rgba(255,255,255,.5)"}}>
-          <div style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
-            background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff"}}>🗺 Sxem</div>
-          <button onClick={onOpenStats} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
-            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📊 Statistika</button>
-          <button onClick={onOpenInvite} style={{flex:1,padding:"8px",borderRadius:12,textAlign:"center",fontSize:11,fontWeight:700,
-            border:"none",background:"transparent",color:"#6B6259",cursor:"pointer"}}>📨 Dəvətnamə</button>
-        </div>
-      )}
-
-      {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,
-        background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
-        border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset",borderRadius:22,padding:"14px 16px"}}>
-        <div>
-          <div style={{fontFamily:"'Fraunces',serif",fontSize:17,color:"#211A16",fontWeight:600}}>{hall&&hall.name||"Sxem"}</div>
-        </div>
-        <div style={{display:"flex",gap:5,alignItems:"center"}}>
-          <button onClick={function(){setShareMode(function(s){return !s;}); setShareResult(null); setShareSelected(new Set());}}
-            style={{padding:"7px 12px",borderRadius:14,
-              border:"1px solid "+(shareMode?"rgba(91,132,176,.5)":"rgba(255,255,255,.5)"),
-              background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.4)",
-              backdropFilter:"blur(8px)",
-              color:shareMode?"#5B84B0":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            📤 Başqasına göndər
-          </button>
-          <button onClick={()=>setHelpTip(helpTip==="share"?null:"share")}
-            style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
-          <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)} style={{padding:"7px 13px",borderRadius:14,border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#6B6259",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-            {editMode?"✓ Bitir":"✏️ Masanı sürüşdür"}
-          </button>
-          <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
-            style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
-        </div>
+      {/* Header: əməliyyat düymələri */}
+      <div style={{display:"flex",justifyContent:"center",alignItems:"center",marginBottom:10,gap:8}}>
+        <button onClick={function(){setShareMode(function(s){return !s;}); setShareResult(null); setShareSelected(new Set());}}
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"11px 10px",borderRadius:14,
+            border:"1px solid "+(shareMode?"rgba(91,132,176,.5)":"rgba(255,255,255,.5)"),
+            background:shareMode?"linear-gradient(155deg,rgba(91,132,176,.22),rgba(91,132,176,.08))":"rgba(255,255,255,.5)",
+            backdropFilter:"blur(8px)",
+            color:shareMode?"#5B84B0":"#211A16",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          Başqasına göndər
+        </button>
+        <button onClick={()=>setHelpTip(helpTip==="share"?null:"share")}
+          style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
+        <button id="schema-edit-btn" onClick={()=>setEditMode(e=>!e)}
+          style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"11px 10px",borderRadius:14,
+            border:"1px solid "+(editMode?"rgba(76,154,110,.5)":"rgba(255,255,255,.5)"),
+            background:editMode?"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))":"rgba(255,255,255,.5)",
+            backdropFilter:"blur(8px)",color:editMode?"#4C9A6E":"#211A16",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          {editMode?(
+            <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20 6 9 17l-5-5"/></svg>Bitir</>
+          ):(
+            <><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Masanı sürüşdür</>
+          )}
+        </button>
+        <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
+          style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
       </div>
 
       {helpTip&&(
@@ -2156,48 +2184,66 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
           <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
-          <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>📊 Statistika</div>
+          <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>
+            Statistika
+          </div>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}}>✕</button>
         </div>
 
         <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
           {/* Ümumi */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
-            {statCard("Qonaq",total,gold,"👥")}
-            {statCard("Doluluq",pct+"%","#50c878","📊")}
-            {statCard("Masa",tables.length,"#7aade8","🪑")}
+            {statCard("Qonaq",total,gold,<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>)}
+            {statCard("Doluluq",pct+"%","#50c878",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#50c878" strokeWidth="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>)}
+            {statCard("Masa",tables.length,"#7aade8",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7aade8" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>)}
           </div>
 
           {/* Cins */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
-            {statCard("Kişi",kishi,"#7aade8","👨")}
-            {statCard("Qadın",qadin,"#e87aad","👩")}
-            {statCard("Uşaq",ushaqSayi,"#D4AF5A","👧")}
-            {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)","👤")}
+            {statCard("Kişi",kishi,"#7aade8",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7aade8" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
+            {statCard("Qadın",qadin,"#e87aad",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e87aad" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
+            {statCard("Uşaq",ushaqSayi,"#D4AF5A",<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" strokeWidth="1.7"><circle cx="12" cy="9" r="3"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>)}
+            {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(150,120,40,.8)" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
           </div>
 
           {/* Dəvətnamə çatdırılma hesabatı */}
           {true&&(
             <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:16}}>
-              <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10}}>📨 Dəvətnamə çatdırılması</div>
+              <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                Dəvətnamə çatdırılması
+              </div>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(76,154,110,.1)",border:"1px solid rgba(76,154,110,.25)"}}>
-                  <span style={{fontSize:12,color:"#4C9A6E"}}>✅ SMS çatıb</span>
+                  <span style={{fontSize:12,color:"#4C9A6E",display:"flex",alignItems:"center",gap:6}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
+                    SMS çatıb
+                  </span>
                   <span style={{fontSize:13,fontWeight:800,color:"#4C9A6E"}}>{smsSent}</span>
                 </div>
                 {smsFailed>0&&(
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.25)"}}>
-                    <span style={{fontSize:12,color:"#C1382A"}}>❌ SMS çatmayıb</span>
+                    <span style={{fontSize:12,color:"#C1382A",display:"flex",alignItems:"center",gap:6}}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                      SMS çatmayıb
+                    </span>
                     <span style={{fontSize:13,fontWeight:800,color:"#C1382A"}}>{smsFailed}</span>
                   </div>
                 )}
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)"}}>
-                  <span style={{fontSize:12,color:"#5B84B0"}}>📱 WhatsApp göndərilib</span>
+                  <span style={{fontSize:12,color:"#5B84B0",display:"flex",alignItems:"center",gap:6}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                    WhatsApp göndərilib
+                  </span>
                   <span style={{fontSize:13,fontWeight:800,color:"#5B84B0"}}>{waSent}</span>
                 </div>
                 {deliveryPending>0&&(
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 13px",borderRadius:12,background:"rgba(212,175,90,.1)",border:"1px solid rgba(212,175,90,.25)"}}>
-                    <span style={{fontSize:12,color:"#8A6B1E"}}>⏳ Hələ göndərilməyib</span>
+                    <span style={{fontSize:12,color:"#8A6B1E",display:"flex",alignItems:"center",gap:6}}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                      Hələ göndərilməyib
+                    </span>
                     <span style={{fontSize:13,fontWeight:800,color:"#8A6B1E"}}>{deliveryPending}</span>
                   </div>
                 )}
