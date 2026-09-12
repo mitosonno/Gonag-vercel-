@@ -2371,6 +2371,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const [expand, setExpand] = useState(null); // "attending"|"not_attending"|"pending"
   const [smsGuest, setSmsGuest] = useState(null);
   const [smsText, setSmsText] = useState("");
+  const [listFilter, setListFilter] = useState(null); // "all"|"kishi"|"qadin"|null
 
   function openSms(g){
     setSmsGuest(g);
@@ -2378,8 +2379,8 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
   }
 
   const gold="#D4AF5A";
-  const statCard = (label,val,color,icon)=>(
-    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:16,padding:"12px"}}>
+  const statCard = (label,val,color,icon,onClick)=>(
+    <div onClick={onClick||undefined} style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:16,padding:"12px",cursor:onClick?"pointer":"default"}}>
       <div style={{width:30,height:30,borderRadius:9,background:color+"1E",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>{icon}</div>
       <div style={{fontSize:9,color:"rgba(33,26,22,.5)",fontWeight:600,letterSpacing:.3,textTransform:"uppercase"}}>{label}</div>
       <div style={{fontSize:20,fontWeight:800,color,marginTop:2,fontFamily:"'Fraunces',serif"}}>{val}</div>
@@ -2403,18 +2404,47 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
         <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
           {/* Ümumi */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
-            {statCard("Qonaq",total,gold,<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>)}
+            {statCard("Qonaq",total,gold,<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>, ()=>setListFilter("all"))}
             {statCard("Doluluq",pct+"%","#50c878",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#50c878" strokeWidth="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>)}
             {statCard("Masa",tables.length,"#7aade8",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7aade8" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>)}
           </div>
 
           {/* Cins */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
-            {statCard("Kişi",kishi,"#7aade8",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7aade8" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
-            {statCard("Qadın",qadin,"#e87aad",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e87aad" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
-            {statCard("Uşaq",ushaqSayi,"#D4AF5A",<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" strokeWidth="1.7"><circle cx="12" cy="9" r="3"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>)}
-            {statCard("Digər",total-kishi-qadin-ushaqSayi,"rgba(201,168,76,.7)",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(150,120,40,.8)" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>)}
+            {statCard("Kişi",kishi,"#7aade8",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7aade8" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>, ()=>setListFilter("kishi"))}
+            {statCard("Qadın",qadin,"#e87aad",<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e87aad" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>, ()=>setListFilter("qadin"))}
+            {statCard("Uşaq",ushaqSayi,"#D4AF5A",<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AF5A" strokeWidth="1.7"><circle cx="12" cy="9" r="3"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></svg>, null)}
           </div>
+
+          {listFilter&&(()=>{
+            const list = listFilter==="all" ? guests : guests.filter(g=>g.gender===listFilter);
+            const titleMap = {all:"Bütün qonaqlar", kishi:"Kişilər", qadin:"Qadınlar"};
+            return (
+              <div style={{position:"fixed",inset:0,zIndex:600,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setListFilter(null)}>
+                <div style={{width:"100%",maxWidth:420,maxHeight:"75vh",background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 24px",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexShrink:0}}>
+                    <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:"#211A16"}}>{titleMap[listFilter]} ({list.length})</div>
+                    <button onClick={()=>setListFilter(null)} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer"}}>✕</button>
+                  </div>
+                  <div style={{overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
+                    {list.map((g,i)=>{
+                      const sc=g.gender==="kishi"?"#5B84B0":g.gender==="qadin"?"#C9668A":"#8A6FA8";
+                      return (
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 12px",background:"rgba(255,255,255,.6)",border:"1px solid rgba(150,120,80,.15)",borderRadius:12}}>
+                          <div style={{width:26,height:26,borderRadius:"50%",flexShrink:0,background:sc+"22",border:"1px solid "+sc+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,color:sc}}>{(g.name||"?")[0]}</div>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:13,fontWeight:600,color:"#211A16"}}>{g.name}</div>
+                            <div style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>{g.count>1&&g.count+" nəfər"}{g.ushaqCount>0&&(g.count>1?" + ":"")+(g.ushaqCount>0?g.ushaqCount+" uşaq":"")}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {list.length===0&&<div style={{textAlign:"center",color:"#a89a80",fontSize:12,padding:20}}>Bu kateqoriyada qonaq yoxdur</div>}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Dəvətnamə çatdırılma hesabatı */}
           {true&&(
