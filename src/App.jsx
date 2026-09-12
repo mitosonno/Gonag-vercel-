@@ -6337,21 +6337,20 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         );
         return (
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",padding:"18px 16px"}}>
-          {!hasDesign?(
-            <div onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:14,padding:16,
-              border:"1.5px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:16,cursor:"pointer",
-              background:"rgba(212,175,90,.1)"}}>
-              <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.22)",
-                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:14.5,fontWeight:700,color:"#8A6B1E",marginBottom:2}}>Əvvəlcə dizayn seçin</div>
-                <div style={{fontSize:11,color:"#6B6259"}}>Öz video/şəklinizi yükləyin, ya da şablon seçin</div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+          <div onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+            border:"1.5px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(212,175,90,.1)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.22)",
+              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
             </div>
-          ):(
+            <div style={{flex:1}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"#8A6B1E",marginBottom:2}}>{hasDesign?"Dəvətnaməni dəyiş":"Dəvətnaməni seç"}</div>
+              <div style={{fontSize:11,color:"#6B6259"}}>{hasDesign?"İstənilən vaxt dəyişin və ya silin":"Öz video/şəklinizi yükləyin, ya da şablon seçin"}</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+          {hasDesign&&(
             <>
               <Card accent="#C1382A" onClick={()=>setPanel("bulk")}
                 icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
