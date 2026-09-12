@@ -440,6 +440,28 @@ function parseLine(line){
 
 function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
   const [imgFailed, setImgFailed] = useState({});
+  const [zoomScale, setZoomScale] = useState(1);
+  const pinchRef = useRef(null);
+  function handleTouchStart(e){
+    if(e.touches.length===2){
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      pinchRef.current = { d0: Math.sqrt(dx*dx+dy*dy), z0: zoomScale };
+    }
+  }
+  function handleTouchMove(e){
+    if(e.touches.length===2 && pinchRef.current){
+      e.preventDefault();
+      const dx=e.touches[0].clientX-e.touches[1].clientX;
+      const dy=e.touches[0].clientY-e.touches[1].clientY;
+      const d=Math.sqrt(dx*dx+dy*dy);
+      const nz = Math.max(1, Math.min(2.5, pinchRef.current.z0*(d/pinchRef.current.d0)));
+      setZoomScale(nz);
+    }
+  }
+  function handleTouchEnd(e){
+    if(e.touches.length<2) pinchRef.current=null;
+  }
   const guests = table.guests||[];
   const n = Math.min(table.seats||10, 16);
   const r = (size/2)*0.52, cx = size/2, cy = size/2;
@@ -512,7 +534,12 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   });
 
   return (
-    <div style={{position:"relative", width:size, height:size, margin:"0 auto"}}>
+    <div style={{position:"relative", width:size, height:size, margin:"0 auto",
+        transform: useChairImage? "scale("+zoomScale+")":undefined, transformOrigin:"center center",
+        touchAction: useChairImage?"none":undefined}}
+      onTouchStart={useChairImage?handleTouchStart:undefined}
+      onTouchMove={useChairImage?handleTouchMove:undefined}
+      onTouchEnd={useChairImage?handleTouchEnd:undefined}>
     <svg width={size} height={size} style={{display:"block",overflow:"visible"}}>
       {useChairImage&&(
         <style>{`
@@ -1384,7 +1411,10 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     const wrapSize = S*1.66;
                     // Hər fiziki oturacağı öz qonağına uyğunlaşdır (count>1 olan qonaqlar bir neçə yeri tutur)
                     const seatOwners=[];
-                    (t.guests||[]).forEach(g=>{ for(let k=0;k<(g.count||1);k++) seatOwners.push(g); });
+                    (t.guests||[]).forEach(g=>{
+                      for(let k=0;k<(g.count||1);k++) seatOwners.push(g);
+                      for(let k=0;k<(g.ushaqCount||0);k++) seatOwners.push(g);
+                    });
                     return (
                       <div style={{position:"relative",width:wrapSize,height:wrapSize,pointerEvents:"none"}}>
                         {Array.from({length:seats}).map((_,i)=>{
