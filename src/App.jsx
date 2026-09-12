@@ -1271,29 +1271,21 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               );
             })}
 
-            {/* Kiçik Zal elementləri */}
+            {/* Kiçik Zal elementləri — əsl ikon şəkilləri, minimalist */}
             {hasHallElements&&hall._hallElements.map(function(el,idx){
-              var isDF=el.type==="danceFloor", isBG=el.type==="brideGroom",
-                  isStage=el.type==="stage", isEnt=el.type==="entrance";
-              var bg = isDF?"linear-gradient(155deg,#F9DCE3,#F3C4D0)":isBG?"linear-gradient(155deg,#FFF7E0,#FDECC0)":isStage?"linear-gradient(155deg,#DCEBF9,#C4DDF3)":"linear-gradient(155deg,#E8F3E4,#D4EACB)";
-              var bd = isDF?"#E8A8BA":isBG?"#D4AF5A":isStage?"#A8C7E8":"#9FCB8A";
-              var tcol = isDF?"#B06B7E":isBG?"#8A6B1E":isStage?"#5B84B0":"#5A8F4A";
-              var dfSize = Math.max(el.w,el.h)*0.95; // Rəqs meydanı — dairəvi, kifayət qədər böyük
+              var iconSrc = el.type==="danceFloor"?"/hall-dancefloor.png":el.type==="brideGroom"?"/hall-bridegroom.png":el.type==="stage"?"/hall-musicians.png":"/hall-entrance.png";
+              var isDF=el.type==="danceFloor";
+              var elSize = Math.max(el.w,el.h)*0.62; // minimalist — çox böyük olmasın
               return (
                 <div key={idx} style={{
                   position:"absolute",
                   left:el.xPct+"%", top:el.yPct+"%",
-                  width:isDF?dfSize+"%":el.w+"%", height:isDF?dfSize+"%":el.h+"%",
+                  width:elSize+"%",
                   transform:"translate(-50%,-50%)",
-                  background:bg, border:"1px solid "+bd,
-                  borderRadius:isDF?"50%":12,
-                  boxShadow:"0 3px 10px -4px rgba(120,90,40,.25), inset 0 1px 0 rgba(255,255,255,.6)",
-                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:isDF?4:2,
-                  padding:isDF?"6%":0,
-                  zIndex:2,pointerEvents:"none",userSelect:"none",boxSizing:"border-box"
+                  zIndex:2,pointerEvents:"none",userSelect:"none"
                 }}>
-                  <span style={{fontSize:isDF?"clamp(13px,3.2vw,20px)":11,lineHeight:1}}>{isDF?"💃":isBG?"👰":isStage?"🎸":"🚪"}</span>
-                  <span style={{fontSize:isDF?"clamp(6.5px,1.5vw,9px)":7.5,fontWeight:700,letterSpacing:0.4,lineHeight:1.3,color:tcol,textAlign:"center"}}>{el.label}</span>
+                  <img src={iconSrc} style={{width:"100%",height:"auto",display:"block",
+                    filter:"drop-shadow(0 2px 5px rgba(60,40,20,.2))"}}/>
                 </div>
               );
             })}
@@ -4788,14 +4780,13 @@ ${savedEvsList||"Yoxdur"}`;
                           </svg>
                         )}
                         {hall&&hall._hallElements&&hall._hallElements.map(function(el,i){
-                          var isDF=el.type==="danceFloor";
+                          var iconSrc = el.type==="danceFloor"?"/hall-dancefloor.png":el.type==="brideGroom"?"/hall-bridegroom.png":el.type==="stage"?"/hall-musicians.png":"/hall-entrance.png";
+                          var elSize = Math.max(el.w,el.h)*0.55;
                           return (
                             <div key={i} style={{position:"absolute",left:el.xPct+"%",top:el.yPct+"%",
-                              width:(isDF?Math.max(el.w,el.h)*0.9:el.w)+"%",height:(isDF?Math.max(el.w,el.h)*0.9:el.h)+"%",
-                              transform:"translate(-50%,-50%)",borderRadius:isDF?"50%":6,
-                              background:"rgba(255,255,255,.5)",border:"1px solid rgba(212,175,90,.4)",
-                              display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>
-                              {el.type==="danceFloor"?"💃":el.type==="brideGroom"?"👰":el.type==="stage"?"🎸":"🚪"}
+                              width:elSize+"%",
+                              transform:"translate(-50%,-50%)"}}>
+                              <img src={iconSrc} style={{width:"100%",height:"auto",display:"block"}}/>
                             </div>
                           );
                         })}
