@@ -516,12 +516,6 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     <svg width={size} height={size} style={{display:"block",overflow:"visible"}}>
       {useChairImage&&(
         <style>{`
-          @keyframes seatArriveHtml {
-            0% { opacity:0; transform:translate(-50%,-50%) scale(0.3) rotate(var(--rot)); }
-            55% { opacity:1; transform:translate(-50%,-50%) scale(1.15) rotate(var(--rot)); }
-            75% { transform:translate(-50%,-50%) scale(0.92) rotate(var(--rot)); }
-            100% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(var(--rot)); }
-          }
           @keyframes fingerTap {
             0%{opacity:0; transform:translate(6px,6px) scale(1.1);}
             12%{opacity:1; transform:translate(0,0) scale(1);}
@@ -541,13 +535,13 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
       ):(
         <circle cx={cx} cy={cy} r={r} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
       )}
-      {pct>0&&(
-        <circle cx={cx} cy={cy} r={useChairImage?r*0.72:r}
+      {pct>0&&!useChairImage&&(
+        <circle cx={cx} cy={cy} r={r}
           fill="none"
           stroke={tc}
           strokeWidth={size>100?"3":"2"}
-          strokeDasharray={2*Math.PI*(useChairImage?r*0.72:r)}
-          strokeDashoffset={2*Math.PI*(useChairImage?r*0.72:r)*(1-pct)}
+          strokeDasharray={2*Math.PI*r}
+          strokeDashoffset={2*Math.PI*r*(1-pct)}
           strokeLinecap="round"
           transform={"rotate(-90 "+cx+" "+cy+")"}
           opacity="0.8"
@@ -653,28 +647,27 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
             width:imgSize, height:imgSize,
             transform:"translate(-50%,-50%) rotate("+rotDeg+"deg)",
             pointerEvents:"none",
-            animation: !isEmpty ? "seatArriveHtml .6s cubic-bezier(.25,.8,.3,1.3)" : undefined,
           }}
           />
       );
     })}
-    {/* Ad etiketləri — HTML overlay, hər qonağın öz yerinin yanında */}
+    {/* Ad etiketləri — HTML overlay, hər qonağın öz yerinin yanında (başın üstündə, üzü örtmür) */}
     {useChairImage&&positions.filter(p=>p.g).map(p=>{
       const { i, sx, sy, g, isUshaq } = p;
       const slotKey = (seatOwner[i]&&seatOwner[i].key)||("n"+i);
       const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
-      const dist = slotR*2.5;
+      const dist = slotR*3.1;
       const tx = sx+(ndx/nd)*dist, ty = sy+(ndy/nd)*dist;
-      const name = g.name.split(" ")[0].substring(0,9);
+      const name = g.name.split(" ")[0].substring(0,8);
       return (
         <div key={"lbl_"+slotKey} style={{
           position:"absolute", left:tx, top:ty,
           transform:"translate(-50%,-50%)",
-          background:"rgba(255,253,247,.94)", border:"1px solid rgba(150,120,80,.22)",
-          borderRadius:7, padding:"2px 7px",
-          fontSize:9, fontWeight:600, color:"#3D2E1F", fontFamily:"'Inter',sans-serif",
+          background:"rgba(255,253,247,.94)", border:"1px solid rgba(150,120,80,.2)",
+          borderRadius:6, padding:"1.5px 5px",
+          fontSize:7, fontWeight:600, color:"#3D2E1F", fontFamily:"'Inter',sans-serif",
           whiteSpace:"nowrap", pointerEvents:"none",
-          boxShadow:"0 2px 5px rgba(40,28,16,.14)",
+          boxShadow:"0 1px 3px rgba(40,28,16,.12)",
         }}>{name}</div>
       );
     })}
@@ -2273,6 +2266,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                         {g.count>1&&g.count+" nəfər"}{g.side&&" · "+g.side}
                       </div>
                     </div>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(33,26,22,.35)" strokeWidth="2" style={{flexShrink:0}}>
+                      <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                    </svg>
                   </div>
                 );
               })}
