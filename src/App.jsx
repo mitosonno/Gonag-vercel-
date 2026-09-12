@@ -4775,7 +4775,7 @@ ${savedEvsList||"Yoxdur"}`;
       <div className="app">
         {/* TOP BAR */}
         <div className="tb">
-          <div className="logo">GONAG<span>.AZ</span></div>
+          <div className="logo"><img src="/qonaq-logo.png" alt="GONAG.AZ" style={{height:22,width:"auto",display:"block"}}/></div>
           <div className="tbx">
             <div className="pill"><div className="dot"/><span className="pn">Gul Agent</span></div>
           </div>
