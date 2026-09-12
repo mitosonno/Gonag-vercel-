@@ -4007,6 +4007,8 @@ export default function App(){
             hist: meta.hist||[],
             tables: actualTables,
             totalGuests: meta.totalGuests||0,
+            myInviteShablon: meta.myInviteShablon!=null?meta.myInviteShablon:null,
+            myInviteMedia: meta.myInviteMedia||null,
           };
         }
       }catch(e){}
@@ -4027,6 +4029,9 @@ export default function App(){
       }).catch(()=>{});
     }
     setTables(full.tables||[]);
+    // Dəvətnamə dizaynı — HƏR MƏCLİS ÜÇÜN AYRICA (əvvəllər sıfırlanmırdı, köhnə məclisdən "yapışıb qalırdı")
+    setMyInviteShablon(full.myInviteShablon!=null?full.myInviteShablon:null);
+    setMyInviteMedia(full.myInviteMedia||null);
     setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
     setHist(full.hist||[]);
     if(full.tables&&full.tables.length>0){ pushPanel("schema"); setSchemaOpen(true); }
@@ -5413,6 +5418,7 @@ ${savedEvsList||"Yoxdur"}`;
             try{ localStorage.removeItem("gonag_last_active_evid"); }catch(e){}
             setEvType(null); setObStep("type"); setObData({});
             setTables([]); setHall(null); setCurrentEvId(null);
+            setMyInviteShablon(null); setMyInviteMedia(null);
             setHist([]);
             setMsgs([{role:"agent",text:"Salam! 👋 Yeni məclis başladırıq!\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
           }}
@@ -6307,20 +6313,58 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {/* HOME */}
       {panel==="home"&&(()=>{
         const hasDesign = myInviteShablon!=null || myInviteMedia;
-        function shareGuestListText(){
+        function loadJsPDF(){
+          return new Promise((resolve,reject)=>{
+            if(window.jspdf&&window.jspdf.jsPDF){ resolve(window.jspdf.jsPDF); return; }
+            const s=document.createElement("script");
+            s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            s.onload=()=>{ window.jspdf&&window.jspdf.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error("jsPDF yüklənmədi")); };
+            s.onerror=()=>reject(new Error("jsPDF yüklənmədi"));
+            document.head.appendChild(s);
+          });
+        }
+        async function shareGuestListText(){
           const filled = allTables.filter(t=>(t.guests||[]).length>0);
           if(filled.length===0){ alert("Hələ heç bir masada qonaq yoxdur"); return; }
-          const lines = filled.map(t=>{
-            const names = (t.guests||[]).map(g=>g.name+(g.count>1?" ("+g.count+")":"")).join(", ");
-            return "Masa "+t.id+": "+names;
+          const evName = (obData&&(obData.boy&&obData.girl?obData.boy+" & "+obData.girl:obData.name))||"Məclis";
+          let JsPDF;
+          try{ JsPDF = await loadJsPDF(); }catch(e){ alert("PDF yarada bilmədi, internet bağlantınızı yoxlayın."); return; }
+          const doc = new JsPDF({unit:"pt", format:"a4"});
+          const pageW = doc.internal.pageSize.getWidth();
+          let y = 50;
+          doc.setFont("helvetica","bold"); doc.setFontSize(20);
+          doc.text(evName, pageW/2, y, {align:"center"});
+          y += 22;
+          doc.setFont("helvetica","normal"); doc.setFontSize(11); doc.setTextColor(120,100,70);
+          doc.text("Qonaq siyahısı"+(obData&&obData.date?" · "+obData.date:""), pageW/2, y, {align:"center"});
+          y += 30;
+          doc.setDrawColor(200,180,140); doc.line(40,y,pageW-40,y); y+=24;
+          filled.forEach(t=>{
+            if(y>760){ doc.addPage(); y=50; }
+            doc.setFont("helvetica","bold"); doc.setFontSize(13); doc.setTextColor(30,25,20);
+            doc.text("Masa "+t.id+(t.label&&t.label!=="__extra__"?" — "+t.label:""), 44, y);
+            y += 17;
+            doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(60,55,50);
+            (t.guests||[]).forEach(g=>{
+              const line = "•  "+g.name+(g.count>1?" ("+g.count+" nəfər)":"")+(g.ushaqCount>0?" + "+g.ushaqCount+" uşaq":"");
+              doc.text(line, 56, y);
+              y += 14;
+              if(y>770){ doc.addPage(); y=50; }
+            });
+            y += 12;
           });
-          const text = (obData&&(obData.boy&&obData.girl?obData.boy+" & "+obData.girl:obData.name)||"Məclis")+" — Qonaq siyahısı\n\n"+lines.join("\n");
-          if(navigator.share){
-            navigator.share({text}).catch(()=>{});
-          } else {
-            navigator.clipboard&&navigator.clipboard.writeText(text);
-            alert("Siyahı kopyalandı! İstədiyiniz yerə yapışdıra bilərsiniz.");
+          const blob = doc.output("blob");
+          const fileName = "qonaq-siyahisi-"+evName.replace(/[^a-zA-Zəıöüğçş0-9]+/gi,"-")+".pdf";
+          if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([blob],fileName,{type:"application/pdf"})]})){
+            try{
+              await navigator.share({files:[new File([blob],fileName,{type:"application/pdf"})], title:evName+" — Qonaq siyahısı"});
+              return;
+            }catch(e){}
           }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href=url; a.download=fileName; a.click();
+          setTimeout(()=>URL.revokeObjectURL(url),3000);
         }
         const Card = ({icon, title, desc, onClick, accent}) => (
           <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:16,
@@ -6350,8 +6394,17 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
           </div>
+          {onPrint&&(
+            <Card accent="#6B6259" onClick={onPrint}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>}
+              title="Çap et" desc="Dəvətnaməni çap üçün hazırlayın."/>
+          )}
+          <Card accent="#4C9A6E" onClick={shareGuestListText}
+            icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>}
+            title="Siyahını dostuna göndər" desc="Masa-masa PDF siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
           {hasDesign&&(
             <>
+              <div style={{height:1,background:"rgba(150,120,80,.15)",margin:"6px 0 14px"}}/>
               <Card accent="#C1382A" onClick={()=>setPanel("bulk")}
                 icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
                 title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
@@ -6360,14 +6413,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                 title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
             </>
           )}
-          {onPrint&&(
-            <Card accent="#6B6259" onClick={onPrint}
-              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>}
-              title="Çap et" desc="Dəvətnaməni çap üçün hazırlayın."/>
-          )}
-          <Card accent="#4C9A6E" onClick={shareGuestListText}
-            icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>}
-            title="Siyahını dostuna göndər" desc="Masa-masa mətn siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
         </div>
         );
       })()}
