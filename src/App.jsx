@@ -3740,9 +3740,11 @@ export default function App(){
   const evRef = useRef(ev);
   const tabRef = useRef(tables);
   const obDataRef = useRef(obData);
+  const hallRef = useRef(hall);
   useEffect(()=>{ evRef.current=ev; },[ev]);
   useEffect(()=>{ tabRef.current=tables; },[tables]);
   useEffect(()=>{ obDataRef.current=obData; },[obData]);
+  useEffect(()=>{ hallRef.current=hall; },[hall]);
   useEffect(()=>{ endRef.current&&endRef.current.scrollIntoView({behavior:"smooth"}); },[msgs]);
 
   // Auto-save hər dəfə masalar dəyişəndə — yalnız aktiv məclis varsa
@@ -3876,7 +3878,7 @@ export default function App(){
       obData: overrides.obData||obDataRef.current,
       obStep: overrides.obStep||obStep,
       ev: overrides.ev||ev,
-      hall: overrides.hall||hall,
+      hall: overrides.hall||hallRef.current,
       tables: overrides.tables||tabRef.current,
       msgs: overrides.msgs||(msgs.slice(-20)),
       hist: overrides.hist||hist.slice(-20),
