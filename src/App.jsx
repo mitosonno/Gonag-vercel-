@@ -433,7 +433,7 @@ function parseLine(line){
   return { name:parts[0], phone:parts[1]||"", count:parseInt(parts[2])||1 };
 }
 
-function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick }){
+function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false }){
   const guests = table.guests||[];
   const n = Math.min(table.seats||10, 16);
   const r = (size/2)*0.52, cx = size/2, cy = size/2;
@@ -496,13 +496,21 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick 
             if(isEmpty && onSlotClick) onSlotClick(i);
             else if(g && onGuestClick) onGuestClick(g);
           }}>
-            <circle cx={sx} cy={sy} r={slotR}
-              fill={isEmpty ? "#FFFFFF" : sc+"33"}
-              stroke={sc}
-              strokeWidth={isEmpty?"1.6":"1.8"}
-              opacity={isEmpty?0.8:1}
-            />
-            {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
+            {isEmpty&&useChairImage?(
+              <image href="/chair-seat.png" x={sx-slotR*2.2} y={sy-slotR*2.2} width={slotR*4.4} height={slotR*4.4}
+                transform={"rotate("+((a*180/Math.PI)+90)+" "+sx+" "+sy+")"}
+                style={{cursor:clickable?"pointer":"default"}}/>
+            ):(
+              <>
+                <circle cx={sx} cy={sy} r={slotR}
+                  fill={isEmpty ? "#FFFFFF" : sc+"33"}
+                  stroke={sc}
+                  strokeWidth={isEmpty?"1.6":"1.8"}
+                  opacity={isEmpty?0.8:1}
+                />
+                {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
+              </>
+            )}
             {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
             {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
             {g&&(()=>{
@@ -1963,7 +1971,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
-            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true}
+            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
                 setSlotInput({slotIdx:idx});
