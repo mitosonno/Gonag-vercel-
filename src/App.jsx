@@ -6298,7 +6298,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {panel!=="home"&&<button onClick={()=>{setPanel("home");setStep("select");setSingleStep("list");setSingleGuest(null);}} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>
-            {panel==="home"?"📨 Dəvətnamə":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
+            {panel==="home"?"Dəvətnaməni göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
           </div>
         </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -6307,49 +6307,68 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {/* HOME */}
       {panel==="home"&&(()=>{
         const hasDesign = myInviteShablon!=null || myInviteMedia;
+        function shareGuestListText(){
+          const filled = allTables.filter(t=>(t.guests||[]).length>0);
+          if(filled.length===0){ alert("Hələ heç bir masada qonaq yoxdur"); return; }
+          const lines = filled.map(t=>{
+            const names = (t.guests||[]).map(g=>g.name+(g.count>1?" ("+g.count+")":"")).join(", ");
+            return "Masa "+t.id+": "+names;
+          });
+          const text = (obData&&(obData.boy&&obData.girl?obData.boy+" & "+obData.girl:obData.name)||"Məclis")+" — Qonaq siyahısı\n\n"+lines.join("\n");
+          if(navigator.share){
+            navigator.share({text}).catch(()=>{});
+          } else {
+            navigator.clipboard&&navigator.clipboard.writeText(text);
+            alert("Siyahı kopyalandı! İstədiyiniz yerə yapışdıra bilərsiniz.");
+          }
+        }
+        const Card = ({icon, title, desc, onClick, accent}) => (
+          <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+            border:"1.5px solid rgba(150,120,80,.18)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(255,255,255,.4)",backdropFilter:"blur(10px)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:(accent||"#8A6B1E")+"22",
+              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent||"#8A6B1E"}}>{icon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"#211A16",marginBottom:2}}>{title}</div>
+              <div style={{fontSize:11,color:"#6B6259",lineHeight:1.35}}>{desc}</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2" style={{flexShrink:0}}><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        );
         return (
-        <div style={{flex:1,display:"flex",flexDirection:"column",gap:12,padding:"24px 16px"}}>
+        <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",padding:"18px 16px"}}>
           {!hasDesign?(
-            <button onClick={onOpenMyInvite}
-              style={{padding:"26px 20px",borderRadius:22,border:"1px solid rgba(212,175,90,.4)",
-                background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.05))",backdropFilter:"blur(16px) saturate(150%)",
-                boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
-                textAlign:"center",cursor:"pointer",color:"#211A16"}}>
-              <div style={{fontSize:30,marginBottom:8}}>🎬</div>
-              <div style={{fontSize:16,fontWeight:700,color:"#8A6B1E",marginBottom:4}}>Əvvəlcə dəvətnamə dizaynını seçin</div>
-              <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Öz video/şəklinizi yükləyin, ya da hazır şablonlardan birini seçin</div>
-            </button>
+            <div onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+              border:"1.5px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:16,cursor:"pointer",
+              background:"rgba(212,175,90,.1)"}}>
+              <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.22)",
+                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14.5,fontWeight:700,color:"#8A6B1E",marginBottom:2}}>Əvvəlcə dizayn seçin</div>
+                <div style={{fontSize:11,color:"#6B6259"}}>Öz video/şəklinizi yükləyin, ya da şablon seçin</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+            </div>
           ):(
             <>
-              <button onClick={()=>setPanel("bulk")}
-                style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(193,56,42,.3)",
-                  background:"linear-gradient(155deg,rgba(193,56,42,.16),rgba(193,56,42,.05))",backdropFilter:"blur(16px) saturate(150%)",
-                  boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
-                  textAlign:"left",cursor:"pointer",color:"#211A16"}}>
-                <div style={{fontSize:26,marginBottom:8}}>📨</div>
-                <div style={{fontSize:15,fontWeight:700,color:"#C1382A",marginBottom:4}}>Toplu göndər</div>
-                <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Masaları seç → hamısına birdəfəlik göndər</div>
-              </button>
-              <button onClick={()=>setPanel("single")}
-                style={{padding:"22px 18px",borderRadius:22,border:"1px solid rgba(91,132,176,.3)",
-                  background:"linear-gradient(155deg,rgba(91,132,176,.16),rgba(91,132,176,.05))",backdropFilter:"blur(16px) saturate(150%)",
-                  boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 18px -8px rgba(60,40,20,.2)",
-                  textAlign:"left",cursor:"pointer",color:"#211A16"}}>
-                <div style={{fontSize:26,marginBottom:8}}>👤</div>
-                <div style={{fontSize:15,fontWeight:700,color:"#5B84B0",marginBottom:4}}>Tək-tək adla göndər</div>
-                <div style={{fontSize:12,color:"rgba(33,26,22,.55)"}}>Hər qonağa ayrıca — şablon preview ilə</div>
-              </button>
+              <Card accent="#C1382A" onClick={()=>setPanel("bulk")}
+                icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
+                title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
+              <Card accent="#5B84B0" onClick={()=>setPanel("single")}
+                icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>}
+                title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
             </>
           )}
-          <div style={{display:"flex",gap:10,marginTop:4}}>
-            {onPrint&&(
-              <button onClick={onPrint} style={{flex:1,padding:"14px 12px",borderRadius:16,border:"1px solid rgba(150,120,80,.25)",
-                background:"rgba(150,120,80,.08)",textAlign:"center",cursor:"pointer",color:"#6B6259"}}>
-                <div style={{fontSize:18,marginBottom:4}}>🖨️</div>
-                <div style={{fontSize:11,fontWeight:700}}>Çap et</div>
-              </button>
-            )}
-          </div>
+          {onPrint&&(
+            <Card accent="#6B6259" onClick={onPrint}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>}
+              title="Çap et" desc="Dəvətnaməni çap üçün hazırlayın."/>
+          )}
+          <Card accent="#4C9A6E" onClick={shareGuestListText}
+            icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>}
+            title="Siyahını dostuna göndər" desc="Masa-masa mətn siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
         </div>
         );
       })()}
