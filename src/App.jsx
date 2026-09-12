@@ -3679,7 +3679,7 @@ export default function App(){
     // Sxem bağlananda (əvvəl açıq idisə) — chat-a avtomatik yenilənmiş önizləmə + xatırlatma göndər
     if(prevSchemaOpenRef.current && !schemaOpen && tabRef.current && tabRef.current.length>0){
       const msg = "🗺️ Zal sxemi — indi belə görünür:";
-      setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+      setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[],hallOverview:true}]);
     }
     prevSchemaOpenRef.current = schemaOpen;
   },[schemaOpen]);
@@ -4462,7 +4462,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(txt==="Masanın öz tutumu"){
         setHall(h=>({...h, _step:"done"}));
         const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:[],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
@@ -4470,7 +4470,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         const n=parseInt(txt);
         setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
         const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:[],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
@@ -4479,7 +4479,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         if(n>=1&&n<=30){
           setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
           const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.`;
-          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:[],hallOverview:true}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
         }
@@ -4930,7 +4930,7 @@ ${savedEvsList||"Yoxdur"}`;
                         style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
                           background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(10px)",
                           color:"#F5EEE0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                        🗺️ Sxemə keç
+                        🗺️ Zalın sxemini aç və qonaq əlavə elə
                       </button>
                     </div>
                   )}
@@ -4976,7 +4976,7 @@ ${savedEvsList||"Yoxdur"}`;
               const totalAdd = g.count + g.ushaqCount;
               if(oc+totalAdd>effectiveCap){
                 setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.\n\nBaşqa masa seçin 👇`,
-                  qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+                  qrs:[],hallOverview:true}]);
                 setChatWizard(null);
                 return;
               }
