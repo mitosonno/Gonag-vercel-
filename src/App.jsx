@@ -3678,8 +3678,8 @@ export default function App(){
   useEffect(function(){
     // Sxem bağlananda (əvvəl açıq idisə) — chat-a avtomatik yenilənmiş önizləmə + xatırlatma göndər
     if(prevSchemaOpenRef.current && !schemaOpen && tabRef.current && tabRef.current.length>0){
-      const msg = "🗺️ Zal sxemi bağlandı — indi belə görünür.\n\nMasaları burada, chat-da mənim vasitəmlə doldura bilərsiniz, ya da özünüz ümumi sxemə keçib əlavə edə bilərsiniz.";
-      setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+      const msg = "🗺️ Zal sxemi — indi belə görünür:";
+      setMsgs(m=>[...m,{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
     }
     prevSchemaOpenRef.current = schemaOpen;
   },[schemaOpen]);
@@ -4299,17 +4299,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
       setBusy(false); return;
     }
-    if(txt==="💬 Chat-da əlavə et"){
-      const anyOpen = tabRef.current.some(t=>occ(t)<t.seats);
-      const explainMsg = "👇 Aşağıdakı sxemdə istədiyiniz masaya bir dəfə toxunun — o masanı dolduraq.\n\n💡 Bir masanı başqasına həvalə etmək istəsəniz: həmin masaya barmağınızla basıb 1 saniyə saxlayın — link yaranacaq, onu göndərdiyiniz adam öz qonaqlarını özü əlavə edib, istəsə özü də dəvətnamə göndərə bilər.";
-      if(anyOpen){
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:explainMsg,qrs:[],hallOverview:true}]);
-      } else {
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Bütün masalar doludur! 🎉",qrs:[]}]);
-      }
-      setBusy(false); return;
-    }
-
     // ═══ ONBOARDING STATE MACHINE — tamamilə client-side ═══
     function obReply(msg, qrs=[]){
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs}]);
@@ -4329,6 +4318,11 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(txt==="💫 Nişan"){  setEvType("nishan");     setObStep("nishan_couple"); obReply("Mübarək! 💫\n\nOğlan və qızın adını yazın:\n(məs: Tural Quliyev / Aytən Məmmədova)"); setTimeout(()=>saveCurrentEvent({evType:"nishan",obStep:"nishan_couple"}),100); return; }
       if(txt==="🎂 Ad günü"){setEvType("adgunu");     setObStep("adgunu_name");   obReply("Əla! 🎂\n\nAd sahibinin adı-soyadı?"); setTimeout(()=>saveCurrentEvent({evType:"adgunu",obStep:"adgunu_name"}),100); return; }
       if(txt==="🏢 Korporativ"){setEvType("korporativ");setObStep("korp_company");obReply("Əla! 🏢\n\nŞirkətin adı nədir?"); setTimeout(()=>saveCurrentEvent({evType:"korporativ",obStep:"korp_company"}),100); return; }
+      // İstifadəçi düymələrdən başqa bir şey yazıbsa — məcburi növbədən əvvəl məclis növünü seçdir
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Əvvəlcə məclis növünü seçin 👇",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+      setHist(h=>[...h,{role:"user",content:txt},{role:"assistant",content:"Əvvəlcə məclis növünü seçin"}]);
+      setBusy(false);
+      return;
     }
 
     // TOY
@@ -4467,16 +4461,16 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(hall && hall._step==="customSeats"){
       if(txt==="Masanın öz tutumu"){
         setHall(h=>({...h, _step:"done"}));
-        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+        const msg = `✅ Hər masa öz tutumuna görə doldurulacaq.`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
       if(["6","8","10","12"].includes(txt)){
         const n=parseInt(txt);
         setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+        const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı (masalar daha böyük olsa belə, xəbərdarlıq bu ədədə görə olacaq).`;
+        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
         setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
         setBusy(false); return;
       }
@@ -4484,8 +4478,8 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
         const n=parseInt(txt);
         if(n>=1&&n<=30){
           setHall(h=>({...h, plannedSeatsPerTable:n, _step:"done"}));
-          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.\n\nHansı masadan başlayaq? Yuxarıdakı masaya klikləyib elə burada — chat-da — qonaq əlavə edə bilərsiniz, sxemi açmaq şərt deyil.`;
-          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+          const msg = `✅ Hər masada ${n} nəfər planlaşdırıldı.`;
+          setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
         }
@@ -4506,7 +4500,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     }
 
     // ═══ DƏVƏTNAMƏ FLOW ═══
-    if(txt==="🗺️ Sxemi aç"){
+    if(txt==="🗺️ Sxemi aç"||txt==="🗺️ Zalın sxemini aç və qonaq əlavə elə"){
       pushPanel("schema"); setSchemaOpen(true);
       setBusy(false); return;
     }
@@ -4984,7 +4978,7 @@ ${savedEvsList||"Yoxdur"}`;
               const totalAdd = g.count + g.ushaqCount;
               if(oc+totalAdd>effectiveCap){
                 setMsgs(m=>[...m,{role:"agent",text:`⚠️ Masa ${t.id} üçün ${effectiveCap} nəfər planlaşdırılıb, hazırda ${oc} dolu. ${totalAdd} nəfər sığmır.\n\nBaşqa masa seçin 👇`,
-                  qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"],hallOverview:true}]);
+                  qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
                 setChatWizard(null);
                 return;
               }
@@ -5017,7 +5011,7 @@ ${savedEvsList||"Yoxdur"}`;
                         setChatWizard(null);
                         setMsgs(m=>[...m,{role:"agent",
                           text:"Dayandırıldı. Davam etmək istəsəniz 👇",
-                          qrs:["💬 Chat-da əlavə et","🗺️ Sxemi aç"]}]);
+                          qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"]}]);
                       }}
                       style={{width:26,height:26,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.4)",
                         color:"#6B6259",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
