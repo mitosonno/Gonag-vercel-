@@ -467,7 +467,11 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   return (
     <svg width={size} height={size} style={{display:"block",margin:"0 auto"}}>
       {/* Background fill indicator arc */}
-      <circle cx={cx} cy={cy} r={r} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
+      {useChairImage?(
+        <image href="/table-surface.png" x={cx-r*1.08} y={cy-r*1.08} width={r*2.16} height={r*2.16}/>
+      ):(
+        <circle cx={cx} cy={cy} r={r} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
+      )}
       {pct>0&&(
         <circle cx={cx} cy={cy} r={r}
           fill="none"
