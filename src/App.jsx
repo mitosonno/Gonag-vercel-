@@ -1275,7 +1275,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
             {hasHallElements&&hall._hallElements.map(function(el,idx){
               var iconSrc = el.type==="danceFloor"?"/hall-dancefloor.png":el.type==="brideGroom"?"/hall-bridegroom.png":el.type==="stage"?"/hall-musicians.png":"/hall-entrance.png";
               var isDF=el.type==="danceFloor";
-              var elSize = Math.max(el.w,el.h)*0.62; // minimalist — çox böyük olmasın
+              var elSize = Math.max(el.w,el.h)*1.25;
               return (
                 <div key={idx} style={{
                   position:"absolute",
@@ -4781,7 +4781,7 @@ ${savedEvsList||"Yoxdur"}`;
                         )}
                         {hall&&hall._hallElements&&hall._hallElements.map(function(el,i){
                           var iconSrc = el.type==="danceFloor"?"/hall-dancefloor.png":el.type==="brideGroom"?"/hall-bridegroom.png":el.type==="stage"?"/hall-musicians.png":"/hall-entrance.png";
-                          var elSize = Math.max(el.w,el.h)*0.55;
+                          var elSize = Math.max(el.w,el.h)*1.1;
                           return (
                             <div key={i} style={{position:"absolute",left:el.xPct+"%",top:el.yPct+"%",
                               width:elSize+"%",
