@@ -4086,6 +4086,7 @@ export default function App(){
     setRestOpen(false);
     setLayoutMode(null);
     setLayoutPickOpen({hall:h}); // pass hall directly, don't rely on state
+    setTimeout(()=>saveCurrentEvent({hall:h}),150);
   }
 
   async function pickCustomHall(rest, hallObj){
@@ -4135,6 +4136,7 @@ export default function App(){
     setTables(customTables);
     setLayoutMode("ready");
     setRestOpen(false);
+    setTimeout(()=>saveCurrentEvent({hall:h, tables:customTables}),150);
     const totalCap = customTables.reduce((s,t)=>s+t.seats,0);
     const msg = `✅ ${rest.name} — ${full.name} seçildi!\n\n🎉 Əla, zal sxemi hazırdır! ${customTables.length} masa qoyulub (ümumi tutum: ${totalCap} nəfər).\n\nİndi struktura əsasən dəqiqləşdirək — ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
