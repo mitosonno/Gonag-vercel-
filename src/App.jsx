@@ -1648,10 +1648,10 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         </div>
       )}
       {/* Başlıq: ad, tarix, sayğac, doluluq */}
-      {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
-        const title = obData.boy&&obData.girl ? (
+      {(hall||tables.length>0||(obData&&(obData.boy||obData.name||obData.company)))&&(()=>{
+        const title = obData&&obData.boy&&obData.girl ? (
           <>{obData.boy} <span style={{color:"#C9A25E",fontWeight:400,fontStyle:"italic"}}>&amp;</span> {obData.girl}</>
-        ) : (obData.name||obData.company||"");
+        ) : (obData&&(obData.name||obData.company)) || (hall&&hall.name) || "Məclis";
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
         const evLabel = evType==="toy"?"Toy":evType==="nishan"?"Nişan":evType==="adgunu"?"Ad günü":evType==="korporativ"?"Korporativ":"Məclis";
         return (
@@ -1661,7 +1661,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:9.5,letterSpacing:2.5,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:7}}>
-                {evLabel}{obData.date?" · "+obData.date:""}
+                {evLabel}{obData&&obData.date?" · "+obData.date:""}
               </div>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.3}}>{title}</div>
               {hall&&hall.name&&<div style={{fontSize:11.5,color:"#8a7548",marginTop:6}}>{hall.name}</div>}
@@ -3429,9 +3429,8 @@ export default function App(){
 
   const [meclisOpen, setMeclisOpen] = useState(false);
   const [currentEvId, setCurrentEvId] = useState(null);
-  useEffect(()=>{
-    if(currentEvId){ try{ localStorage.setItem("gonag_last_active_evid", currentEvId); }catch(e){} }
-  },[currentEvId]);
+  // Qeyd: "son aktiv məclis" izi indi saveCurrentEvent-in saxlama tamamlandıqdan sonra
+  // (rəqəmsal dbId ilə) yazılır — bax aşağıda savePromise.then(...) daxilində.
 
   const [msgs, setMsgs] = useState([{
     role:"agent",text:"Salam! 👋 GONAG.AZ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
@@ -3705,6 +3704,8 @@ export default function App(){
   },[sessionId]);
 
   // Auto-save current event
+  const savingInFlightRef = useRef({}); // evId -> Promise<dbId> (ilk yaradılış gedəndə paralel INSERT-lərin qarşısını alır)
+
   function saveCurrentEvent(overrides={}){
     const curEvType = overrides.evType||evType;
     if(!currentEvId && !curEvType) return;
@@ -3734,6 +3735,7 @@ export default function App(){
 
     const newEvents = [snap, ...(savedEventsRef.current.filter(e=>e.id!==evId))];
     setSavedEvents(newEvents);
+    savedEventsRef.current = newEvents;
 
     // localStorage-ə saxla — həmişə işləyir
     try{
@@ -3742,15 +3744,30 @@ export default function App(){
       try{ localStorage.setItem("gonag_events_v2", JSON.stringify(newEvents.slice(0,20))); }catch(e2){}
     }
 
-    // Supabase-ə saxla
-    sbSaveEvent({...snap, dbId:existingDbId, sessionId, cardNumber}).then(returnedId=>{
+    // Supabase-ə saxla — TƏKRARLANAN INSERT-in qarşısını al:
+    // əgər bu evId üçün artıq bir "yaradılış" gedirsə, ONU gözlə, sonra həmin dbId ilə PATCH et
+    const inFlight = savingInFlightRef.current[evId];
+    const doSave = async ()=>{
+      let dbIdToUse = existingDbId;
+      if(!dbIdToUse && inFlight){
+        try{ dbIdToUse = await inFlight; }catch(e){}
+      }
+      const returnedId = await sbSaveEvent({...snap, dbId:dbIdToUse, sessionId, cardNumber});
+      return returnedId;
+    };
+    const savePromise = doSave();
+    if(!existingDbId){ savingInFlightRef.current[evId] = savePromise; }
+
+    savePromise.then(returnedId=>{
       if(returnedId){
         const finalId = returnedId;
         setSavedEvents(prev=>prev.map(e=>e.id===evId?{...e,dbId:finalId}:e));
-        // ref-i də güncəllə
         const idx = savedEventsRef.current.findIndex(e=>e.id===evId);
         if(idx>=0) savedEventsRef.current[idx]={...savedEventsRef.current[idx],dbId:finalId};
         else savedEventsRef.current=[{...snap,dbId:finalId},...savedEventsRef.current];
+        delete savingInFlightRef.current[evId];
+        // Avtomatik davam etmə RƏQƏMSAL id ilə işləyir (siyahı da rəqəmsaldır) — yerli "ev_..." id yox
+        try{ localStorage.setItem("gonag_last_active_evid", String(finalId)); }catch(e){}
       }
     });
     return evId;
