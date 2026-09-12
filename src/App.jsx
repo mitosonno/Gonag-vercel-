@@ -265,12 +265,17 @@ async function sbFetch(path, options={}){
 
 async function sbSaveEvent(ev){
   if(!ev||!ev.id) return;
+  // Zal videosunu/şəklini saxlamadan ÇIXARIRIQ — bunlar meqabaytlarla ola bilər və
+  // hər avtomatik saxlamada bunu göndərmək server ölçü limitinə tuş gəlib bütün
+  // saxlamanı SƏSSİZCƏ uğursuz edə bilər (nəticədə zal düzülüşü — rəqs meydanı,
+  // giriş, divarlar — itmiş kimi görünür, çünki köhnə/yarımçıq son saxlama qalır).
+  const hallLight = ev.hall ? (()=>{ const {_videoUrl, ...rest} = ev.hall; return rest; })() : null;
   const tablesWithMeta = {
     _meta: {
       evType: ev.evType||"",
       obStep: ev.obStep||"",
       obData: ev.obData||{},
-      hall: ev.hall||null,
+      hall: hallLight,
       msgs: (ev.msgs||[]).slice(-10),
       hist: (ev.hist||[]).slice(-10),
       myInviteShablon: ev.myInviteShablon!=null?ev.myInviteShablon:null,
@@ -898,7 +903,11 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const [showLongPressPanel, setShowLongPressPanel] = useState(false);
   const [longPressResult, setLongPressResult] = useState(null);
   const longPressTimer = useRef(null);
-  const [zoom, setZoom] = useState(0.6);
+  const [zoom, setZoom] = useState(()=>{
+    try{ const saved = localStorage.getItem("gonag_zoom_level"); if(saved) return parseFloat(saved)||0.6; }catch(e){}
+    return 0.6;
+  });
+  useEffect(()=>{ try{ localStorage.setItem("gonag_zoom_level", String(zoom)); }catch(e){} },[zoom]);
   const [elemPos, setElemPos] = useState({sehne:{x:10,y:2},giris:{x:30,y:88}});
   const drag = useRef(null);
   const pinch = useRef(null);
@@ -3956,6 +3965,14 @@ export default function App(){
     setObStep(full.obStep||"done");
     setEv(full.ev||{});
     setHall(full.hall||null);
+    // Zal videosu/şəkli saxlamadan çıxarılıb (ölçü səbəbindən) — davam edərkən arxa planda yenidən yüklə
+    if(full.hall&&full.hall._dbHallId){
+      fetchHallMedia(full.hall._dbHallId).then(media=>{
+        if(media&&(media.video_url||media.photo_url)){
+          setHall(prev=>prev?({...prev,_videoUrl:media.video_url||prev._videoUrl,planImageUrl:media.photo_url||prev.planImageUrl}):prev);
+        }
+      }).catch(()=>{});
+    }
     setTables(full.tables||[]);
     setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
     setHist(full.hist||[]);
@@ -4090,6 +4107,7 @@ export default function App(){
       }
     }
     const h = {
+      _dbHallId: full.id,
       _venueName: rest.name, name: full.name,
       totalGuests: null, _step:"customTotal",
       _hallElements: full.elements||[],
