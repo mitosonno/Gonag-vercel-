@@ -4837,10 +4837,8 @@ ${savedEvsList||"Yoxdur"}`;
                             if(chatLongPressTimer.current){
                               clearTimeout(chatLongPressTimer.current);
                               chatLongPressTimer.current = null;
-                              if(!wasLong && !tfull){
-                                setActiveTable(t.id);
-                                setChatWizard({tableId:t.id, step:"name", name:"", phone:"", gender:"", count:"1"});
-                              }
+                              // Qısa toxunma ilə qonaq əlavə etmə HƏLƏLİK SÖNDÜRÜLÜB —
+                              // yeganə yol: "Zalın sxemini aç və qonaq əlavə elə" düyməsi
                             }
                           }
                           return (
