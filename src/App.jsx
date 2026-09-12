@@ -3642,8 +3642,10 @@ export default function App(){
   const inpRef = useRef(null);
   const evRef = useRef(ev);
   const tabRef = useRef(tables);
+  const obDataRef = useRef(obData);
   useEffect(()=>{ evRef.current=ev; },[ev]);
   useEffect(()=>{ tabRef.current=tables; },[tables]);
+  useEffect(()=>{ obDataRef.current=obData; },[obData]);
   useEffect(()=>{ endRef.current&&endRef.current.scrollIntoView({behavior:"smooth"}); },[msgs]);
 
   // Auto-save hər dəfə masalar dəyişəndə — yalnız aktiv məclis varsa
@@ -3774,7 +3776,7 @@ export default function App(){
     const snap = {
       id: evId,
       evType: overrides.evType||evType,
-      obData: overrides.obData||obData,
+      obData: overrides.obData||obDataRef.current,
       obStep: overrides.obStep||obStep,
       ev: overrides.ev||ev,
       hall: overrides.hall||hall,
@@ -4193,15 +4195,15 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(!girl){ obWarn(boy+" — gəlinin adını da əlavə edin 🙏\nMəs: "+boy+" Zəhra, yaxud: "+boy+" / Zəhra Quliyeva"); return; }
       setObData(d=>({...d,boy,girl}));
       setObStep("toy_date");
-      setTimeout(()=>saveCurrentEvent({obStep:"toy_date",obData:{...obData,boy,girl}}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"toy_date",obData:{...obDataRef.current,boy,girl}}),100);
       obReply(boy+" & "+girl+" — nə gözəl cüt! 🥂\n\nToy tarixi? (məs: 15 Avqust 2025)"); return;
     }
     if(obStep==="toy_date"){
       if(empty){ obWarn("Toy tarixini yazın zəhmət olmasa 📅"); return; }
       setObData(d=>({...d,date:txt})); setObStep("restoran");
-      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obData,date:txt}}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt}}),100);
       obReply("📅 "+txt+" — qeyd edildi!\n\nİndi zal seçək 👇",["🔍 Restoran axtar"]);
-      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obData,date:txt},status:"natamam"}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt},status:"natamam"}),100);
       return;
     }
 
@@ -4223,7 +4225,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       const [boy,girl]=parseCouple2(txt);
       if(!girl){ obWarn(boy+" — qızın adını da əlavə edin 🙏"); return; }
       setObData(d=>({...d,boy,girl})); setObStep("nishan_date");
-      setTimeout(()=>saveCurrentEvent({obStep:"nishan_date",obData:{...obData,boy,girl}}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"nishan_date",obData:{...obDataRef.current,boy,girl}}),100);
       obReply(boy+" & "+girl+" — mübarək! 💫\n\nNişan tarixi?"); return;
     }
     if(obStep==="nishan_date"){
@@ -4240,7 +4242,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(obStep==="adgunu_name"){
       if(empty){ obWarn("Ad sahibinin adını yazın zəhmət olmasa 🙏"); return; }
       setObData(d=>({...d,name:txt})); setObStep("adgunu_age");
-      setTimeout(()=>saveCurrentEvent({obStep:"adgunu_age",obData:{...obData,name:txt}}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"adgunu_age",obData:{...obDataRef.current,name:txt}}),100);
       obReply(txt+" — neçə yaşı tamam olur?"); return;
     }
     if(obStep==="adgunu_age"){
@@ -4272,7 +4274,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(obStep==="korp_date"){
       if(empty){ obWarn("Tarixi yazın zəhmət olmasa 📅"); return; }
       setObData(d=>({...d,date:txt})); setObStep("restoran");
-      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obData,date:txt}}),100);
+      setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt}}),100);
       obReply("📅 "+txt+" — qeyd edildi! Zal seçək 👇",["🔍 Restoran axtar"]); return;
     }
     // Hall total step — neçə nəfər
