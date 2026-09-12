@@ -3444,7 +3444,14 @@ export default function App(){
     });
   }
   async function fetchHallFull(hallId){
-    const rows = await sbFetch("halls?id=eq."+hallId+"&select=*");
+    // video_url/photo_url XARIC edilir — bunlar meqabaytlarla ola bilər, kritik yolu ləngidir.
+    // Masa yerləşdirmək üçün yalnız struktur məlumatı lazımdır.
+    const rows = await sbFetch("halls?id=eq."+hallId+"&select=id,name,layout,elements,wall_path,wall_edges,columns,maps_url,contact_phone");
+    return rows&&rows[0]?rows[0]:null;
+  }
+  async function fetchHallMedia(hallId){
+    // Video/şəkli AYRICA, arxa planda yüklə — heç nəyi bloklamasın
+    const rows = await sbFetch("halls?id=eq."+hallId+"&select=photo_url,video_url");
     return rows&&rows[0]?rows[0]:null;
   }
   useEffect(function(){
@@ -3817,7 +3824,6 @@ export default function App(){
   async function pickCustomHall(rest, hallObj){
     let full = hallObj;
     if(hallObj._lightweight){
-      setMsgs(m=>[...m,{role:"agent",text:"Zal detalları yüklənir...",qrs:[]}]);
       try{
         const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error("8 saniyə gözlədi, cavab gəlmədi")),8000));
         const fetched = await Promise.race([fetchHallFull(hallObj.id), timeout]);
@@ -3825,10 +3831,12 @@ export default function App(){
           full = fetched;
         } else {
           setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənə bilmədi — server boş cavab qaytardı (id: "+hallObj.id+"). Zəhmət olmasa yenidən sınayın.",qrs:[]}]);
+          return;
         }
       }catch(e){
         console.error("fetchHallFull error:", e);
         setMsgs(m=>[...m,{role:"agent",text:"⚠️ Zal detalları yüklənərkən xəta: "+(e&&e.message||"naməlum")+" (id: "+hallObj.id+")",qrs:[]}]);
+        return;
       }
     }
     const h = {
@@ -3838,11 +3846,19 @@ export default function App(){
       _wallPath: full.wall_path||[],
       _wallEdges: full.wall_edges||[],
       _columns: full.columns||[],
-      _videoUrl: full.video_url||null,
+      _videoUrl: null, // video ayrıca, arxa planda yüklənəcək (aşağıda)
       _mapsUrl: full.maps_url||null,
       _contactPhone: full.contact_phone||null,
-      planImageUrl: full.photo_url||null
+      planImageUrl: null // şəkil də ayrıca yüklənəcək
     };
+    // Video/şəkil — böyük ola bilər (MB-larla), arxa planda, HEÇ NƏYİ BLOKLAMADAN yüklə
+    if(hallObj._lightweight){
+      fetchHallMedia(hallObj.id).then(media=>{
+        if(media&&(media.video_url||media.photo_url)){
+          setHall(prev=>prev?({...prev,_videoUrl:media.video_url||prev._videoUrl,planImageUrl:media.photo_url||prev.planImageUrl}):prev);
+        }
+      }).catch(()=>{});
+    }
     const customTables = (full.layout||[]).map(t=>({
       id:t.id, seats:t.seats, label:t.label||"", side:t.side||"",
       guests:[], pos:{xPct:t.xPct, yPct:t.yPct}
