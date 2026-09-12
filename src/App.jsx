@@ -1546,6 +1546,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [editMode, setEditMode] = useState(false);
   const [shareMode, setShareMode] = useState(false);
   const [helpTip, setHelpTip] = useState(null); // "share"|"edit"|null
+  const [mediaChoice, setMediaChoice] = useState(false);
   const [countdown, setCountdown] = useState(null); // {days,hours,mins,secs}|null
 
   useEffect(function(){
@@ -1736,6 +1737,40 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
           style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
       </div>
+
+      {hall&&(hall._videoUrl||hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+        <button onClick={()=>setMediaChoice(true)}
+          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:14,marginBottom:10,
+            border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+          Zalın real görüntüsü
+        </button>
+      )}
+
+      {mediaChoice&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setMediaChoice(false)}>
+          <div style={{width:"100%",maxWidth:420,background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 32px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12,textAlign:"center"}}>Zalın real görüntüsü</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {hall&&hall._videoUrl&&(
+                <button onClick={()=>{setMediaChoice(false);setVideoPlayerOpen(true);}}
+                  style={{padding:"14px",borderRadius:12,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4V8Z"/></svg>
+                  Video
+                </button>
+              )}
+              {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+                <button onClick={()=>{setMediaChoice(false);setRealPhotoOpen(true);}}
+                  style={{padding:"14px",borderRadius:12,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.08)",color:"#5B84B0",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+                  Şəkil
+                </button>
+              )}
+              <button onClick={()=>setMediaChoice(false)} style={{padding:"10px",borderRadius:12,border:"none",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Ləğv et</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {helpTip&&(
         <div style={{marginBottom:10,padding:"11px 14px",borderRadius:14,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)",fontSize:11.5,color:"#211A16",lineHeight:1.5}}>
@@ -2170,10 +2205,10 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
   const gold="#D4AF5A";
   const statCard = (label,val,color,icon)=>(
-    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:18,padding:"13px",textAlign:"center"}}>
-      <div style={{fontSize:22}}>{icon}</div>
-      <div style={{fontSize:22,fontWeight:800,color,marginTop:4,fontFamily:"'Fraunces',serif"}}>{val}</div>
-      <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginTop:2}}>{label}</div>
+    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:16,padding:"12px"}}>
+      <div style={{width:30,height:30,borderRadius:9,background:color+"1E",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>{icon}</div>
+      <div style={{fontSize:9,color:"rgba(33,26,22,.5)",fontWeight:600,letterSpacing:.3,textTransform:"uppercase"}}>{label}</div>
+      <div style={{fontSize:20,fontWeight:800,color,marginTop:2,fontFamily:"'Fraunces',serif"}}>{val}</div>
     </div>
   );
 
@@ -2253,13 +2288,16 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
           {/* RSVP Bölməsi */}
           <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:12}}>
-            <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:12}}>📋 İştirak cavabları</div>
+            <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              İştirak cavabları
+            </div>
 
             {/* Gəlirəm */}
             <div onClick={()=>setExpand(expand==="attending"?null:"attending")}
               style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))",backdropFilter:"blur(10px)",marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>✅</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4C9A6E" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
                 <span style={{fontSize:14,fontWeight:700,color:"#4C9A6E"}}>Gəlirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -5289,24 +5327,6 @@ ${savedEvsList||"Yoxdur"}`;
                     display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,marginRight:"auto"}}>?</button>
               )}
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                {hall&&hall._videoUrl&&(
-                  <button onClick={()=>setVideoPlayerOpen(true)}
-                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
-                      background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
-                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4V8Z"/></svg>
-                    Zalın videosu
-                  </button>
-                )}
-                {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
-                  <button onClick={()=>setRealPhotoOpen(true)}
-                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
-                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#211A16",fontSize:11,
-                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
-                    Real şəkil
-                  </button>
-                )}
                 <button style={{background:"transparent",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}} onClick={()=>tryCloseSchema()}>✕</button>
               </div>
             </div>
