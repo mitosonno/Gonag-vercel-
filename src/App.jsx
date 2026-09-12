@@ -433,7 +433,7 @@ function parseLine(line){
   return { name:parts[0], phone:parts[1]||"", count:parseInt(parts[2])||1 };
 }
 
-function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false }){
+function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false }){
   const guests = table.guests||[];
   const n = Math.min(table.seats||10, 16);
   const r = (size/2)*0.52, cx = size/2, cy = size/2;
@@ -442,8 +442,8 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   const slots = [];
   guests.forEach(g=>{
     const uc = g.ushaqCount||0;
-    for(let i=0;i<(g.count||1);i++) slots.push({g, isUshaq:false});
-    for(let i=0;i<uc;i++) slots.push({g, isUshaq:true});
+    for(let i=0;i<(g.count||1);i++) slots.push({g, isUshaq:false, key:g.id+"_a"+i});
+    for(let i=0;i<uc;i++) slots.push({g, isUshaq:true, key:g.id+"_u"+i});
   });
 
   const totalOcc = occ(table);  // use occ() which includes ushaqCount
@@ -460,15 +460,44 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     if(g.gender==="qadin") return "#e87aad";
     return sideColor(g.side||"Ümumi");
   }
+  function personImg(g, isUshaq){
+    if(isUshaq) return "/seated-child.png";
+    if(g.gender==="kishi") return "/seated-man.png";
+    return "/seated-woman.png";
+  }
   function avatarEmoji(g, isUshaq){
     return isUshaq ? "👧" : g.gender==="kishi" ? "👨" : g.gender==="qadin" ? "👩" : null;
   }
 
+  let firstEmptyIdx = -1;
+
   return (
-    <svg width={size} height={size} style={{display:"block",margin:"0 auto"}}>
+    <svg width={size} height={size} style={{display:"block",margin:"0 auto",overflow:"visible"}}>
+      {useChairImage&&(
+        <style>{`
+          @keyframes seatArrive {
+            0% { opacity:0; transform:scale(0.3); }
+            55% { opacity:1; transform:scale(1.15); }
+            75% { transform:scale(0.92); }
+            100% { opacity:1; transform:scale(1); }
+          }
+          .seat-arrive { animation:seatArrive .6s cubic-bezier(.25,.8,.3,1.3); transform-box:fill-box; transform-origin:center; }
+          @keyframes fingerTap {
+            0%{opacity:0; transform:translate(6px,6px) scale(1.1);}
+            12%{opacity:1; transform:translate(0,0) scale(1);}
+            24%{transform:translate(2px,2px) scale(0.9);}
+            36%{transform:translate(0,0) scale(1);}
+            48%{transform:translate(2px,2px) scale(0.9);}
+            60%{transform:translate(0,0) scale(1);}
+            80%{opacity:0;}
+            100%{opacity:0;}
+          }
+          .finger-hint { animation:fingerTap 2.4s ease .5s 1; }
+        `}</style>
+      )}
       {/* Background fill indicator arc */}
       {useChairImage?(
-        <image href="/table-surface.png" x={cx-r*1.08} y={cy-r*1.08} width={r*2.16} height={r*2.16}/>
+        <image href="/table-surface.png" x={cx-r*0.62} y={cy-r*0.62} width={r*1.24} height={r*1.24}/>
       ):(
         <circle cx={cx} cy={cy} r={r} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
       )}
@@ -493,15 +522,17 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         const g = slot&&slot.g;
         const isUshaq = slot&&slot.isUshaq;
         const sc = g ? slotColor(g, isUshaq) : "rgba(201,168,76,.3)";
-        const emoji = g ? avatarEmoji(g, isUshaq) : null;
+        if(isEmpty && firstEmptyIdx===-1) firstEmptyIdx = i;
         return (
-          <g key={i} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
+          <g key={slot?slot.key:("empty"+i)} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
             if(!clickable) return;
             if(isEmpty && onSlotClick) onSlotClick(i);
             else if(g && onGuestClick) onGuestClick(g);
           }}>
-            {isEmpty&&useChairImage?(
-              <image href="/chair-seat.png" x={sx-slotR*2.2} y={sy-slotR*2.2} width={slotR*4.4} height={slotR*4.4}
+            {useChairImage?(
+              <image href={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
+                className={!isEmpty?"seat-arrive":undefined}
+                x={sx-slotR*2.2} y={sy-slotR*2.2} width={slotR*4.4} height={slotR*4.4}
                 transform={"rotate("+((a*180/Math.PI)+90)+" "+sx+" "+sy+")"}
                 style={{cursor:clickable?"pointer":"default"}}/>
             ):(
@@ -513,10 +544,10 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                   opacity={isEmpty?0.8:1}
                 />
                 {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
+                {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
+                {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
               </>
             )}
-            {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
-            {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
             {g&&(()=>{
               const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
               const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
@@ -527,6 +558,15 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
           </g>
         );
       })}
+      {showTapHint&&useChairImage&&firstEmptyIdx>=0&&(()=>{
+        const a = (firstEmptyIdx/n)*Math.PI*2 - Math.PI/2;
+        const sx = cx+r*Math.cos(a), sy = cy+r*Math.sin(a);
+        return (
+          <g className="finger-hint" style={{pointerEvents:"none"}}>
+            <text x={sx} y={sy+2} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.6}>👆</text>
+          </g>
+        );
+      })()}
       {/* Center label — nömrə həmişə görünür, ad varsa altında kiçik */}
       <text x={cx} y={cy-(size>100?9:5)} textAnchor="middle" dominantBaseline="middle"
         fontSize={size>100?13:9} fill={tc} fontWeight="800">
@@ -1975,7 +2015,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
-            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true}
+            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={occ(exTbl)===0}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
                 setSlotInput({slotIdx:idx});
