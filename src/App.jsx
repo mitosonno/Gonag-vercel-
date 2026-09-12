@@ -434,6 +434,7 @@ function parseLine(line){
 }
 
 function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false }){
+  const [imgFailed, setImgFailed] = useState({});
   const guests = table.guests||[];
   const n = Math.min(table.seats||10, 16);
   const r = (size/2)*0.52, cx = size/2, cy = size/2;
@@ -502,12 +503,12 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         <circle cx={cx} cy={cy} r={r} fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.12)" strokeWidth="1"/>
       )}
       {pct>0&&(
-        <circle cx={cx} cy={cy} r={r}
+        <circle cx={cx} cy={cy} r={useChairImage?r*0.72:r}
           fill="none"
           stroke={tc}
           strokeWidth={size>100?"3":"2"}
-          strokeDasharray={2*Math.PI*r}
-          strokeDashoffset={2*Math.PI*r*(1-pct)}
+          strokeDasharray={2*Math.PI*(useChairImage?r*0.72:r)}
+          strokeDashoffset={2*Math.PI*(useChairImage?r*0.72:r)*(1-pct)}
           strokeLinecap="round"
           transform={"rotate(-90 "+cx+" "+cy+")"}
           opacity="0.8"
@@ -522,18 +523,20 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         const g = slot&&slot.g;
         const isUshaq = slot&&slot.isUshaq;
         const sc = g ? slotColor(g, isUshaq) : "rgba(201,168,76,.3)";
+        const slotKey = slot?slot.key:("empty"+i);
         if(isEmpty && firstEmptyIdx===-1) firstEmptyIdx = i;
         return (
-          <g key={slot?slot.key:("empty"+i)} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
+          <g key={slotKey} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
             if(!clickable) return;
             if(isEmpty && onSlotClick) onSlotClick(i);
             else if(g && onGuestClick) onGuestClick(g);
           }}>
-            {useChairImage?(
+            {useChairImage&&!imgFailed[slotKey]?(
               <image href={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
                 className={!isEmpty?"seat-arrive":undefined}
                 x={sx-slotR*2.2} y={sy-slotR*2.2} width={slotR*4.4} height={slotR*4.4}
                 transform={"rotate("+((a*180/Math.PI)+90)+" "+sx+" "+sy+")"}
+                onError={()=>setImgFailed(f=>({...f,[slotKey]:true}))}
                 style={{cursor:clickable?"pointer":"default"}}/>
             ):(
               <>
@@ -548,20 +551,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                 {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
               </>
             )}
-            {g&&useChairImage&&(()=>{
-              const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
-              const tx=sx+(ndx/nd)*(slotR+11), ty=sy+(ndy/nd)*(slotR+11);
-              const name=g.name.split(" ")[0].substring(0,8);
-              const pillW = Math.max(24, name.length*5.6+10);
-              return (
-                <g key="lbl">
-                  <rect x={tx-pillW/2} y={ty-7} width={pillW} height={13} rx={6.5}
-                    fill="rgba(255,253,247,.92)" stroke="rgba(150,120,80,.25)" strokeWidth="0.6"/>
-                  <text x={tx} y={ty+0.5} textAnchor="middle" dominantBaseline="middle"
-                    fontSize="7.5" fill="#3D2E1F" fontWeight="600" fontFamily="'Inter',sans-serif" letterSpacing="0.2">{name}</text>
-                </g>
-              );
-            })()}
+
             {g&&!useChairImage&&(()=>{
               const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
               const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
