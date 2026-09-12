@@ -102,33 +102,6 @@ function NavIcon({ type }){
   return null;
 }
 
-function DashNav({ dashProps }){
-  if(!dashProps) return null;
-  const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis } = dashProps;
-  const items = [
-    {key:"schema", label:"Zalın sxemi", cnt:tableCount||0, onClick:onGoSchema},
-    {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:onGoInvite},
-    {key:"stats", label:"Statistika", cnt:0, onClick:onGoStats},
-    {key:"meclis", label:"Məclislərim", cnt:eventCount||0, onClick:onGoMeclis},
-  ];
-  return (
-    <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
-      {items.map(it=>{
-        const isActive = it.key===active;
-        return (
-          <button key={it.key} onClick={it.onClick} disabled={isActive}
-            style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
-              border:"none",background:"transparent",cursor:isActive?"default":"pointer",position:"relative"}}>
-            <span style={{color:isActive?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
-            <span style={{fontSize:10,fontWeight:isActive?700:600,color:isActive?"#C1382A":"#6B6259"}}>{it.label}</span>
-            {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function contactsSupported(){
   return typeof navigator!=="undefined" && "contacts" in navigator && "ContactsManager" in window;
 }
@@ -1629,7 +1602,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, dashProps }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -2268,7 +2241,7 @@ function Bar({val,tot,color}){
   );
 }
 
-function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
+function StatsPanel({ tables, ev, rsvpStats, onClose }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
   const ushaqSayi = guests.reduce((s,g)=>s+(g.ushaqCount||0),0);
   const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
@@ -2466,7 +2439,6 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
             )}
           </div>
         </div>
-        <DashNav dashProps={dashProps}/>
       </div>
 
       {/* SMS Pəncərəsi */}
@@ -2492,7 +2464,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
 }
 
 
-function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onLogout, dashProps }){
+function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onLogout }){
   const [confirmId, setConfirmId] = useState(null);
   if(!events||events.length===0) return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
@@ -2625,7 +2597,6 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
             </button>
           )}
         </div>
-        <DashNav dashProps={dashProps}/>
       </div>
     </div>
   );
@@ -5291,13 +5262,6 @@ ${savedEvsList||"Yoxdur"}`;
           onDelete={deleteEvent}
           onClose={closeTopPanel}
           onLogout={()=>{ supabase.auth.signOut(); }}
-          dashProps={{
-            active:"meclis", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setMeclisOpen(false); pushPanel("schema"); setSchemaOpen(true); },
-            onGoInvite:()=>{ setMeclisOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
-            onGoStats:()=>{ setMeclisOpen(false); pushPanel("stats"); setStatsOpen(true); },
-            onGoMeclis:()=>{},
-          }}
           onNewEvent={()=>{
             setMeclisOpen(false);
             // Əvvəlcə aktiv məclisi saxla
@@ -5430,13 +5394,6 @@ ${savedEvsList||"Yoxdur"}`;
           ev={ev}
           rsvpStats={rsvpStats}
           onClose={closeTopPanel}
-          dashProps={{
-            active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setStatsOpen(false); pushPanel("schema"); setSchemaOpen(true); },
-            onGoInvite:()=>{ setStatsOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
-            onGoStats:()=>{},
-            onGoMeclis:()=>{ setStatsOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
-          }}
         />
       )}
 
@@ -5470,15 +5427,6 @@ ${savedEvsList||"Yoxdur"}`;
               />
             )}
             <div style={{flex:1,overflowY:"auto",padding:"0 14px 16px",WebkitOverflowScrolling:"touch",touchAction:"pan-y"}}>
-              {(()=>{
-                const dashProps = {
-                  active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
-                  onGoSchema:()=>{},
-                  onGoInvite:()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
-                  onGoStats:()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
-                  onGoMeclis:()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
-                };
-                return (
               <SchemaDrawer
                 tables={tables}
                 activeTable={activeTable}
@@ -5489,7 +5437,6 @@ ${savedEvsList||"Yoxdur"}`;
                 obData={obData}
                 evType={evType}
                 sessionId={sessionId}
-                dashProps={dashProps}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
@@ -5523,8 +5470,6 @@ ${savedEvsList||"Yoxdur"}`;
                   setSchemaChanged(true);
                 }}
               />
-                );
-              })()}
             </div>
 
             {/* Boş çıxmaq promptu */}
@@ -5617,7 +5562,31 @@ ${savedEvsList||"Yoxdur"}`;
             )}
 
             {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
-            <DashNav dashProps={dashProps}/>
+            <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
+              {[
+                {key:"schema", label:"Zalın sxemi", active:true, cnt:tables.length, onClick:()=>{}},
+                {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                }},
+                {key:"stats", label:"Statistika", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true);
+                }},
+                {key:"meclis", label:"Məclislərim", cnt:savedEvents.length, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true);
+                }},
+              ].map(it=>(
+                <button key={it.key} onClick={it.onClick}
+                  style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+                    border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
+                  <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
+                  <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
+                  {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -5726,13 +5695,6 @@ ${savedEvsList||"Yoxdur"}`;
           myInviteShablon={myInviteShablon}
           myInviteMedia={myInviteIncludeMedia?myInviteMedia:null}
           sessionId={sessionId}
-          dashProps={{
-            active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setNotInvitedDrawerOpen(false); pushPanel("schema"); setSchemaOpen(true); },
-            onGoInvite:()=>{},
-            onGoStats:()=>{ setNotInvitedDrawerOpen(false); pushPanel("stats"); setStatsOpen(true); },
-            onGoMeclis:()=>{ setNotInvitedDrawerOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
-          }}
         />
       )}
 
@@ -5913,7 +5875,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId, dashProps }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
   // Toplu göndər
@@ -6548,7 +6510,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           )}
         </>
       )}
-      <DashNav dashProps={dashProps}/>
     </div>
   );
 }
