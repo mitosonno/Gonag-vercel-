@@ -548,7 +548,21 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                 {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
               </>
             )}
-            {g&&(()=>{
+            {g&&useChairImage&&(()=>{
+              const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
+              const tx=sx+(ndx/nd)*(slotR+11), ty=sy+(ndy/nd)*(slotR+11);
+              const name=g.name.split(" ")[0].substring(0,8);
+              const pillW = Math.max(24, name.length*5.6+10);
+              return (
+                <g key="lbl">
+                  <rect x={tx-pillW/2} y={ty-7} width={pillW} height={13} rx={6.5}
+                    fill="rgba(255,253,247,.92)" stroke="rgba(150,120,80,.25)" strokeWidth="0.6"/>
+                  <text x={tx} y={ty+0.5} textAnchor="middle" dominantBaseline="middle"
+                    fontSize="7.5" fill="#3D2E1F" fontWeight="600" fontFamily="'Inter',sans-serif" letterSpacing="0.2">{name}</text>
+                </g>
+              );
+            })()}
+            {g&&!useChairImage&&(()=>{
               const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
               const tx=sx+(ndx/nd)*(slotR+9), ty=sy+(ndy/nd)*(slotR+9);
               const name=g.name.split(" ")[0].substring(0,7);
@@ -1597,6 +1611,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [popupMoveTgt, setPopupMoveTgt] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [shareMode, setShareMode] = useState(false);
+  useEffect(()=>{
+    if(expandedId){ setShareMode(false); setShareResult(null); setShareSelected(new Set()); }
+  },[expandedId]);
   const [helpTip, setHelpTip] = useState(null); // "share"|"edit"|null
   const [mediaChoice, setMediaChoice] = useState(false);
   const [countdown, setCountdown] = useState(null); // {days,hours,mins,secs}|null
