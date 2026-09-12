@@ -6027,7 +6027,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 
 function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId }){
   // Ana panel seçimi
-  const [panel, setPanel] = useState("home"); // "home"|"bulk"|"single"
+  const [panel, setPanel] = useState("home"); // "home"|"sendChoice"|"bulk"|"single"
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
   const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
@@ -6302,9 +6302,13 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
         background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {panel!=="home"&&<button onClick={()=>{setPanel("home");setStep("select");setSingleStep("list");setSingleGuest(null);}} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
+          {panel!=="home"&&<button onClick={()=>{
+              if(panel==="bulk"||panel==="single") setPanel("sendChoice");
+              else setPanel("home");
+              setStep("select");setSingleStep("list");setSingleGuest(null);
+            }} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>
-            {panel==="home"?"Dəvətnaməni göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
+            {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
           </div>
         </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -6403,17 +6407,41 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>}
             title="Siyahını dostuna göndər" desc="Masa-masa PDF siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
           {hasDesign&&(
-            <>
-              <div style={{height:1,background:"rgba(150,120,80,.15)",margin:"6px 0 14px"}}/>
-              <Card accent="#C1382A" onClick={()=>setPanel("bulk")}
-                icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
-                title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
-              <Card accent="#5B84B0" onClick={()=>setPanel("single")}
-                icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>}
-                title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
-            </>
+            <button onClick={()=>setPanel("sendChoice")}
+              style={{marginTop:"auto",paddingTop:14,width:"100%",padding:"15px",borderRadius:16,border:"none",
+                background:"linear-gradient(155deg,rgba(30,22,16,.8),rgba(30,22,16,.6))",backdropFilter:"blur(10px)",
+                color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+              📨 Dəvətləri qonaqlara göndər
+            </button>
           )}
         </div>
+        );
+      })()}
+
+      {/* SEND CHOICE — Toplu / Tək-tək seçimi */}
+      {panel==="sendChoice"&&(()=>{
+        const Card2 = ({icon, title, desc, onClick, accent}) => (
+          <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+            border:"1.5px solid rgba(150,120,80,.18)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(255,255,255,.4)",backdropFilter:"blur(10px)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:accent+"22",
+              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent}}>{icon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14.5,fontWeight:700,color:"#211A16",marginBottom:2}}>{title}</div>
+              <div style={{fontSize:11,color:"#6B6259",lineHeight:1.35}}>{desc}</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+        );
+        return (
+          <div style={{flex:1,overflowY:"auto",padding:"18px 16px"}}>
+            <Card2 accent="#C1382A" onClick={()=>setPanel("bulk")}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
+              title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
+            <Card2 accent="#5B84B0" onClick={()=>setPanel("single")}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>}
+              title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
+          </div>
         );
       })()}
 
