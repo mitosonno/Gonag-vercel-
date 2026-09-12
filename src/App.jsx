@@ -5281,31 +5281,30 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
               <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 10px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:17,fontWeight:600}}>🗺️ Masa Sxemi</div>
-                {schemaTutStep===-1&&(
-                  <button onClick={()=>setSchemaTutStep(1)}
-                    style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
-                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,cursor:"pointer",
-                      display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>?</button>
-                )}
-              </div>
+            <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",padding:"0 16px 10px"}}>
+              {schemaTutStep===-1&&(
+                <button onClick={()=>setSchemaTutStep(1)}
+                  style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
+                    background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,marginRight:"auto"}}>?</button>
+              )}
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 {hall&&hall._videoUrl&&(
                   <button onClick={()=>setVideoPlayerOpen(true)}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
                       background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
-                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
-                    🎥 Zalın videosu
+                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4V8Z"/></svg>
+                    Zalın videosu
                   </button>
                 )}
                 {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
                   <button onClick={()=>setRealPhotoOpen(true)}
                     style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
                       background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#211A16",fontSize:11,
-                      fontWeight:700,cursor:"pointer"}}>
-                    📸 Real şəkil
+                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+                    Real şəkil
                   </button>
                 )}
                 <button style={{background:"transparent",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}} onClick={()=>tryCloseSchema()}>✕</button>
@@ -5456,26 +5455,31 @@ ${savedEvsList||"Yoxdur"}`;
               </div>
             )}
 
-            {/* Alt — Dəvətnamələri göndər */}
-            <div style={{padding:"10px 16px 18px",borderTop:"1px solid rgba(255,255,255,.4)",textAlign:"center"}}>
-              <button onClick={function(){
-                setSchemaChanged(false);
-                setSchemaOpen(false);
-                saveCurrentEvent({tables:tabRef.current});
-                var totG=tables.reduce(function(s,t){return s+t.guests.reduce(function(ss,g){return ss+(g.count||1);},0);},0);
-                var tblCount=tables.filter(function(t){return t.guests.length>0;}).length;
-                setMsgs(function(m){return [...m,{role:"agent",
-                  text:"Saxlanıldı! "+totG+" qonaq, "+tblCount+" masa dolu.",
-                  qrs:[]}];});
-                pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-              }} style={{padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",width:"100%",
-                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",
-                color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
-                📨 Dəvətnamələri göndər
-              </button>
-              <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:6}}>
-                Siz həmişə qonaq masasını redaktə edə bilərsiniz
-              </div>
+            {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
+            <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
+              {[
+                {key:"schema", label:"Zalın sxemi", active:true, cnt:tables.length, onClick:()=>{}},
+                {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                }},
+                {key:"stats", label:"Statistika", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true);
+                }},
+                {key:"meclis", label:"Məclislərim", cnt:savedEvents.length, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true);
+                }},
+              ].map(it=>(
+                <button key={it.key} onClick={it.onClick}
+                  style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+                    border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
+                  <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
+                  <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
+                  {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+                </button>
+              ))}
             </div>
           </div>
         </div>
