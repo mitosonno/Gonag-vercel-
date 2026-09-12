@@ -1546,6 +1546,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [editMode, setEditMode] = useState(false);
   const [shareMode, setShareMode] = useState(false);
   const [helpTip, setHelpTip] = useState(null); // "share"|"edit"|null
+  const [mediaChoice, setMediaChoice] = useState(false);
   const [countdown, setCountdown] = useState(null); // {days,hours,mins,secs}|null
 
   useEffect(function(){
@@ -1647,10 +1648,10 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         </div>
       )}
       {/* Başlıq: ad, tarix, sayğac, doluluq */}
-      {obData&&(obData.boy||obData.name||obData.company)&&(()=>{
-        const title = obData.boy&&obData.girl ? (
+      {(hall||tables.length>0||(obData&&(obData.boy||obData.name||obData.company)))&&(()=>{
+        const title = obData&&obData.boy&&obData.girl ? (
           <>{obData.boy} <span style={{color:"#C9A25E",fontWeight:400,fontStyle:"italic"}}>&amp;</span> {obData.girl}</>
-        ) : (obData.name||obData.company||"");
+        ) : (obData&&(obData.name||obData.company)) || (hall&&hall.name) || "Məclis";
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
         const evLabel = evType==="toy"?"Toy":evType==="nishan"?"Nişan":evType==="adgunu"?"Ad günü":evType==="korporativ"?"Korporativ":"Məclis";
         return (
@@ -1660,7 +1661,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
             <div style={{textAlign:"center"}}>
               <div style={{fontSize:9.5,letterSpacing:2.5,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:7}}>
-                {evLabel}{obData.date?" · "+obData.date:""}
+                {evLabel}{obData&&obData.date?" · "+obData.date:""}
               </div>
               <div style={{fontFamily:"'Fraunces',serif",fontSize:24,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.3}}>{title}</div>
               {hall&&hall.name&&<div style={{fontSize:11.5,color:"#8a7548",marginTop:6}}>{hall.name}</div>}
@@ -1736,6 +1737,40 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
         <button onClick={()=>setHelpTip(helpTip==="edit"?null:"edit")}
           style={{width:24,height:24,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.5)",color:"#6B6259",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>?</button>
       </div>
+
+      {hall&&(hall._videoUrl||hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+        <button onClick={()=>setMediaChoice(true)}
+          style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"10px",borderRadius:14,marginBottom:10,
+            border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+          Zalın real görüntüsü
+        </button>
+      )}
+
+      {mediaChoice&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setMediaChoice(false)}>
+          <div style={{width:"100%",maxWidth:420,background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 32px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12,textAlign:"center"}}>Zalın real görüntüsü</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {hall&&hall._videoUrl&&(
+                <button onClick={()=>{setMediaChoice(false);setVideoPlayerOpen(true);}}
+                  style={{padding:"14px",borderRadius:12,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4V8Z"/></svg>
+                  Video
+                </button>
+              )}
+              {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+                <button onClick={()=>{setMediaChoice(false);setRealPhotoOpen(true);}}
+                  style={{padding:"14px",borderRadius:12,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.08)",color:"#5B84B0",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+                  Şəkil
+                </button>
+              )}
+              <button onClick={()=>setMediaChoice(false)} style={{padding:"10px",borderRadius:12,border:"none",background:"transparent",color:"#6B6259",fontSize:12,cursor:"pointer"}}>Ləğv et</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {helpTip&&(
         <div style={{marginBottom:10,padding:"11px 14px",borderRadius:14,background:"rgba(91,132,176,.1)",border:"1px solid rgba(91,132,176,.25)",fontSize:11.5,color:"#211A16",lineHeight:1.5}}>
@@ -2170,10 +2205,10 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
   const gold="#D4AF5A";
   const statCard = (label,val,color,icon)=>(
-    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:18,padding:"13px",textAlign:"center"}}>
-      <div style={{fontSize:22}}>{icon}</div>
-      <div style={{fontSize:22,fontWeight:800,color,marginTop:4,fontFamily:"'Fraunces',serif"}}>{val}</div>
-      <div style={{fontSize:10,color:"rgba(33,26,22,.5)",marginTop:2}}>{label}</div>
+    <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:16,padding:"12px"}}>
+      <div style={{width:30,height:30,borderRadius:9,background:color+"1E",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>{icon}</div>
+      <div style={{fontSize:9,color:"rgba(33,26,22,.5)",fontWeight:600,letterSpacing:.3,textTransform:"uppercase"}}>{label}</div>
+      <div style={{fontSize:20,fontWeight:800,color,marginTop:2,fontFamily:"'Fraunces',serif"}}>{val}</div>
     </div>
   );
 
@@ -2253,13 +2288,16 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 
           {/* RSVP Bölməsi */}
           <div style={{borderTop:"1px solid rgba(201,168,76,.1)",paddingTop:16,marginBottom:12}}>
-            <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:12}}>📋 İştirak cavabları</div>
+            <div style={{fontSize:12,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:12,display:"flex",alignItems:"center",gap:6}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              İştirak cavabları
+            </div>
 
             {/* Gəlirəm */}
             <div onClick={()=>setExpand(expand==="attending"?null:"attending")}
               style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.14),rgba(76,154,110,.04))",backdropFilter:"blur(10px)",marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>✅</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4C9A6E" strokeWidth="2"><path d="M20 6 9 17l-5-5"/></svg>
                 <span style={{fontSize:14,fontWeight:700,color:"#4C9A6E"}}>Gəlirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -3391,9 +3429,8 @@ export default function App(){
 
   const [meclisOpen, setMeclisOpen] = useState(false);
   const [currentEvId, setCurrentEvId] = useState(null);
-  useEffect(()=>{
-    if(currentEvId){ try{ localStorage.setItem("gonag_last_active_evid", currentEvId); }catch(e){} }
-  },[currentEvId]);
+  // Qeyd: "son aktiv məclis" izi indi saveCurrentEvent-in saxlama tamamlandıqdan sonra
+  // (rəqəmsal dbId ilə) yazılır — bax aşağıda savePromise.then(...) daxilində.
 
   const [msgs, setMsgs] = useState([{
     role:"agent",text:"Salam! 👋 GONAG.AZ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
@@ -3667,6 +3704,8 @@ export default function App(){
   },[sessionId]);
 
   // Auto-save current event
+  const savingInFlightRef = useRef({}); // evId -> Promise<dbId> (ilk yaradılış gedəndə paralel INSERT-lərin qarşısını alır)
+
   function saveCurrentEvent(overrides={}){
     const curEvType = overrides.evType||evType;
     if(!currentEvId && !curEvType) return;
@@ -3696,6 +3735,7 @@ export default function App(){
 
     const newEvents = [snap, ...(savedEventsRef.current.filter(e=>e.id!==evId))];
     setSavedEvents(newEvents);
+    savedEventsRef.current = newEvents;
 
     // localStorage-ə saxla — həmişə işləyir
     try{
@@ -3704,15 +3744,30 @@ export default function App(){
       try{ localStorage.setItem("gonag_events_v2", JSON.stringify(newEvents.slice(0,20))); }catch(e2){}
     }
 
-    // Supabase-ə saxla
-    sbSaveEvent({...snap, dbId:existingDbId, sessionId, cardNumber}).then(returnedId=>{
+    // Supabase-ə saxla — TƏKRARLANAN INSERT-in qarşısını al:
+    // əgər bu evId üçün artıq bir "yaradılış" gedirsə, ONU gözlə, sonra həmin dbId ilə PATCH et
+    const inFlight = savingInFlightRef.current[evId];
+    const doSave = async ()=>{
+      let dbIdToUse = existingDbId;
+      if(!dbIdToUse && inFlight){
+        try{ dbIdToUse = await inFlight; }catch(e){}
+      }
+      const returnedId = await sbSaveEvent({...snap, dbId:dbIdToUse, sessionId, cardNumber});
+      return returnedId;
+    };
+    const savePromise = doSave();
+    if(!existingDbId){ savingInFlightRef.current[evId] = savePromise; }
+
+    savePromise.then(returnedId=>{
       if(returnedId){
         const finalId = returnedId;
         setSavedEvents(prev=>prev.map(e=>e.id===evId?{...e,dbId:finalId}:e));
-        // ref-i də güncəllə
         const idx = savedEventsRef.current.findIndex(e=>e.id===evId);
         if(idx>=0) savedEventsRef.current[idx]={...savedEventsRef.current[idx],dbId:finalId};
         else savedEventsRef.current=[{...snap,dbId:finalId},...savedEventsRef.current];
+        delete savingInFlightRef.current[evId];
+        // Avtomatik davam etmə RƏQƏMSAL id ilə işləyir (siyahı da rəqəmsaldır) — yerli "ev_..." id yox
+        try{ localStorage.setItem("gonag_last_active_evid", String(finalId)); }catch(e){}
       }
     });
     return evId;
@@ -5281,33 +5336,14 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
               <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 10px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:17,fontWeight:600}}>🗺️ Masa Sxemi</div>
-                {schemaTutStep===-1&&(
-                  <button onClick={()=>setSchemaTutStep(1)}
-                    style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
-                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,cursor:"pointer",
-                      display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>?</button>
-                )}
-              </div>
+            <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",padding:"0 16px 10px"}}>
+              {schemaTutStep===-1&&(
+                <button onClick={()=>setSchemaTutStep(1)}
+                  style={{width:22,height:22,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",
+                    background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,marginRight:"auto"}}>?</button>
+              )}
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                {hall&&hall._videoUrl&&(
-                  <button onClick={()=>setVideoPlayerOpen(true)}
-                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(193,56,42,.4)",
-                      background:"rgba(193,56,42,.14)",backdropFilter:"blur(6px)",color:"#C1382A",fontSize:11,
-                      fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
-                    🎥 Zalın videosu
-                  </button>
-                )}
-                {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
-                  <button onClick={()=>setRealPhotoOpen(true)}
-                    style={{padding:"5px 11px",borderRadius:14,border:"1px solid rgba(255,255,255,.5)",
-                      background:"rgba(255,255,255,.4)",backdropFilter:"blur(6px)",color:"#211A16",fontSize:11,
-                      fontWeight:700,cursor:"pointer"}}>
-                    📸 Real şəkil
-                  </button>
-                )}
                 <button style={{background:"transparent",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}} onClick={()=>tryCloseSchema()}>✕</button>
               </div>
             </div>
@@ -5456,26 +5492,31 @@ ${savedEvsList||"Yoxdur"}`;
               </div>
             )}
 
-            {/* Alt — Dəvətnamələri göndər */}
-            <div style={{padding:"10px 16px 18px",borderTop:"1px solid rgba(255,255,255,.4)",textAlign:"center"}}>
-              <button onClick={function(){
-                setSchemaChanged(false);
-                setSchemaOpen(false);
-                saveCurrentEvent({tables:tabRef.current});
-                var totG=tables.reduce(function(s,t){return s+t.guests.reduce(function(ss,g){return ss+(g.count||1);},0);},0);
-                var tblCount=tables.filter(function(t){return t.guests.length>0;}).length;
-                setMsgs(function(m){return [...m,{role:"agent",
-                  text:"Saxlanıldı! "+totG+" qonaq, "+tblCount+" masa dolu.",
-                  qrs:[]}];});
-                pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-              }} style={{padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",width:"100%",
-                background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",
-                color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
-                📨 Dəvətnamələri göndər
-              </button>
-              <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginTop:6}}>
-                Siz həmişə qonaq masasını redaktə edə bilərsiniz
-              </div>
+            {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
+            <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
+              {[
+                {key:"schema", label:"Zalın sxemi", active:true, cnt:tables.length, onClick:()=>{}},
+                {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                }},
+                {key:"stats", label:"Statistika", cnt:0, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true);
+                }},
+                {key:"meclis", label:"Məclislərim", cnt:savedEvents.length, onClick:()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true);
+                }},
+              ].map(it=>(
+                <button key={it.key} onClick={it.onClick}
+                  style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+                    border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
+                  <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
+                  <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
+                  {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+                </button>
+              ))}
             </div>
           </div>
         </div>
