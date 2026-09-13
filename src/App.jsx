@@ -1465,8 +1465,9 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   </div>
 
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
-                    <div className="finger" style={{position:"absolute",top:0,left:"50%",
-                      fontSize:22,zIndex:20,pointerEvents:"none",lineHeight:1}}>👆</div>
+                    <div className="finger" style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+                      fontSize:26,zIndex:20,pointerEvents:"none",lineHeight:1,
+                      filter:"drop-shadow(0 3px 6px rgba(0,0,0,.35))"}}>👆</div>
                   )}
                 </div>
               );
@@ -4860,8 +4861,10 @@ ${savedEvsList||"Yoxdur"}`;
                             if(chatLongPressTimer.current){
                               clearTimeout(chatLongPressTimer.current);
                               chatLongPressTimer.current = null;
-                              // Qısa toxunma ilə qonaq əlavə etmə HƏLƏLİK SÖNDÜRÜLÜB —
-                              // yeganə yol: "Zalın sxemini aç və qonaq əlavə elə" düyməsi
+                              if(!wasLong){
+                                // Qısa toxunma = tam Zal Sxeminə keçid (eyni "Zala keç" düyməsi ilə)
+                                pushPanel("schema"); setSchemaOpen(true);
+                              }
                             }
                           }
                           return (
@@ -4950,10 +4953,13 @@ ${savedEvsList||"Yoxdur"}`;
                       )}
 
                       <button onClick={()=>{ pushPanel("schema"); setSchemaOpen(true); }}
-                        style={{width:"100%",marginTop:8,padding:"9px",borderRadius:12,border:"none",
-                          background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(10px)",
-                          color:"#F5EEE0",fontSize:11,fontWeight:700,cursor:"pointer"}}>
-                        🗺️ Zalın sxemini aç və qonaq əlavə elə
+                        style={{width:"100%",marginTop:10,padding:"14px",borderRadius:16,border:"1px solid rgba(255,255,255,.25)",
+                          background:"rgba(33,26,22,.75)",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",
+                          color:"#F5EEE0",fontSize:13.5,fontWeight:700,cursor:"pointer",
+                          boxShadow:"0 1px 0 rgba(255,255,255,.15) inset, 0 10px 22px -12px rgba(0,0,0,.4)",
+                          display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>
+                        Zala keç, qonaq əlavə elə
                       </button>
                     </div>
                   )}
@@ -5725,6 +5731,20 @@ ${savedEvsList||"Yoxdur"}`;
                 </div>
               </div>
             )}
+
+            {/* Dəvəti qonaqlara göndər — aydın, minimalist */}
+            <div style={{padding:"8px 12px 4px",flexShrink:0}}>
+              <button onClick={()=>{
+                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                }}
+                style={{width:"100%",padding:"12px",borderRadius:14,border:"1px solid rgba(212,175,90,.4)",
+                  background:"rgba(212,175,90,.14)",backdropFilter:"blur(12px)",color:"#8A6B1E",
+                  fontSize:12.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                Dəvəti qonaqlara göndər
+              </button>
+            </div>
 
             {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
             <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
