@@ -2652,28 +2652,37 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
 
         {/* List */}
         <div style={{flex:1,overflowY:"auto",padding:"0 14px 16px",WebkitOverflowScrolling:"touch",touchAction:"pan-y"}}>
-          {events.map((ev,i)=>(
-            <div key={ev.id} style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.2))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -8px rgba(60,40,20,.2)",borderRadius:22,padding:"14px 16px",marginBottom:10,position:"relative"}}>
+          {events.map((ev,i)=>{
+            const filled = ev.tables&&ev.tables.length>0 ? ev.tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0) : (ev.totalGuests||0);
+            const kishi = ev.tables&&ev.tables.length>0 ? ev.tables.reduce((s,t)=>s+t.guests.filter(g=>g.gender==="kishi").reduce((ss,g)=>ss+(g.count||1),0),0) : null;
+            const qadin = ev.tables&&ev.tables.length>0 ? ev.tables.reduce((s,t)=>s+t.guests.filter(g=>g.gender==="qadin").reduce((ss,g)=>ss+(g.count||1),0),0) : null;
+            const cap = ev.tables&&ev.tables.length>0 ? ev.tables.reduce((s,t)=>s+t.seats,0) : (ev.hallTotal||0);
+            const pct = cap>0?Math.round(filled/cap*100):0;
+            return (
+            <div key={ev.id} onClick={()=>confirmId!==ev.id&&onSelect(ev)}
+              style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.2))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -8px rgba(60,40,20,.2)",borderRadius:22,padding:"16px",marginBottom:10,position:"relative",cursor:"pointer"}}>
 
-              {/* Status badge */}
-              <div style={{position:"absolute",top:12,right:12,display:"flex",alignItems:"center",gap:4,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 9px 3px 7px"}}>
-                {ev.status==="tamamlandi"?(
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
-                ):ev.status==="devetname"?(
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                ):(
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                )}
-                {statusLabel(ev.status)}
-              </div>
+              <button onClick={e=>{e.stopPropagation();setConfirmId(confirmId===ev.id?null:ev.id);}}
+                style={{position:"absolute",top:12,right:12,width:26,height:26,borderRadius:"50%",border:"none",background:"rgba(150,120,80,.1)",color:"rgba(107,98,89,.6)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/><circle cx="5" cy="12" r="1.2"/></svg>
+              </button>
+              {confirmId===ev.id&&(
+                <div onClick={e=>e.stopPropagation()} style={{position:"absolute",top:42,right:12,zIndex:5,background:"#FBF8F1",border:"1px solid rgba(150,120,80,.2)",borderRadius:14,padding:6,boxShadow:"0 10px 24px -8px rgba(60,40,20,.3)"}}>
+                  <button onClick={()=>{onDelete(ev.id, ev.dbId);setConfirmId(null);}}
+                    style={{display:"flex",alignItems:"center",gap:6,padding:"8px 12px",borderRadius:10,border:"none",background:"transparent",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+                    Sil
+                  </button>
+                </div>
+              )}
 
               {/* Event info */}
-              <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:10,paddingRight:90}}>
-                <div style={{width:38,height:38,borderRadius:11,background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:statusColor(ev.status)}}>
+              <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:12,paddingRight:26}}>
+                <div style={{width:40,height:40,borderRadius:12,background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:statusColor(ev.status)}}>
                   <TypeIcon type={ev.evType}/>
                 </div>
-                <div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:15,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                     {ev.evType==="toy"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
                     {ev.evType==="toy"&&(!ev.obData||(!ev.obData.boy&&!ev.obData.girl))?"Toy — davam edir":""}
                     {ev.evType==="nishan"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
@@ -2684,60 +2693,45 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
                     {ev.evType==="korporativ"&&(!ev.obData||!ev.obData.company)?"Korporativ — davam edir":""}
                     {!ev.evType&&"Başlanmamış məclis"}
                   </div>
-                  <div style={{fontSize:11,color:"rgba(33,26,22,.5)",marginTop:2}}>
-                    {ev.obData&&ev.obData.date&&<span>{ev.obData.date} · </span>}
+                  <div style={{fontSize:10.5,color:"rgba(33,26,22,.5)",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                     {(ev.hall&&ev.hall.name)||ev.hallName?<span>{(ev.hall&&ev.hall.name)||ev.hallName} · </span>:null}
-                    {ev.tables&&ev.tables.length>0&&<span>{ev.tables.length} masa · </span>}
-                    {ev.totalGuests>0&&<span>{ev.totalGuests} qonaq</span>}
+                    {ev.obData&&ev.obData.date&&<span>{ev.obData.date}</span>}
                   </div>
+                </div>
+                <div style={{fontSize:9,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"1E",borderRadius:8,padding:"3px 8px",whiteSpace:"nowrap",flexShrink:0}}>
+                  {statusLabel(ev.status)}
                 </div>
               </div>
 
-              {/* Progress bar — tam masalar yüklənibsə dəqiq, yoxsa təxmini (hallTotal əsasında) */}
-              {ev.tables&&ev.tables.length>0?(()=>{
-                const filled = ev.tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1),0),0);
-                const cap = ev.tables.reduce((s,t)=>s+t.seats,0);
-                const pct = cap>0?Math.round(filled/cap*100):0;
-                return (
-                  <div style={{marginBottom:10}}>
-                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                      <span style={{fontSize:10,color:"rgba(33,26,22,.45)"}}>Masa dolulugu</span>
-                      <span style={{fontSize:10,color:"#8A6B1E",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
-                    </div>
-                    <div style={{height:5,background:"rgba(255,255,255,.4)",borderRadius:3,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:pct+"%",background:pct>=100?"linear-gradient(90deg,#7ED6A5,#4C9A6E)":"linear-gradient(90deg,#E4C888,#C9A25E)",borderRadius:3}}/>
-                    </div>
-                  </div>
-                );
-              })():(ev.hallTotal>0&&(
-                <div style={{marginBottom:10,fontSize:10,color:"rgba(33,26,22,.45)"}}>
-                  Tutum: {ev.hallTotal} nəfər — "Davam et" basanda dəqiq doluluq görünəcək
+              {/* Stats row */}
+              <div style={{display:"flex",gap:6,paddingTop:11,borderTop:"1px solid rgba(255,255,255,.5)"}}>
+                <div style={{flex:1,textAlign:"center"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#211A16"}}>{filled}</div>
+                  <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>QONAQ</div>
                 </div>
-              ))}
-
-              {/* Buttons */}
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>onSelect(ev)}
-                  style={{flex:1,padding:"9px",borderRadius:14,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.16)",backdropFilter:"blur(10px)",color:"#8A6B1E",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 3v18l15-9L5 3z"/></svg>
-                  Davam et
-                </button>
-                {confirmId===ev.id?(
-                  <div style={{display:"flex",gap:4,alignItems:"center"}}>
-                    <button onClick={()=>{onDelete(ev.id, ev.dbId);setConfirmId(null);}}
-                      style={{padding:"6px 10px",borderRadius:10,border:"1px solid rgba(220,80,80,.3)",background:"rgba(220,80,80,.15)",color:"#C1382A",fontSize:11,fontWeight:700,cursor:"pointer"}}>Hə, sil</button>
-                    <button onClick={()=>setConfirmId(null)}
-                      style={{padding:"6px 10px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",background:"transparent",color:"#6B6259",fontSize:11,cursor:"pointer"}}>Yox</button>
-                  </div>
-                ):(
-                  <button onClick={()=>setConfirmId(ev.id)}
-                    style={{width:38,height:38,borderRadius:14,border:"1px solid rgba(220,80,80,.2)",background:"rgba(220,80,80,.08)",backdropFilter:"blur(10px)",color:"rgba(193,56,42,.75)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
-                  </button>
+                {kishi!=null&&(
+                  <>
+                    <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
+                    <div style={{flex:1,textAlign:"center"}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#5B84B0"}}>{kishi}</div>
+                      <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>KİŞİ</div>
+                    </div>
+                    <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
+                    <div style={{flex:1,textAlign:"center"}}>
+                      <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#C9668A"}}>{qadin}</div>
+                      <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>QADIN</div>
+                    </div>
+                  </>
                 )}
+                <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
+                <div style={{flex:1,textAlign:"center"}}>
+                  <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:pct>=100?"#4C9A6E":"#C9A25E"}}>{cap>0?pct+"%":"—"}</div>
+                  <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>DOLUB</div>
+                </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {/* Sabit alt düymə */}
         <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
