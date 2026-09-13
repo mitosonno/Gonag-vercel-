@@ -3770,6 +3770,7 @@ export default function App(){
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
   const [notInvitedDrawerOpen, setNotInvitedDrawerOpen] = useState(false);
+  const [sendFillWarning, setSendFillWarning] = useState(false);
   // Panel navigation
   const [panelStack, setPanelStack] = useState([]);
   const [hasUnsaved, setHasUnsaved] = useState(false);
@@ -5322,22 +5323,18 @@ ${savedEvsList||"Yoxdur"}`;
                   <div key={i} style={{borderRadius:15,overflow:"hidden",cursor:"pointer",
                       border:"2px solid "+(myInviteShablon===i?"#C1382A":"rgba(255,255,255,.5)"),
                       background:"rgba(255,255,255,.4)"}}
-                    onClick={()=>setMyInviteShablon(i)}>
+                    onClick={()=>setFullPreviewShablon(i)}>
                     <div style={{position:"relative"}}>
                       <MiniShablonPreview shablon={s} obData={obData}/>
-                      <button onClick={e=>{e.stopPropagation();setFullPreviewShablon(i);}}
-                        style={{position:"absolute",top:6,right:6,width:26,height:26,borderRadius:"50%",
-                          background:"rgba(20,15,10,.55)",backdropFilter:"blur(4px)",border:"none",color:"#fff",
-                          fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>👁</button>
+                      {myInviteShablon===i&&(
+                        <div style={{position:"absolute",top:6,right:6,width:22,height:22,borderRadius:"50%",
+                          background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
+                        </div>
+                      )}
                     </div>
                     <div style={{padding:"8px 6px",textAlign:"center"}}>
-                      <div style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16",marginBottom:6}}>{s.ad}</div>
-                      <button onClick={e=>{e.stopPropagation();setMyInviteShablon(i);}}
-                        style={{width:"100%",padding:"6px",borderRadius:9,border:"none",fontSize:10,fontWeight:800,cursor:"pointer",
-                          background:myInviteShablon===i?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(150,120,80,.12)",
-                          color:myInviteShablon===i?"#fff":"#6B6259"}}>
-                        {myInviteShablon===i?"✓ Seçildi":"Seç"}
-                      </button>
+                      <div style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16"}}>{s.ad}</div>
                     </div>
                   </div>
                 ))}
@@ -5406,7 +5403,7 @@ ${savedEvsList||"Yoxdur"}`;
             </button>
             <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-              ✓ Bunu seç
+              ✓ Bəyəndim, seç
             </button>
           </div>
         </div>
@@ -5735,6 +5732,9 @@ ${savedEvsList||"Yoxdur"}`;
             {/* Dəvəti qonaqlara göndər — aydın, minimalist */}
             <div style={{padding:"8px 12px 4px",flexShrink:0}}>
               <button onClick={()=>{
+                  const cap = tables.reduce((s,t)=>s+t.seats,0);
+                  const filled = tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0);
+                  if(cap>0 && filled<cap){ setSendFillWarning(true); return; }
                   setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
                   setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
                 }}
@@ -5746,6 +5746,38 @@ ${savedEvsList||"Yoxdur"}`;
               </button>
             </div>
 
+            {sendFillWarning&&(()=>{
+              const cap = tables.reduce((s,t)=>s+t.seats,0);
+              const filled = tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0);
+              const remaining = cap-filled;
+              return (
+                <div style={{position:"fixed",inset:0,zIndex:600,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setSendFillWarning(false)}>
+                  <div style={{width:"100%",maxWidth:420,background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"22px 20px 30px"}} onClick={e=>e.stopPropagation()}>
+                    <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(212,175,90,.18)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.8"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                    </div>
+                    <div style={{textAlign:"center",fontSize:14,fontWeight:700,color:"#211A16",marginBottom:6}}>Zal hələ tam dolmayıb</div>
+                    <div style={{textAlign:"center",fontSize:12.5,color:"#6B6259",marginBottom:20,lineHeight:1.5}}>
+                      {cap} qonaqdan {filled}-i əlavə edilib, <b style={{color:"#8A6B1E"}}>{remaining} yer hələ boşdur</b>.<br/>Dəvətnamələr yalnız əlavə edilmiş qonaqlara göndəriləcək.
+                    </div>
+                    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                      <button onClick={()=>{
+                          setSendFillWarning(false);
+                          setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                          setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                        }}
+                        style={{width:"100%",padding:"13px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                        Bilirəm, sonra tamamlayacam
+                      </button>
+                      <button onClick={()=>setSendFillWarning(false)}
+                        style={{width:"100%",padding:"11px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"transparent",color:"#6B6259",fontSize:12.5,cursor:"pointer"}}>
+                        Geri qayıt, əlavə edim
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
             <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
               {[
