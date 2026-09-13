@@ -2607,12 +2607,15 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
   if(!events||events.length===0) return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.35))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 20px 50px -15px rgba(60,40,20,.35)",borderRadius:26,padding:"32px 24px",textAlign:"center",maxWidth:320,width:"90%"}} onClick={e=>e.stopPropagation()}>
-        <div style={{fontSize:40,marginBottom:12}}>🎊</div>
+        <div style={{width:60,height:60,borderRadius:"50%",background:"rgba(212,175,90,.18)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px"}}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.6"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+        </div>
         <div style={{fontSize:16,fontWeight:700,color:"#211A16"}}>Hələ məclis yoxdur</div>
         <div style={{fontSize:12,color:"rgba(33,26,22,.5)",marginBottom:20,marginTop:4}}>Gul Agent ilə yeni məclis yaradın</div>
         <button onClick={()=>{onClose();if(onNewEvent)onNewEvent();}}
-          style={{width:"100%",padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8}}>
-          ✨ Yeni Məclis Yarat
+          style={{width:"100%",padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",color:"#F5EEE0",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+          Yeni Məclis Yarat
         </button>
         <button onClick={onClose} style={{padding:"9px 28px",borderRadius:16,border:"1px solid rgba(193,56,42,.3)",background:"transparent",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer"}}>Bağla</button>
       </div>
@@ -2620,8 +2623,14 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
   );
 
   const statusColor = s => s==="tamamlandi"?"#4C9A6E":s==="devetname"?"#5B84B0":"#8A6B1E";
-  const statusLabel = s => s==="tamamlandi"?"✅ Tamamlandı":s==="devetname"?"📨 Dəvətnamə göndərildi":"⏳ Natamam";
-  const typeIcon = t => t==="toy"?"💍":t==="nishan"?"💫":t==="adgunu"?"🎂":"🏢";
+  const statusLabel = s => s==="tamamlandi"?"Tamamlandı":s==="devetname"?"Dəvətnamə göndərildi":"Natamam";
+  function TypeIcon({type, size=18}){
+    const common = {width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8};
+    if(type==="toy") return <svg {...common}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>;
+    if(type==="nishan") return <svg {...common}><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>;
+    if(type==="adgunu") return <svg {...common}><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>;
+    return <svg {...common}><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>;
+  }
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)"}} onClick={onClose}>
@@ -2647,24 +2656,33 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
             <div key={ev.id} style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.2))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px -8px rgba(60,40,20,.2)",borderRadius:22,padding:"14px 16px",marginBottom:10,position:"relative"}}>
 
               {/* Status badge */}
-              <div style={{position:"absolute",top:12,right:12,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 8px"}}>
+              <div style={{position:"absolute",top:12,right:12,display:"flex",alignItems:"center",gap:4,fontSize:10,fontWeight:700,color:statusColor(ev.status),background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",border:"1px solid "+statusColor(ev.status)+"44",borderRadius:20,padding:"3px 9px 3px 7px"}}>
+                {ev.status==="tamamlandi"?(
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
+                ):ev.status==="devetname"?(
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                ):(
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                )}
                 {statusLabel(ev.status)}
               </div>
 
               {/* Event info */}
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,paddingRight:90}}>
-                <div style={{fontSize:28}}>{typeIcon(ev.evType)}</div>
+              <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:10,paddingRight:90}}>
+                <div style={{width:38,height:38,borderRadius:11,background:statusColor(ev.status)+"1E",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:statusColor(ev.status)}}>
+                  <TypeIcon type={ev.evType}/>
+                </div>
                 <div>
                   <div style={{fontSize:15,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif"}}>
-                    {ev.evType==="toy"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
-                    {ev.evType==="toy"&&(!ev.obData||!ev.obData.boy)?"💍 Toy — davam edir":""}
-                    {ev.evType==="nishan"&&ev.obData&&ev.obData.boy?(ev.obData.boy+" & "+(ev.obData.girl||"...")):""}
-                    {ev.evType==="nishan"&&(!ev.obData||!ev.obData.boy)?"💫 Nişan — davam edir":""}
+                    {ev.evType==="toy"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
+                    {ev.evType==="toy"&&(!ev.obData||(!ev.obData.boy&&!ev.obData.girl))?"Toy — davam edir":""}
+                    {ev.evType==="nishan"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
+                    {ev.evType==="nishan"&&(!ev.obData||(!ev.obData.boy&&!ev.obData.girl))?"Nişan — davam edir":""}
                     {ev.evType==="adgunu"&&ev.obData&&ev.obData.name?ev.obData.name:""}
-                    {ev.evType==="adgunu"&&(!ev.obData||!ev.obData.name)?"🎂 Ad günü — davam edir":""}
+                    {ev.evType==="adgunu"&&(!ev.obData||!ev.obData.name)?"Ad günü — davam edir":""}
                     {ev.evType==="korporativ"&&ev.obData&&ev.obData.company?ev.obData.company:""}
-                    {ev.evType==="korporativ"&&(!ev.obData||!ev.obData.company)?"🏢 Korporativ — davam edir":""}
-                    {!ev.evType&&"⏳ Başlanmamış məclis"}
+                    {ev.evType==="korporativ"&&(!ev.obData||!ev.obData.company)?"Korporativ — davam edir":""}
+                    {!ev.evType&&"Başlanmamış məclis"}
                   </div>
                   <div style={{fontSize:11,color:"rgba(33,26,22,.5)",marginTop:2}}>
                     {ev.obData&&ev.obData.date&&<span>{ev.obData.date} · </span>}
@@ -6372,9 +6390,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         }
         const Card = ({icon, title, desc, onClick, accent}) => (
           <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:16,
-            border:"1.5px solid rgba(150,120,80,.18)",borderRadius:18,marginBottom:12,cursor:"pointer",
-            background:"rgba(255,255,255,.4)",backdropFilter:"blur(10px)"}}>
-            <div style={{width:46,height:46,borderRadius:13,background:(accent||"#8A6B1E")+"22",
+            border:"1px solid rgba(255,255,255,.45)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(255,255,255,.28)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+            boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:(accent||"#8A6B1E")+"28",backdropFilter:"blur(8px)",
               display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent||"#8A6B1E"}}>{icon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:14.5,fontWeight:700,color:"#211A16",marginBottom:2}}>{title}</div>
@@ -6386,9 +6405,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         return (
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",padding:"18px 16px"}}>
           <div onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:14,padding:16,
-            border:"1.5px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
-            background:"rgba(212,175,90,.1)"}}>
-            <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.22)",
+            border:"1px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(212,175,90,.16)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+            boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.28)",backdropFilter:"blur(8px)",
               display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
             </div>
@@ -6408,9 +6428,11 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             title="Siyahını dostuna göndər" desc="Masa-masa PDF siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
           {hasDesign&&(
             <button onClick={()=>setPanel("sendChoice")}
-              style={{marginTop:"auto",paddingTop:14,width:"100%",padding:"15px",borderRadius:16,border:"none",
-                background:"linear-gradient(155deg,rgba(30,22,16,.8),rgba(30,22,16,.6))",backdropFilter:"blur(10px)",
-                color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+              style={{marginTop:"auto",paddingTop:14,width:"100%",padding:"15px",borderRadius:16,
+                border:"1px solid rgba(255,255,255,.25)",
+                background:"rgba(33,26,22,.55)",backdropFilter:"blur(20px) saturate(150%)",WebkitBackdropFilter:"blur(20px) saturate(150%)",
+                color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",
+                boxShadow:"0 1px 0 rgba(255,255,255,.15) inset, 0 10px 24px -12px rgba(0,0,0,.4)"}}>
               📨 Dəvətləri qonaqlara göndər
             </button>
           )}
@@ -6422,9 +6444,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {panel==="sendChoice"&&(()=>{
         const Card2 = ({icon, title, desc, onClick, accent}) => (
           <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:14,padding:16,
-            border:"1.5px solid rgba(150,120,80,.18)",borderRadius:18,marginBottom:12,cursor:"pointer",
-            background:"rgba(255,255,255,.4)",backdropFilter:"blur(10px)"}}>
-            <div style={{width:46,height:46,borderRadius:13,background:accent+"22",
+            border:"1px solid rgba(255,255,255,.45)",borderRadius:18,marginBottom:12,cursor:"pointer",
+            background:"rgba(255,255,255,.28)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+            boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
+            <div style={{width:46,height:46,borderRadius:13,background:accent+"28",backdropFilter:"blur(8px)",
               display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:accent}}>{icon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:14.5,fontWeight:700,color:"#211A16",marginBottom:2}}>{title}</div>
