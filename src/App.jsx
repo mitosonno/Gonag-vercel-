@@ -2702,10 +2702,10 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
                   <div style={{marginBottom:10}}>
                     <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                       <span style={{fontSize:10,color:"rgba(33,26,22,.45)"}}>Masa dolulugu</span>
-                      <span style={{fontSize:10,color:"#C1382A",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
+                      <span style={{fontSize:10,color:"#8A6B1E",fontWeight:700}}>{filled}/{cap} · {pct}%</span>
                     </div>
-                    <div style={{height:5,background:"rgba(150,120,80,.15)",borderRadius:3,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:pct+"%",background:pct>=100?"linear-gradient(90deg,#7ED6A5,#4C9A6E)":"linear-gradient(90deg,#FF9B85,#C1382A)",borderRadius:3,boxShadow:"0 0 6px rgba(193,56,42,.4)"}}/>
+                    <div style={{height:5,background:"rgba(255,255,255,.4)",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:pct+"%",background:pct>=100?"linear-gradient(90deg,#7ED6A5,#4C9A6E)":"linear-gradient(90deg,#E4C888,#C9A25E)",borderRadius:3}}/>
                     </div>
                   </div>
                 );
@@ -2718,8 +2718,9 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
               {/* Buttons */}
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>onSelect(ev)}
-                  style={{flex:1,padding:"9px",borderRadius:14,border:"1px solid rgba(193,56,42,.25)",background:"linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06))",color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                  ▶ Davam et
+                  style={{flex:1,padding:"9px",borderRadius:14,border:"1px solid rgba(212,175,90,.35)",background:"rgba(212,175,90,.16)",backdropFilter:"blur(10px)",color:"#8A6B1E",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 3v18l15-9L5 3z"/></svg>
+                  Davam et
                 </button>
                 {confirmId===ev.id?(
                   <div style={{display:"flex",gap:4,alignItems:"center"}}>
@@ -2730,8 +2731,8 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
                   </div>
                 ):(
                   <button onClick={()=>setConfirmId(ev.id)}
-                    style={{width:38,height:38,borderRadius:14,border:"1px solid rgba(220,80,80,.2)",background:"rgba(220,80,80,.08)",color:"rgba(193,56,42,.7)",fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    🗑
+                    style={{width:38,height:38,borderRadius:14,border:"1px solid rgba(220,80,80,.2)",background:"rgba(220,80,80,.08)",backdropFilter:"blur(10px)",color:"rgba(193,56,42,.75)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
                   </button>
                 )}
               </div>
@@ -2741,15 +2742,17 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
         {/* Sabit alt düymə */}
         <div style={{padding:"10px 14px 28px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
           <button onClick={()=>{onClose();if(onNewEvent)onNewEvent();}}
-            style={{width:"100%",padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.4)",
-              background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset, 0 8px 20px -8px rgba(0,0,0,.4)"}}>
-            ✨ Yeni Məclis Yarat
+            style={{width:"100%",padding:"14px",borderRadius:18,border:"1px solid rgba(255,255,255,.25)",
+              background:"rgba(33,26,22,.55)",backdropFilter:"blur(20px) saturate(150%)",WebkitBackdropFilter:"blur(20px) saturate(150%)",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.15) inset, 0 8px 20px -8px rgba(0,0,0,.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            Yeni Məclis Yarat
           </button>
           {onLogout&&(
             <button onClick={onLogout}
               style={{width:"100%",padding:"11px",borderRadius:14,border:"1px solid rgba(193,56,42,.25)",
-                background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-              🚪 Çıxış
+                background:"rgba(193,56,42,.1)",backdropFilter:"blur(14px)",color:"#C1382A",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+              Çıxış
             </button>
           )}
         </div>
@@ -6314,7 +6317,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   // ── ANA EKRAN ──────────────────────────────────
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,
-      background:"radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%)",
+      background:"linear-gradient(155deg,#E8DCC0,#D4C4A0)",
       display:"flex",flexDirection:"column"}}>
       {/* Header */}
       <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
