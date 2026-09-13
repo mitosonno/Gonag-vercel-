@@ -102,6 +102,33 @@ function NavIcon({ type }){
   return null;
 }
 
+function DashNav({ dashProps }){
+  if(!dashProps) return null;
+  const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis } = dashProps;
+  const items = [
+    {key:"schema", label:"Zalın sxemi", cnt:tableCount||0, onClick:onGoSchema},
+    {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:onGoInvite},
+    {key:"stats", label:"Statistika", cnt:0, onClick:onGoStats},
+    {key:"meclis", label:"Məclislərim", cnt:eventCount||0, onClick:onGoMeclis},
+  ];
+  return (
+    <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
+      {items.map(it=>{
+        const isActive = it.key===active;
+        return (
+          <button key={it.key} onClick={it.onClick} disabled={isActive}
+            style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
+              border:"none",background:"transparent",cursor:isActive?"default":"pointer",position:"relative"}}>
+            <span style={{color:isActive?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
+            <span style={{fontSize:10,fontWeight:isActive?700:600,color:isActive?"#C1382A":"#6B6259"}}>{it.label}</span>
+            {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function contactsSupported(){
   return typeof navigator!=="undefined" && "contacts" in navigator && "ContactsManager" in window;
 }
@@ -2350,7 +2377,7 @@ function Bar({val,tot,color}){
   );
 }
 
-function StatsPanel({ tables, ev, rsvpStats, onClose }){
+function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
   const ushaqSayi = guests.reduce((s,g)=>s+(g.ushaqCount||0),0);
   const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
@@ -2578,6 +2605,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
             )}
           </div>
         </div>
+        <DashNav dashProps={dashProps}/>
       </div>
 
       {/* SMS Pəncərəsi */}
@@ -2603,7 +2631,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose }){
 }
 
 
-function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onLogout }){
+function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onLogout, dashProps }){
   const [confirmId, setConfirmId] = useState(null);
   if(!events||events.length===0) return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
@@ -2751,6 +2779,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
             </button>
           )}
         </div>
+        <DashNav dashProps={dashProps}/>
       </div>
     </div>
   );
@@ -5429,6 +5458,13 @@ ${savedEvsList||"Yoxdur"}`;
           onDelete={deleteEvent}
           onClose={closeTopPanel}
           onLogout={()=>{ supabase.auth.signOut(); }}
+          dashProps={{
+            active:"meclis", tableCount:tables.length, eventCount:savedEvents.length,
+            onGoSchema:()=>{ setMeclisOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoInvite:()=>{ setMeclisOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+            onGoStats:()=>{ setMeclisOpen(false); pushPanel("stats"); setStatsOpen(true); },
+            onGoMeclis:()=>{},
+          }}
           onNewEvent={()=>{
             setMeclisOpen(false);
             // Əvvəlcə aktiv məclisi saxla
@@ -5562,6 +5598,13 @@ ${savedEvsList||"Yoxdur"}`;
           ev={ev}
           rsvpStats={rsvpStats}
           onClose={closeTopPanel}
+          dashProps={{
+            active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
+            onGoSchema:()=>{ setStatsOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoInvite:()=>{ setStatsOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+            onGoStats:()=>{},
+            onGoMeclis:()=>{ setStatsOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+          }}
         />
       )}
 
@@ -5912,6 +5955,13 @@ ${savedEvsList||"Yoxdur"}`;
           myInviteShablon={myInviteShablon}
           myInviteMedia={myInviteIncludeMedia?myInviteMedia:null}
           sessionId={sessionId}
+          dashProps={{
+            active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
+            onGoSchema:()=>{ setNotInvitedDrawerOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoInvite:()=>{},
+            onGoStats:()=>{ setNotInvitedDrawerOpen(false); pushPanel("stats"); setStatsOpen(true); },
+            onGoMeclis:()=>{ setNotInvitedDrawerOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+          }}
         />
       )}
 
@@ -6092,7 +6142,7 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId, dashProps }){
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"sendChoice"|"bulk"|"single"
   // Toplu göndər
@@ -6467,6 +6517,11 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
           </div>
+          {hasDesign&&(
+            <Card accent="#C1382A" onClick={()=>setPanel("sendChoice")}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>}
+              title="SMS+WhatsApp dəvət göndər" desc="Qonaqlara birbaşa dəvətnamə göndərin."/>
+          )}
           {onPrint&&(
             <Card accent="#6B6259" onClick={onPrint}
               icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>}
@@ -6475,16 +6530,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           <Card accent="#4C9A6E" onClick={shareGuestListText}
             icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>}
             title="Siyahını dostuna göndər" desc="Masa-masa PDF siyahısı (Masa 1: adlar...) — paylaşmaq üçün."/>
-          {hasDesign&&(
-            <button onClick={()=>setPanel("sendChoice")}
-              style={{marginTop:"auto",paddingTop:14,width:"100%",padding:"15px",borderRadius:16,
-                border:"1px solid rgba(255,255,255,.25)",
-                background:"rgba(33,26,22,.55)",backdropFilter:"blur(20px) saturate(150%)",WebkitBackdropFilter:"blur(20px) saturate(150%)",
-                color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",
-                boxShadow:"0 1px 0 rgba(255,255,255,.15) inset, 0 10px 24px -12px rgba(0,0,0,.4)"}}>
-              📨 Dəvətləri qonaqlara göndər
-            </button>
-          )}
         </div>
         );
       })()}
@@ -6677,35 +6722,51 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           </div>
           {sendComplete?(
             <div style={{padding:"14px 16px 36px",flexShrink:0,display:"flex",flexDirection:"column",gap:10}}>
-              <div style={{textAlign:"center",padding:"14px",borderRadius:14,background:"rgba(76,154,110,.1)",border:"1px solid rgba(76,154,110,.3)"}}>
-                <div style={{fontSize:24,marginBottom:4}}>✅</div>
+              <div style={{textAlign:"center",padding:"16px",borderRadius:16,background:"rgba(76,154,110,.14)",backdropFilter:"blur(12px)",border:"1px solid rgba(76,154,110,.3)"}}>
+                <div style={{width:38,height:38,borderRadius:"50%",background:"rgba(76,154,110,.2)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 8px"}}>
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#4C9A6E" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
                 <div style={{fontSize:13,fontWeight:700,color:"#4C9A6E"}}>Göndərildi!</div>
               </div>
               <button onClick={()=>{ setSendComplete(false); onGoToSchema&&onGoToSchema(); }}
-                style={{padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                🗺️ Sxemə qayıt
+                style={{padding:"14px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(33,26,22,.6)",backdropFilter:"blur(16px)",color:"#F5EEE0",fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>
+                Sxemə qayıt
               </button>
               <button onClick={()=>{ setSendComplete(false); setStep("select"); }}
-                style={{padding:"12px",borderRadius:12,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:"pointer"}}>
+                style={{padding:"12px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"transparent",color:"#6B6259",fontSize:13,cursor:"pointer"}}>
                 Yenidən göndər
               </button>
             </div>
           ):(
           <div style={{padding:"10px 14px 36px",flexShrink:0,display:"flex",flexDirection:"column",gap:8}}>
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setStep("preview")} disabled={smsSending} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.55)",fontSize:13,cursor:smsSending?"default":"pointer"}}>← Geri</button>
-              <button onClick={sendBulk} disabled={smsSending}
-                style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#4C9A6E",fontSize:14,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1}}>
-                📱 WhatsApp ilə göndər
-              </button>
-            </div>
+            <button onClick={sendBulk} disabled={smsSending}
+              style={{padding:"14px",borderRadius:14,border:"1px solid rgba(76,154,110,.35)",
+                background:"rgba(76,154,110,.16)",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",
+                color:"#4C9A6E",fontSize:13.5,fontWeight:700,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              Yalnız WhatsApp
+            </button>
             <button onClick={sendBulkSMS} disabled={smsSending}
-              style={{padding:"13px",borderRadius:12,border:"1px solid rgba(91,132,176,.35)",background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
-              {smsSending?"Göndərilir...":"📩 SMS ilə göndər (1 kliklə hamısına)"}
+              style={{padding:"14px",borderRadius:14,border:"1px solid rgba(91,132,176,.35)",
+                background:"rgba(91,132,176,.16)",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",
+                color:"#5B84B0",fontSize:13.5,fontWeight:700,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+              {smsSending?"Göndərilir...":"Yalnız SMS"}
             </button>
             <button onClick={sendBulkBoth} disabled={smsSending}
-              style={{padding:"13px",borderRadius:12,border:"1px solid rgba(212,175,90,.4)",background:"linear-gradient(155deg,rgba(212,175,90,.18),rgba(212,175,90,.06))",color:"#8A6B1E",fontSize:13,fontWeight:800,cursor:smsSending?"default":"pointer",opacity:smsSending?0.6:1}}>
-              {smsSending?"Göndərilir...":"📱📩 WhatsApp + SMS birlikdə"}
+              style={{padding:"14px",borderRadius:14,border:"1px solid rgba(212,175,90,.4)",
+                background:"rgba(212,175,90,.18)",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",
+                color:"#8A6B1E",fontSize:13.5,fontWeight:700,cursor:smsSending?"default":"pointer",opacity:smsSending?0.5:1,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/></svg>
+              {smsSending?"Göndərilir...":"SMS + WhatsApp"}
+            </button>
+            <button onClick={()=>setStep("preview")} disabled={smsSending}
+              style={{padding:"12px",borderRadius:14,border:"1px solid rgba(150,120,80,.2)",background:"transparent",color:"#6B6259",fontSize:12.5,cursor:smsSending?"default":"pointer"}}>
+              ← Geri
             </button>
           </div>
           )}
@@ -6817,6 +6878,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
           )}
         </>
       )}
+      <DashNav dashProps={dashProps}/>
     </div>
   );
 }
