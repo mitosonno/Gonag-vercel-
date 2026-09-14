@@ -465,8 +465,15 @@ function parseLine(line){
   return { name:parts[0], phone:parts[1]||"", count:parseInt(parts[2])||1 };
 }
 
-function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null, showSeatHint=false, onDismissSeatHint }){
+function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
   const [imgFailed, setImgFailed] = useState({});
+  const [showSeatCard, setShowSeatCard] = useState(()=>{
+    try{ return !localStorage.getItem("gonag_seen_seat_hint"); }catch(e){ return true; }
+  });
+  function dismissSeatHint(){
+    setShowSeatCard(false);
+    try{ localStorage.setItem("gonag_seen_seat_hint","1"); }catch(e){}
+  }
   const [zoomScale, setZoomScale] = useState(1);
   const pinchRef = useRef(null);
   function handleTouchStart(e){
@@ -722,25 +729,25 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         }}>{name}</div>
       );
     })}
-    {showSeatHint&&useChairImage&&firstEmptyIdx>=0&&(()=>{
+    {showSeatCard&&useChairImage&&firstEmptyIdx>=0&&(()=>{
       const p = positions[firstEmptyIdx];
-      const cardW = Math.min(150, size-20);
+      const cardW = Math.min(200, size-20);
       return (
         <>
           <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-135%)",
-            fontSize:17,lineHeight:1,zIndex:200,pointerEvents:"none",
-            filter:"drop-shadow(0 2px 4px rgba(0,0,0,.35))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
-          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translate(-50%,-135%);}50%{transform:translate(-50%,-120%);}}`}</style>
-          <div style={{position:"absolute", left:cx, top:size+6, transform:"translateX(-50%)", width:cardW, zIndex:200,
+            fontSize:24,lineHeight:1,zIndex:200,pointerEvents:"none",
+            filter:"drop-shadow(0 2px 5px rgba(0,0,0,.35))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translate(-50%,-135%);}50%{transform:translate(-50%,-115%);}}`}</style>
+          <div style={{position:"absolute", left:cx, top:size+8, transform:"translateX(-50%)", width:cardW, zIndex:200,
             background:"linear-gradient(155deg,rgba(255,255,255,.75),rgba(255,255,255,.45))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
-            border:"1px solid rgba(255,255,255,.6)",borderRadius:11,padding:"8px 9px",
-            boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 9px 18px -8px rgba(60,40,20,.35)"}}>
-            <div style={{fontSize:8.5,fontWeight:800,color:"#211A16",marginBottom:3}}>Oturacağa bas</div>
-            <div style={{fontSize:7.5,color:"#3D2E1F",lineHeight:1.5,marginBottom:6.5}}>
+            border:"1px solid rgba(255,255,255,.6)",borderRadius:16,padding:"12px 14px",
+            boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 14px 28px -12px rgba(60,40,20,.35)"}}>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#211A16",marginBottom:4}}>Oturacağa bas</div>
+            <div style={{fontSize:10,color:"#3D2E1F",lineHeight:1.5,marginBottom:10}}>
               Boş yerə toxunub qonaq adını, telefon nömrəsini əlavə edin.
             </div>
-            <button onClick={onDismissSeatHint}
-              style={{width:"100%",padding:5.5,borderRadius:7,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:8,fontWeight:800,cursor:"pointer"}}>
+            <button onClick={dismissSeatHint}
+              style={{width:"100%",padding:8,borderRadius:10,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:11,fontWeight:800,cursor:"pointer"}}>
               Tamam
             </button>
           </div>
@@ -956,7 +963,7 @@ function HallPlanSVG({ hallName, venueName, width, height }){
   );
 }
 
-function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable, sessionId, showSchemaHint, onDismissSchemaHint }){
+function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable, sessionId }){
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
   const zoomRef = useRef(1);
@@ -982,8 +989,15 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const pinch = useRef(null);
   const [gridH, setGridH] = useState(300);
   const [pulseId, setPulseId] = useState(null);
+  const [showHint, setShowHint] = useState(()=>{
+    try{ return !localStorage.getItem("gonag_seen_schema_hint"); }catch(e){ return true; }
+  });
   const hintTableIdRef = useRef(null);
   if(hintTableIdRef.current===null && tables.length>0){ hintTableIdRef.current = tables[0].id; }
+  function dismissSchemaHint(){
+    setShowHint(false);
+    try{ localStorage.setItem("gonag_seen_schema_hint","1"); }catch(e){}
+  }
   const STAGE_H = 48;
 
   // Native pinch zoom — React bypass, 60fps
@@ -1509,23 +1523,23 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     <span style={{fontSize:Math.max(7,S*0.15),fontWeight:700,color:"#6B5A3A"}}>{oc}/{t.seats}</span>
                   </div>
 
-                  {showSchemaHint&&hintTableIdRef.current===t.id&&(
+                  {showHint&&hintTableIdRef.current===t.id&&(
                     <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
                       zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",pointerEvents:"none"}}>
-                      <div style={{fontSize:17,lineHeight:1,marginBottom:-1,
-                        filter:"drop-shadow(0 2px 4px rgba(0,0,0,.35))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
-                      <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(4px);}}`}</style>
-                      <div style={{marginTop:4,width:150,
+                      <div style={{fontSize:26,lineHeight:1,marginBottom:-2,
+                        filter:"drop-shadow(0 3px 6px rgba(0,0,0,.35))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+                      <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}`}</style>
+                      <div style={{marginTop:6,width:230,
                         background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.4))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
-                        border:"1px solid rgba(255,255,255,.6)",borderRadius:11,padding:"8px 9px",
-                        boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 9px 18px -8px rgba(60,40,20,.35)",pointerEvents:"auto"}}>
-                        <div style={{fontSize:8.5,fontWeight:800,color:"#211A16",marginBottom:3}}>Masanın üzərinə bas</div>
-                        <div style={{fontSize:7.5,color:"#3D2E1F",lineHeight:1.5,marginBottom:6.5}}>
+                        border:"1px solid rgba(255,255,255,.6)",borderRadius:16,padding:"13px 15px",
+                        boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 14px 30px -12px rgba(60,40,20,.35)",pointerEvents:"auto"}}>
+                        <div style={{fontSize:12,fontWeight:800,color:"#211A16",marginBottom:5}}>Masanın üzərinə bas</div>
+                        <div style={{fontSize:10.5,color:"#3D2E1F",lineHeight:1.55,marginBottom:11}}>
                           Qonaqları əlavə etmək üçün istənilən masaya toxunun.<br/><br/>
-                          💡 <b>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz.
+                          💡 <b>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz, o öz qonaqlarını özü əlavə edib göndərə bilər.
                         </div>
-                        <button onClick={onDismissSchemaHint}
-                          style={{width:"100%",padding:5.5,borderRadius:7,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:8,fontWeight:800,cursor:"pointer"}}>
+                        <button onClick={dismissSchemaHint}
+                          style={{width:"100%",padding:9,borderRadius:11,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:11.5,fontWeight:800,cursor:"pointer"}}>
                           Tamam
                         </button>
                       </div>
@@ -1772,7 +1786,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, showSchemaHint, onDismissSchemaHint, showSeatHint, onDismissSeatHint }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId }){
   const [expandedId, setExpandedId] = useState(activeTable||null);
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -2130,8 +2144,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
       {/* Floor plan - always visible */}
       <FloorPlanView
         tables={tables}
-        showSchemaHint={showSchemaHint}
-        onDismissSchemaHint={onDismissSchemaHint}
         expandedId={editMode?null:expandedId}
         onTableClick={editMode?()=>{}:clickTable}
         onPositionChange={onPositionChange}
@@ -2205,8 +2217,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
             <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={true}
-              showSeatHint={showSeatHint}
-              onDismissSeatHint={onDismissSeatHint}
               selectedSlotIdx={slotInput?slotInput.slotIdx:null}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
@@ -3870,8 +3880,6 @@ export default function App(){
   const [guestOpen, setGuestOpen] = useState(false);
   const [invitedDrawerOpen, setInvitedDrawerOpen] = useState(false);
   const [notInvitedDrawerOpen, setNotInvitedDrawerOpen] = useState(false);
-  const [showSchemaHint, setShowSchemaHint] = useState(false);
-  const [showSeatHint, setShowSeatHint] = useState(false);
   const [sendFillWarning, setSendFillWarning] = useState(false);
   // Panel navigation
   const [panelStack, setPanelStack] = useState([]);
@@ -5547,7 +5555,6 @@ ${savedEvsList||"Yoxdur"}`;
             setTables([]); setHall(null); setCurrentEvId(null);
             setMyInviteShablon(null); setMyInviteMedia(null);
             setHist([]);
-            setShowSchemaHint(true); setShowSeatHint(true);
             setMsgs([{role:"agent",text:"Salam! 👋 Yeni məclis başladırıq!\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
           }}
         />
@@ -5722,10 +5729,6 @@ ${savedEvsList||"Yoxdur"}`;
                 obData={obData}
                 evType={evType}
                 sessionId={sessionId}
-                showSchemaHint={showSchemaHint}
-                onDismissSchemaHint={()=>setShowSchemaHint(false)}
-                showSeatHint={showSeatHint}
-                onDismissSeatHint={()=>setShowSeatHint(false)}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
