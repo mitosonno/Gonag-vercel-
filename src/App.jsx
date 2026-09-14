@@ -731,25 +731,27 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     })}
     {showSeatCard&&useChairImage&&firstEmptyIdx>=0&&(()=>{
       const p = positions[firstEmptyIdx];
+      const cardW = Math.min(200, size-20);
       return (
-        <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-100%)",
-          display:"flex",flexDirection:"column",alignItems:"center",zIndex:200}}>
-          <div style={{fontSize:26,lineHeight:1,marginBottom:-2,
+        <>
+          <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-135%)",
+            fontSize:24,lineHeight:1,zIndex:200,pointerEvents:"none",
             filter:"drop-shadow(0 2px 5px rgba(0,0,0,.35))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
-          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}`}</style>
-          <div style={{marginTop:6,width:200,background:"rgba(28,20,12,.94)",backdropFilter:"blur(16px)",
-            border:"1px solid rgba(212,175,90,.4)",borderRadius:14,padding:"11px 13px",
-            boxShadow:"0 12px 26px -10px rgba(0,0,0,.4)"}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#F5EEE0",marginBottom:4}}>Oturacağa bas</div>
-            <div style={{fontSize:9.5,color:"#cbb98a",lineHeight:1.5,marginBottom:9}}>
+          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translate(-50%,-135%);}50%{transform:translate(-50%,-115%);}}`}</style>
+          <div style={{position:"absolute", left:cx, top:size+8, transform:"translateX(-50%)", width:cardW, zIndex:200,
+            background:"linear-gradient(155deg,rgba(255,255,255,.75),rgba(255,255,255,.45))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
+            border:"1px solid rgba(255,255,255,.6)",borderRadius:16,padding:"12px 14px",
+            boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 14px 28px -12px rgba(60,40,20,.35)"}}>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#211A16",marginBottom:4}}>Oturacağa bas</div>
+            <div style={{fontSize:10,color:"#3D2E1F",lineHeight:1.5,marginBottom:10}}>
               Boş yerə toxunub qonaq adını, telefon nömrəsini əlavə edin.
             </div>
             <button onClick={dismissSeatHint}
-              style={{width:"100%",padding:7,borderRadius:9,border:"none",background:"linear-gradient(155deg,#c9a84c,#a8843a)",color:"#1a1206",fontSize:10.5,fontWeight:800,cursor:"pointer"}}>
+              style={{width:"100%",padding:8,borderRadius:10,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:11,fontWeight:800,cursor:"pointer"}}>
               Tamam
             </button>
           </div>
-        </div>
+        </>
       );
     })()}
     </div>
@@ -990,6 +992,8 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const [showHint, setShowHint] = useState(()=>{
     try{ return !localStorage.getItem("gonag_seen_schema_hint"); }catch(e){ return true; }
   });
+  const hintTableIdRef = useRef(null);
+  if(hintTableIdRef.current===null && tables.length>0){ hintTableIdRef.current = tables[0].id; }
   function dismissSchemaHint(){
     setShowHint(false);
     try{ localStorage.setItem("gonag_seen_schema_hint","1"); }catch(e){}
@@ -1519,22 +1523,23 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     <span style={{fontSize:Math.max(7,S*0.15),fontWeight:700,color:"#6B5A3A"}}>{oc}/{t.seats}</span>
                   </div>
 
-                  {showHint&&tables[0]&&tables[0].id===t.id&&(
+                  {showHint&&hintTableIdRef.current===t.id&&(
                     <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
                       zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",pointerEvents:"none"}}>
                       <div style={{fontSize:26,lineHeight:1,marginBottom:-2,
                         filter:"drop-shadow(0 3px 6px rgba(0,0,0,.35))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
                       <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}`}</style>
-                      <div style={{marginTop:6,width:230,background:"rgba(28,20,12,.94)",backdropFilter:"blur(16px)",
-                        border:"1px solid rgba(212,175,90,.4)",borderRadius:14,padding:"12px 14px",
-                        boxShadow:"0 12px 26px -10px rgba(0,0,0,.4)",pointerEvents:"auto"}}>
-                        <div style={{fontSize:11.5,fontWeight:700,color:"#F5EEE0",marginBottom:5}}>Masanın üzərinə bas</div>
-                        <div style={{fontSize:10,color:"#cbb98a",lineHeight:1.5,marginBottom:10}}>
+                      <div style={{marginTop:6,width:230,
+                        background:"linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.4))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
+                        border:"1px solid rgba(255,255,255,.6)",borderRadius:16,padding:"13px 15px",
+                        boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 14px 30px -12px rgba(60,40,20,.35)",pointerEvents:"auto"}}>
+                        <div style={{fontSize:12,fontWeight:800,color:"#211A16",marginBottom:5}}>Masanın üzərinə bas</div>
+                        <div style={{fontSize:10.5,color:"#3D2E1F",lineHeight:1.55,marginBottom:11}}>
                           Qonaqları əlavə etmək üçün istənilən masaya toxunun.<br/><br/>
-                          💡 <b style={{color:"#F5EEE0"}}>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz, o öz qonaqlarını özü əlavə edib göndərə bilər.
+                          💡 <b>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz, o öz qonaqlarını özü əlavə edib göndərə bilər.
                         </div>
                         <button onClick={dismissSchemaHint}
-                          style={{width:"100%",padding:8,borderRadius:10,border:"none",background:"linear-gradient(155deg,#c9a84c,#a8843a)",color:"#1a1206",fontSize:11,fontWeight:800,cursor:"pointer"}}>
+                          style={{width:"100%",padding:9,borderRadius:11,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.28)",color:"#5A4315",fontSize:11.5,fontWeight:800,cursor:"pointer"}}>
                           Tamam
                         </button>
                       </div>
