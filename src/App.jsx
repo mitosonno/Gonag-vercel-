@@ -79,7 +79,7 @@ Misal: "Masa 12-ni dolduraq" → cavab + [OPEN_TABLE:12] + [ADD_GUEST_PANEL:12]
 Misal: "zalın necə göründüyünü göstər" → qısa cavab + [SHOW_HALL_OVERVIEW]
 Misal: "150 nəfər üçün nə tövsiyə edərsən?" → Gülüstan/Nərgiz müqayisəsi + büdcə hesabı`;
 
-function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; return s+(g.count||1)+uc; },0); }
+function occ(t){ return (t.guests||[]).reduce((s,g)=>{ const uc=g.ushaqCount||0; const sc=g.spouseCount||0; return s+(g.count||1)+uc+sc; },0); }
 
 function NavIcon({ type }){
   const common = { width:19, height:19, viewBox:"0 0 24 24", fill:"none", stroke:"#6B6259", strokeWidth:1.6 };
@@ -499,10 +499,11 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   const needsFallback = [];
   guests.forEach(g=>{
     const uc = g.ushaqCount||0;
-    const totalSeatsNeeded = (g.count||1)+uc;
+    const sc = g.spouseCount||0;
     const parts = [];
-    for(let i=0;i<(g.count||1);i++) parts.push({isUshaq:false, sub:i});
-    for(let i=0;i<uc;i++) parts.push({isUshaq:true, sub:i});
+    for(let i=0;i<(g.count||1);i++) parts.push({isUshaq:false, isSpouse:false, sub:i});
+    for(let i=0;i<sc;i++) parts.push({isUshaq:false, isSpouse:true, sub:"s"+i});
+    for(let i=0;i<uc;i++) parts.push({isUshaq:true, isSpouse:false, sub:i});
     if(g.seatIdx!=null && g.seatIdx>=0 && g.seatIdx<n){
       // Bu qonaq üçün seatIdx-dən başlayaraq, ardıcıl BOŞ yerləri tap (dövr edərək)
       let placed = 0;
@@ -510,13 +511,13 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         const idx = (g.seatIdx+off)%n;
         if(seatOwner[idx]===null){
           const part = parts[placed];
-          seatOwner[idx] = {g, isUshaq:part.isUshaq, key:g.id+(part.isUshaq?"_u":"_a")+part.sub};
+          seatOwner[idx] = {g, isUshaq:part.isUshaq, isSpouse:part.isSpouse, key:g.id+(part.isUshaq?"_u":part.isSpouse?"_s":"_a")+part.sub};
           placed++;
         }
       }
-      if(placed<parts.length){ for(let k=placed;k<parts.length;k++) needsFallback.push({g, isUshaq:parts[k].isUshaq, key:g.id+(parts[k].isUshaq?"_u":"_a")+parts[k].sub}); }
+      if(placed<parts.length){ for(let k=placed;k<parts.length;k++) needsFallback.push({g, isUshaq:parts[k].isUshaq, isSpouse:parts[k].isSpouse, key:g.id+(parts[k].isUshaq?"_u":parts[k].isSpouse?"_s":"_a")+parts[k].sub}); }
     } else {
-      parts.forEach(part=>needsFallback.push({g, isUshaq:part.isUshaq, key:g.id+(part.isUshaq?"_u":"_a")+part.sub}));
+      parts.forEach(part=>needsFallback.push({g, isUshaq:part.isUshaq, isSpouse:part.isSpouse, key:g.id+(part.isUshaq?"_u":part.isSpouse?"_s":"_a")+part.sub}));
     }
   });
   // Fallback: qalan (seatIdx-siz və ya toqquşan) qonaqları ilk boş yerlərə ardıcıl yerləşdir
@@ -534,19 +535,23 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
   // Ring color based on fill level
   const tc = full ? "#4C7A5E" : pct > 0.7 ? "#C9A84C" : pct > 0 ? "#B23A2E" : "#B8AC9C";
 
-  function slotColor(g, isUshaq){
+  function slotColor(g, isUshaq, isSpouse){
     if(isUshaq) return "#f5d060";
-    if(g.gender==="kishi") return "#7aade8";
-    if(g.gender==="qadin") return "#e87aad";
+    const eff = isSpouse ? (g.gender==="kishi"?"qadin":g.gender==="qadin"?"kishi":"") : g.gender;
+    if(eff==="kishi") return "#7aade8";
+    if(eff==="qadin") return "#e87aad";
     return sideColor(g.side||"Ümumi");
   }
-  function personImg(g, isUshaq){
+  function personImg(g, isUshaq, isSpouse){
     if(isUshaq) return "/seated-child.png";
-    if(g.gender==="kishi") return "/seated-man.png";
+    const eff = isSpouse ? (g.gender==="kishi"?"qadin":g.gender==="qadin"?"kishi":"") : g.gender;
+    if(eff==="kishi") return "/seated-man.png";
     return "/seated-woman.png";
   }
-  function avatarEmoji(g, isUshaq){
-    return isUshaq ? "👧" : g.gender==="kishi" ? "👨" : g.gender==="qadin" ? "👩" : null;
+  function avatarEmoji(g, isUshaq, isSpouse){
+    if(isUshaq) return "👧";
+    const eff = isSpouse ? (g.gender==="kishi"?"qadin":g.gender==="qadin"?"kishi":"") : g.gender;
+    return eff==="kishi" ? "👨" : eff==="qadin" ? "👩" : null;
   }
 
   let firstEmptyIdx = -1;
@@ -557,7 +562,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     const slot = seatOwner[i];
     const isEmpty = !slot;
     if(isEmpty && firstEmptyIdx===-1) firstEmptyIdx = i;
-    return { i, a, sx, sy, slot, isEmpty, g:slot&&slot.g, isUshaq:slot&&slot.isUshaq };
+    return { i, a, sx, sy, slot, isEmpty, g:slot&&slot.g, isUshaq:slot&&slot.isUshaq, isSpouse:slot&&slot.isSpouse };
   });
 
   return (
@@ -603,8 +608,8 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
       )}
       {/* Klik zonaları (görünməz dairələr) — real qonaq şəkli yoxdursa, köhnə dairə+emoji rejimi burda göstərilir */}
       {positions.map(p=>{
-        const { i, a, sx, sy, slot, isEmpty, g, isUshaq } = p;
-        const sc = g ? slotColor(g, isUshaq) : "rgba(201,168,76,.3)";
+        const { i, a, sx, sy, slot, isEmpty, g, isUshaq, isSpouse } = p;
+        const sc = g ? slotColor(g, isUshaq, isSpouse) : "rgba(201,168,76,.3)";
         const slotKey = slot?slot.key:("empty"+i);
         return (
           <g key={slotKey} style={{cursor:clickable?"pointer":"default"}} onClick={()=>{
@@ -629,7 +634,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
                   opacity={isEmpty?0.8:1}
                 />
                 {isEmpty&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize="9" fill="#B23A2E" fontWeight="700">+</text>}
-                {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{g.gender==="qadin"?"👩":"👨"}</text>}
+                {g&&!isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>{(isSpouse?(g.gender==="kishi"?"qadin":"kishi"):g.gender)==="qadin"?"👩":"👨"}</text>}
                 {g&&isUshaq&&<text x={sx} y={sy} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.1}>👧</text>}
                 {g&&(()=>{
                   const ndx=sx-cx, ndy=sy-cy, nd=Math.sqrt(ndx*ndx+ndy*ndy)||1;
@@ -686,14 +691,14 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     </svg>
     {/* HTML overlay — stul/insan şəkilləri, SVG-dən tamam ayrı, sadə position:absolute ilə */}
     {useChairImage&&positions.map(p=>{
-      const { i, a, sx, sy, slot, isEmpty, g, isUshaq } = p;
+      const { i, a, sx, sy, slot, isEmpty, g, isUshaq, isSpouse } = p;
       const slotKey = slot?slot.key:("empty"+i);
       if(imgFailed[slotKey]) return null;
       const rotDeg = (a*180/Math.PI)+90;
       const imgSize = slotR*4.4;
       return (
         <img key={"ov_"+slotKey}
-          src={isEmpty?"/chair-seat.png":personImg(g,isUshaq)}
+          src={isEmpty?"/chair-seat.png":personImg(g,isUshaq,isSpouse)}
           onError={()=>setImgFailed(f=>({...f,[slotKey]:true}))}
           style={{
             position:"absolute",
@@ -1438,6 +1443,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                     const seatOwners=[];
                     (t.guests||[]).forEach(g=>{
                       for(let k=0;k<(g.count||1);k++) seatOwners.push(g);
+                      for(let k=0;k<(g.spouseCount||0);k++) seatOwners.push(g);
                       for(let k=0;k<(g.ushaqCount||0);k++) seatOwners.push(g);
                     });
                     return (
@@ -1787,6 +1793,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const [slotPhone, setSlotPhone] = useState("");
   const [slotCount, setSlotCount] = useState("1");
   const [slotGender, setSlotGender] = useState("");
+  const [slotSolo, setSlotSolo] = useState(null); // "solo"|"cut"|null
+  const [slotSpouseCount, setSlotSpouseCount] = useState(0); // əks cinsdən (həyat yoldaşı)
+  const [slotCompanionCount, setSlotCompanionCount] = useState(0); // eyni cinsdən (yoldaş)
   const [slotExtras, setSlotExtras] = useState([]);
   const [slotAdding, setSlotAdding] = useState(false);
   const slotRef = useRef(null);
@@ -2238,9 +2247,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   👤
                 </button>
               </div>
-              <div style={{fontSize:9,color:"rgba(33,26,22,.4)",marginBottom:8,paddingLeft:2}}>
-                İstəyə bağlı — WhatsApp dəvəti üçün lazımdır
-              </div>
 
               <div style={{display:"flex",gap:6,marginBottom:8}}>
                 {[["👨 Kişi","kishi","#5B84B0"],["👩 Qadın","qadin","#C9668A"]].map(([lbl,val,sc])=>(
@@ -2254,31 +2260,62 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 ))}
               </div>
 
-              <div style={{display:"flex",gap:6,marginBottom:10}}>
-                {[["Böyük","#C1382A",slotCount,
-                  ()=>setSlotCount(c=>String(Math.max(1,parseInt(c||1)-1))),
-                  ()=>setSlotCount(c=>String(parseInt(c||1)+1))
-                ],["👧 Uşaq","#D4AF5A",
-                  String((slotExtras.find(x=>x.type==="usher")||{count:0}).count),
-                  ()=>setSlotExtras(xs=>{const n=Math.max(0,((xs.find(x=>x.type==="usher")||{count:0}).count)-1);return n===0?[]:[{type:"usher",count:n}];}),
-                  ()=>setSlotExtras(xs=>{const n=((xs.find(x=>x.type==="usher")||{count:0}).count)+1;return [{type:"usher",count:n}];})
-                ]].map(([lbl,sc,val,dec,inc])=>(
-                  <div key={lbl} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",
-                    background:"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",border:"1px solid "+sc+"33",borderRadius:12,padding:"6px 9px"}}>
-                    <span style={{fontSize:9,color:sc+"cc"}}>{lbl}</span>
-                    <button onClick={dec} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"26",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>−</button>
-                    <span style={{fontSize:13,fontWeight:800,color:sc,minWidth:16,textAlign:"center"}}>{val}</span>
-                    <button onClick={inc} style={{width:20,height:20,borderRadius:"50%",border:"none",background:sc+"26",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"20px",textAlign:"center",padding:0}}>+</button>
+              {slotGender&&(
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8,paddingLeft:2}}>Tək gəlir, cüt gəlir?</div>
+                  <div style={{display:"flex",gap:6}}>
+                    {[["Tək gəlir","solo"],["Cüt gəlir","cut"]].map(([lbl,val])=>(
+                      <button key={val} onClick={()=>{setSlotSolo(val); if(val==="solo"){setSlotSpouseCount(0);setSlotCompanionCount(0);}}}
+                        style={{flex:1,padding:"9px",borderRadius:13,fontSize:11.5,fontWeight:700,cursor:"pointer",
+                          border:"1px solid "+(slotSolo===val?"rgba(212,175,90,.55)":"rgba(255,255,255,.5)"),
+                          background:slotSolo===val?"rgba(212,175,90,.18)":"rgba(255,255,255,.3)",
+                          color:slotSolo===val?"#8A6B1E":"rgba(33,26,22,.5)"}}>
+                        {lbl}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {slotGender&&slotSolo==="cut"&&(()=>{
+                const oppositeLbl = slotGender==="kishi"?"👩 Qadın":"👨 Kişi";
+                const sameLbl = slotGender==="kishi"?"👨 Kişi":"👩 Qadın";
+                const oppColor = slotGender==="kishi"?"#C9668A":"#5B84B0";
+                const sameColor = slotGender==="kishi"?"#5B84B0":"#C9668A";
+                const rows = [
+                  ["Həyat yoldaşı ("+oppositeLbl+")", oppColor, slotSpouseCount, ()=>setSlotSpouseCount(c=>Math.max(0,c-1)), ()=>setSlotSpouseCount(c=>c+1)],
+                  ["Yoldaş ("+sameLbl+")", sameColor, slotCompanionCount, ()=>setSlotCompanionCount(c=>Math.max(0,c-1)), ()=>setSlotCompanionCount(c=>c+1)],
+                  ["👧 Uşaq", "#D4AF5A",
+                    (slotExtras.find(x=>x.type==="usher")||{count:0}).count,
+                    ()=>setSlotExtras(xs=>{const n=Math.max(0,((xs.find(x=>x.type==="usher")||{count:0}).count)-1);return n===0?[]:[{type:"usher",count:n}];}),
+                    ()=>setSlotExtras(xs=>{const n=((xs.find(x=>x.type==="usher")||{count:0}).count)+1;return [{type:"usher",count:n}];})
+                  ],
+                ];
+                return (
+                  <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:10}}>
+                    {rows.map(([lbl,sc,val,dec,inc])=>(
+                      <div key={lbl} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                        background:val>0?sc+"14":"rgba(255,255,255,.35)",backdropFilter:"blur(6px)",border:"1px solid "+(val>0?sc+"55":"rgba(150,120,80,.18)"),borderRadius:13,padding:"8px 11px"}}>
+                        <span style={{fontSize:11,fontWeight:600,color:val>0?sc:"#211A16"}}>{lbl}</span>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <button onClick={dec} style={{width:22,height:22,borderRadius:"50%",border:"none",background:sc+"22",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"22px",textAlign:"center",padding:0}}>−</button>
+                          <span style={{fontSize:13,fontWeight:800,color:sc,minWidth:14,textAlign:"center"}}>{val}</span>
+                          <button onClick={inc} style={{width:22,height:22,borderRadius:"50%",border:"none",background:sc+"22",color:sc,fontSize:14,cursor:"pointer",fontWeight:700,lineHeight:"22px",textAlign:"center",padding:0}}>+</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               <button onClick={()=>{
                 if(!slotName.trim()) return;
+                if(!slotPhone.trim()) return;
                 if(slotAdding) return;
                 setSlotAdding(true);
                 const uc=(slotExtras.find(x=>x.type==="usher")||{count:0}).count;
-                const addCount=(parseInt(slotCount)||1)+uc;
+                const mainCount=1+slotCompanionCount;
+                const addCount=mainCount+slotSpouseCount+uc;
                 const curOcc=occ(exTbl);
                 const effectiveCap = (hall&&hall.plannedSeatsPerTable&&hall.plannedSeatsPerTable<exTbl.seats) ? hall.plannedSeatsPerTable : exTbl.seats;
                 if(curOcc+addCount > effectiveCap){
@@ -2286,12 +2323,12 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                   setSlotAdding(false);
                   return;
                 }
-                onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:parseInt(slotCount)||1,gender:slotGender,ushaqCount:uc,extras:[],side:exTbl.side||"",seatIdx:slotInput.slotIdx});
-                setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);
+                onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:mainCount,gender:slotGender,spouseCount:slotSpouseCount,ushaqCount:uc,extras:[],side:exTbl.side||"",seatIdx:slotInput.slotIdx});
+                setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);setSlotSolo(null);setSlotSpouseCount(0);setSlotCompanionCount(0);
                 setTimeout(()=>setSlotAdding(false),400);
-              }} disabled={slotAdding} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
-                background:slotAdding?"rgba(150,120,80,.3)":"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
-                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:slotAdding?"default":"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
+              }} disabled={slotAdding||!slotName.trim()||!slotPhone.trim()} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
+                background:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(150,120,80,.3)":"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
+                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:(slotAdding||!slotName.trim()||!slotPhone.trim())?"default":"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
                 ✓ Əlavə et
               </button>
             </div>
@@ -6552,10 +6589,18 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         );
         return (
           <div style={{flex:1,overflowY:"auto",padding:"18px 16px"}}>
-            <Card2 accent="#C1382A" onClick={()=>setPanel("bulk")}
+            <Card2 accent="#C1382A" onClick={()=>{
+                const totalG = allTables.reduce((s,t)=>s+(t.guests||[]).length,0);
+                if(totalG===0){ alert("Hələ heç bir masaya qonaq əlavə edilməyib.\n\nƏvvəlcə Zal Sxemindən qonaq əlavə edin, sonra dəvətnamə göndərə bilərsiniz."); return; }
+                setPanel("bulk");
+              }}
               icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
               title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
-            <Card2 accent="#5B84B0" onClick={()=>setPanel("single")}
+            <Card2 accent="#5B84B0" onClick={()=>{
+                const totalG = allTables.reduce((s,t)=>s+(t.guests||[]).length,0);
+                if(totalG===0){ alert("Hələ heç bir masaya qonaq əlavə edilməyib.\n\nƏvvəlcə Zal Sxemindən qonaq əlavə edin, sonra dəvətnamə göndərə bilərsiniz."); return; }
+                setPanel("single");
+              }}
               icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>}
               title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
           </div>
