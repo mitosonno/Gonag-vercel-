@@ -1787,7 +1787,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
 }
 
 function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId }){
-  const [expandedId, setExpandedId] = useState(activeTable||null);
+  const [expandedId, setExpandedId] = useState(null); // YALNIZ klik ilə açılsın — köhnə activeTable-dan avtomatik miras alma xətası düzəldildi
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
   const [popup, setPopup] = useState(null);
@@ -1845,7 +1845,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
   const guestPanelRef = useRef(null);
   const [savedFlash, setSavedFlash] = useState(false);
 
+  const activeTableFirstRunRef = useRef(true);
   useEffect(function(){
+    if(activeTableFirstRunRef.current){ activeTableFirstRunRef.current = false; return; }
     if(activeTable){ setExpandedId(activeTable); setPopup(null); setEditLbl(false); }
   },[activeTable]);
 
