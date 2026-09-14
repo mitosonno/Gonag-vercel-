@@ -2251,10 +2251,11 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{display:"flex",gap:6,marginBottom:8}}>
                 {[["👨 Kişi","kishi","#5B84B0"],["👩 Qadın","qadin","#C9668A"]].map(([lbl,val,sc])=>(
                   <button key={val} onClick={()=>setSlotGender(g=>g===val?"":val)}
-                    style={{flex:1,padding:"6px",borderRadius:12,fontSize:11,fontWeight:700,cursor:"pointer",backdropFilter:"blur(6px)",
-                      border:"1px solid "+(slotGender===val?sc+"88":"rgba(255,255,255,.5)"),
-                      background:slotGender===val?sc+"26":"rgba(255,255,255,.3)",
-                      color:slotGender===val?sc:"rgba(33,26,22,.45)"}}>
+                    style={{flex:1,padding:"8px",borderRadius:12,fontSize:11.5,fontWeight:800,cursor:"pointer",
+                      border:"1.5px solid "+(slotGender===val?sc:"rgba(255,255,255,.5)"),
+                      background:slotGender===val?"linear-gradient(155deg,"+sc+",color-mix(in srgb,"+sc+" 75%,black))":"rgba(255,255,255,.3)",
+                      color:slotGender===val?"#fff":"rgba(33,26,22,.45)",
+                      boxShadow:slotGender===val?"0 3px 10px -3px "+sc+"88":"none"}}>
                     {lbl}
                   </button>
                 ))}
@@ -2262,7 +2263,6 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
               {slotGender&&(
                 <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8,paddingLeft:2}}>Tək gəlir, cüt gəlir?</div>
                   <div style={{display:"flex",gap:6}}>
                     {[["Tək gəlir","solo"],["Cüt gəlir","cut"]].map(([lbl,val])=>(
                       <button key={val} onClick={()=>{setSlotSolo(val); if(val==="solo"){setSlotSpouseCount(0);setSlotCompanionCount(0);}}}
@@ -2278,14 +2278,14 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               )}
 
               {slotGender&&slotSolo==="cut"&&(()=>{
-                const oppositeLbl = slotGender==="kishi"?"👩 Qadın":"👨 Kişi";
-                const sameLbl = slotGender==="kishi"?"👨 Kişi":"👩 Qadın";
+                const oppositeLbl = slotGender==="kishi"?"Qadın":"Kişi";
+                const sameLbl = slotGender==="kishi"?"Kişi":"Qadın";
                 const oppColor = slotGender==="kishi"?"#C9668A":"#5B84B0";
                 const sameColor = slotGender==="kishi"?"#5B84B0":"#C9668A";
                 const rows = [
                   ["Həyat yoldaşı ("+oppositeLbl+")", oppColor, slotSpouseCount, ()=>setSlotSpouseCount(c=>Math.max(0,c-1)), ()=>setSlotSpouseCount(c=>c+1)],
                   ["Yoldaş ("+sameLbl+")", sameColor, slotCompanionCount, ()=>setSlotCompanionCount(c=>Math.max(0,c-1)), ()=>setSlotCompanionCount(c=>c+1)],
-                  ["👧 Uşaq", "#D4AF5A",
+                  ["Uşaq", "#D4AF5A",
                     (slotExtras.find(x=>x.type==="usher")||{count:0}).count,
                     ()=>setSlotExtras(xs=>{const n=Math.max(0,((xs.find(x=>x.type==="usher")||{count:0}).count)-1);return n===0?[]:[{type:"usher",count:n}];}),
                     ()=>setSlotExtras(xs=>{const n=((xs.find(x=>x.type==="usher")||{count:0}).count)+1;return [{type:"usher",count:n}];})
@@ -2326,9 +2326,10 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:mainCount,gender:slotGender,spouseCount:slotSpouseCount,ushaqCount:uc,extras:[],side:exTbl.side||"",seatIdx:slotInput.slotIdx});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);setSlotSolo(null);setSlotSpouseCount(0);setSlotCompanionCount(0);
                 setTimeout(()=>setSlotAdding(false),400);
-              }} disabled={slotAdding||!slotName.trim()||!slotPhone.trim()} style={{width:"100%",padding:"10px",borderRadius:14,border:"1px solid rgba(255,255,255,.4)",
-                background:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(150,120,80,.3)":"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(16px)",
-                color:"#F5EEE0",fontSize:12,fontWeight:800,cursor:(slotAdding||!slotName.trim()||!slotPhone.trim())?"default":"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
+              }} disabled={slotAdding||!slotName.trim()||!slotPhone.trim()} style={{width:"100%",padding:"11px",borderRadius:14,border:"none",
+                background:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(150,120,80,.25)":"linear-gradient(155deg,#5EB889,#3d8259)",
+                color:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(107,98,89,.6)":"#fff",fontSize:12.5,fontWeight:800,cursor:(slotAdding||!slotName.trim()||!slotPhone.trim())?"default":"pointer",
+                boxShadow:(slotAdding||!slotName.trim()||!slotPhone.trim())?"none":"0 4px 14px -4px rgba(76,154,110,.6)"}}>
                 ✓ Əlavə et
               </button>
             </div>
