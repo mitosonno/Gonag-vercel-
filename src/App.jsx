@@ -2322,7 +2322,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 const sameColor = slotGender==="kishi"?"#5B84B0":"#C9668A";
                 const rows = [
                   ["Həyat yoldaşı ("+oppositeLbl+")", oppColor, slotSpouseCount, ()=>setSlotSpouseCount(c=>Math.max(0,c-1)), ()=>setSlotSpouseCount(c=>c+1)],
-                  ["Yoldaş ("+sameLbl+")", sameColor, slotCompanionCount, ()=>setSlotCompanionCount(c=>Math.max(0,c-1)), ()=>setSlotCompanionCount(c=>c+1)],
+                  ["Dost ("+sameLbl+")", sameColor, slotCompanionCount, ()=>setSlotCompanionCount(c=>Math.max(0,c-1)), ()=>setSlotCompanionCount(c=>c+1)],
                   ["Uşaq", "#D4AF5A",
                     (slotExtras.find(x=>x.type==="usher")||{count:0}).count,
                     ()=>setSlotExtras(xs=>{const n=Math.max(0,((xs.find(x=>x.type==="usher")||{count:0}).count)-1);return n===0?[]:[{type:"usher",count:n}];}),
