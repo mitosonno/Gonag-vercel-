@@ -467,6 +467,13 @@ function parseLine(line){
 
 function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
   const [imgFailed, setImgFailed] = useState({});
+  const [showSeatCard, setShowSeatCard] = useState(()=>{
+    try{ return !localStorage.getItem("gonag_seen_seat_hint"); }catch(e){ return true; }
+  });
+  function dismissSeatHint(){
+    setShowSeatCard(false);
+    try{ localStorage.setItem("gonag_seen_seat_hint","1"); }catch(e){}
+  }
   const [zoomScale, setZoomScale] = useState(1);
   const pinchRef = useRef(null);
   function handleTouchStart(e){
@@ -648,14 +655,6 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
           </g>
         );
       })}
-      {showTapHint&&useChairImage&&firstEmptyIdx>=0&&(()=>{
-        const p = positions[firstEmptyIdx];
-        return (
-          <g className="finger-hint" style={{pointerEvents:"none"}}>
-            <text x={p.sx} y={p.sy+2} textAnchor="middle" dominantBaseline="middle" fontSize={slotR*1.6}>👆</text>
-          </g>
-        );
-      })()}
       {/* Mərkəz — müasir, minimalist: böyük seriflə nömrə, incə xətt, aydın say */}
       {useChairImage?(
         <>
@@ -730,6 +729,29 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         }}>{name}</div>
       );
     })}
+    {showSeatCard&&useChairImage&&firstEmptyIdx>=0&&(()=>{
+      const p = positions[firstEmptyIdx];
+      return (
+        <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-100%)",
+          display:"flex",flexDirection:"column",alignItems:"center",zIndex:200}}>
+          <div style={{fontSize:26,lineHeight:1,marginBottom:-2,
+            filter:"drop-shadow(0 2px 5px rgba(0,0,0,.35))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}`}</style>
+          <div style={{marginTop:6,width:200,background:"rgba(28,20,12,.94)",backdropFilter:"blur(16px)",
+            border:"1px solid rgba(212,175,90,.4)",borderRadius:14,padding:"11px 13px",
+            boxShadow:"0 12px 26px -10px rgba(0,0,0,.4)"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#F5EEE0",marginBottom:4}}>Oturacağa bas</div>
+            <div style={{fontSize:9.5,color:"#cbb98a",lineHeight:1.5,marginBottom:9}}>
+              Boş yerə toxunub qonaq adını, telefon nömrəsini əlavə edin.
+            </div>
+            <button onClick={dismissSeatHint}
+              style={{width:"100%",padding:7,borderRadius:9,border:"none",background:"linear-gradient(155deg,#c9a84c,#a8843a)",color:"#1a1206",fontSize:10.5,fontWeight:800,cursor:"pointer"}}>
+              Tamam
+            </button>
+          </div>
+        </div>
+      );
+    })()}
     </div>
   );
 }
@@ -965,13 +987,13 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const pinch = useRef(null);
   const [gridH, setGridH] = useState(300);
   const [pulseId, setPulseId] = useState(null);
-  const [showHint, setShowHint] = useState(true);
-  useEffect(()=>{
-    // Komponent hər açılışda (mount) — barmaq işarəsini etibarlı şəkildə göstər
-    const t1 = setTimeout(()=>setShowHint(true), 300);
-    const t2 = setTimeout(()=>setShowHint(false), 2100);
-    return ()=>{ clearTimeout(t1); clearTimeout(t2); };
-  },[]);
+  const [showHint, setShowHint] = useState(()=>{
+    try{ return !localStorage.getItem("gonag_seen_schema_hint"); }catch(e){ return true; }
+  });
+  function dismissSchemaHint(){
+    setShowHint(false);
+    try{ localStorage.setItem("gonag_seen_schema_hint","1"); }catch(e){}
+  }
   const STAGE_H = 48;
 
   // Native pinch zoom — React bypass, 60fps
@@ -1498,9 +1520,25 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                   </div>
 
                   {showHint&&tables[0]&&tables[0].id===t.id&&(
-                    <div className="finger" style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
-                      fontSize:26,zIndex:20,pointerEvents:"none",lineHeight:1,
-                      filter:"drop-shadow(0 3px 6px rgba(0,0,0,.35))"}}>👆</div>
+                    <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+                      zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",pointerEvents:"none"}}>
+                      <div style={{fontSize:26,lineHeight:1,marginBottom:-2,
+                        filter:"drop-shadow(0 3px 6px rgba(0,0,0,.35))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+                      <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}`}</style>
+                      <div style={{marginTop:6,width:230,background:"rgba(28,20,12,.94)",backdropFilter:"blur(16px)",
+                        border:"1px solid rgba(212,175,90,.4)",borderRadius:14,padding:"12px 14px",
+                        boxShadow:"0 12px 26px -10px rgba(0,0,0,.4)",pointerEvents:"auto"}}>
+                        <div style={{fontSize:11.5,fontWeight:700,color:"#F5EEE0",marginBottom:5}}>Masanın üzərinə bas</div>
+                        <div style={{fontSize:10,color:"#cbb98a",lineHeight:1.5,marginBottom:10}}>
+                          Qonaqları əlavə etmək üçün istənilən masaya toxunun.<br/><br/>
+                          💡 <b style={{color:"#F5EEE0"}}>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz, o öz qonaqlarını özü əlavə edib göndərə bilər.
+                        </div>
+                        <button onClick={dismissSchemaHint}
+                          style={{width:"100%",padding:8,borderRadius:10,border:"none",background:"linear-gradient(155deg,#c9a84c,#a8843a)",color:"#1a1206",fontSize:11,fontWeight:800,cursor:"pointer"}}>
+                          Tamam
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               );
