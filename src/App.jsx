@@ -4981,7 +4981,7 @@ ${savedEvsList||"Yoxdur"}`;
             {msgs.map((m,i)=>(
               <div key={i} className={"mw "+m.role}>
                 <div className={"av "+(m.role==="agent"?"a":"u")}>{m.role==="agent"?<img src="/gul-ai-icon.png" style={{width:"70%",height:"70%",objectFit:"contain"}}/>:"👤"}</div>
-                <div>
+                <div style={{minWidth:0,flex:"1 1 auto",maxWidth:"100%"}}>
                   <div className={"bb "+(m.role==="agent"?"a":"u")}>{m.text}</div>
                   {m.masaCard&&(
                     <MasaDevetCard tbl={m.masaCard} ev={m.ev} hall={m.hall} setDevetPNGOpen={setDevetPNGOpen}/>
