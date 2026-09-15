@@ -99,6 +99,9 @@ function NavIcon({ type }){
   if(type==="meclis") return (
     <svg {...common}><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v5h5"/><path d="M9 13h6M9 17h6"/></svg>
   );
+  if(type==="agent") return (
+    <svg {...common}><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-7 7c0 2.4 1.2 4.4 3 5.8V17h8v-2.2c1.8-1.4 3-3.4 3-5.8a7 7 0 0 0-7-7z"/></svg>
+  );
   return null;
 }
 
@@ -112,12 +115,13 @@ function TypeIcon({type, size=18}){
 
 function DashNav({ dashProps }){
   if(!dashProps) return null;
-  const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis } = dashProps;
+  const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis, onGoAgent } = dashProps;
   const items = [
     {key:"schema", label:"Zalın sxemi", cnt:tableCount||0, onClick:onGoSchema},
     {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:onGoInvite},
     {key:"stats", label:"Statistika", cnt:0, onClick:onGoStats},
     {key:"meclis", label:"Məclislərim", cnt:eventCount||0, onClick:onGoMeclis},
+    {key:"agent", label:"Gül-AI", cnt:0, onClick:onGoAgent},
   ];
   return (
     <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
@@ -1812,7 +1816,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, eventId }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, eventId, dashProps }){
   const [expandedId, setExpandedId] = useState(null); // YALNIZ klik ilə açılsın — köhnə activeTable-dan avtomatik miras alma xətası düzəldildi
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -3794,6 +3798,7 @@ export default function App(){
   const [busy, setBusy] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [confirmDeleteChatEv, setConfirmDeleteChatEv] = useState(null);
   const voiceRecogRef = useRef(null);
   const voiceActiveRef = useRef(false);
   const mediaRecorderRef = useRef(null);
@@ -3907,6 +3912,7 @@ export default function App(){
   const [panelStack, setPanelStack] = useState([]);
   const [hasUnsaved, setHasUnsaved] = useState(false);
   const [unsavedConfirm, setUnsavedConfirm] = useState(null);
+  const [noEventWarning, setNoEventWarning] = useState(false);
 
   function pushPanel(name){ setPanelStack(s=>[...s,name]); }
   function popPanel(){ setPanelStack(s=>s.slice(0,-1)); }
@@ -3933,6 +3939,25 @@ export default function App(){
       return;
     }
     _doClosePanel(top);
+  }
+  function goToAgent(){
+    setPanelStack([]);
+    setSchemaOpen(false);
+    setStatsOpen(false);
+    setNotInvitedDrawerOpen(false);
+    setMeclisOpen(false);
+    setSchemaChanged(false);
+  }
+  function goToSchemaOrWarn(closeCurrentFn){
+    if(!currentEvId || tables.length===0){
+      closeCurrentFn&&closeCurrentFn();
+      setPanelStack([]);
+      setStatsOpen(false); setNotInvitedDrawerOpen(false); setMeclisOpen(false); setSchemaOpen(false);
+      setNoEventWarning(true);
+      return;
+    }
+    closeCurrentFn&&closeCurrentFn();
+    pushPanel("schema"); setSchemaOpen(true);
   }
   const [glog, setGlog] = useState([]);
   const endRef = useRef(null);
@@ -4054,7 +4079,7 @@ export default function App(){
               role:"agent",
               text:"Xoş gəldiniz!\n\nSizin aktiv məclisiniz var — davam etmək üçün seçin, ya da yeni məclis yaradın.",
               qrs:[],
-              activeEvents: active
+              showActiveEvents: true
             }]);
           }
         }catch(e){}
@@ -5127,28 +5152,46 @@ ${savedEvsList||"Yoxdur"}`;
                       </div>
                     );
                   })()}
-                  {m.role==="agent"&&i===msgs.length-1&&m.activeEvents&&m.activeEvents.length>0&&(
+                  {m.role==="agent"&&i===msgs.length-1&&m.showActiveEvents&&(()=>{
+                    const liveActive = savedEvents.filter(e=>e.status!=="done" && e.status!=="tamamlandı" && e.status!=="tamamlandi").slice(0,2);
+                    if(liveActive.length===0) return null;
+                    return (
                     <div style={{marginTop:10}}>
-                      {m.activeEvents.map((ev2,ei)=>{
+                      {liveActive.map((ev2,ei)=>{
                         const tw = ev2.evType==="toy"?"#C9668A":ev2.evType==="nishan"?"#8A6B1E":ev2.evType==="adgunu"?"#5B84B0":"#6B6259";
                         const nm = ev2.obData&&(ev2.obData.boy||ev2.obData.girl)
                           ? ((ev2.obData.boy||"...")+" & "+(ev2.obData.girl||"..."))
                           : (ev2.obData&&(ev2.obData.name||ev2.obData.company)) || "Məclis";
                         return (
-                          <div key={ei} onClick={()=>loadEvent(ev2)}
-                            style={{display:"flex",alignItems:"center",gap:11,padding:12,borderRadius:16,marginBottom:9,cursor:"pointer",
-                              background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
-                              border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
-                            <div style={{width:36,height:36,borderRadius:11,background:tw+"26",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:tw}}>
-                              <TypeIcon type={ev2.evType} size={17}/>
-                            </div>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:12.5,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
-                              <div style={{fontSize:9.5,color:"#8a7548",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                                {ev2.hallName?ev2.hallName+" · ":""}{ev2.obData&&ev2.obData.date?ev2.obData.date+" · ":""}{ev2.totalGuests>0?ev2.totalGuests+" qonaq":"başlanğıc"}
+                          <div key={ei} style={{position:"relative",marginBottom:9}}>
+                            <div onClick={()=>confirmDeleteChatEv!==ev2.id&&loadEvent(ev2)}
+                              style={{display:"flex",alignItems:"center",gap:11,padding:12,borderRadius:16,cursor:"pointer",
+                                background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
+                                border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
+                              <div style={{width:36,height:36,borderRadius:11,background:tw+"26",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:tw}}>
+                                <TypeIcon type={ev2.evType} size={17}/>
                               </div>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:12.5,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
+                                <div style={{fontSize:9.5,color:"#8a7548",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                                  {ev2.hallName?ev2.hallName+" · ":""}{ev2.obData&&ev2.obData.date?ev2.obData.date+" · ":""}{ev2.totalGuests>0?ev2.totalGuests+" qonaq":"başlanğıc"}
+                                </div>
+                              </div>
+                              <div style={{fontSize:8,fontWeight:800,padding:"3px 7px",borderRadius:7,background:"rgba(212,175,90,.22)",color:"#8A6B1E",whiteSpace:"nowrap",flexShrink:0}}>Natamam</div>
+                              <button onClick={e=>{e.stopPropagation();setConfirmDeleteChatEv(confirmDeleteChatEv===ev2.id?null:ev2.id);}}
+                                style={{width:24,height:24,borderRadius:"50%",border:"none",background:"rgba(150,120,80,.12)",color:"rgba(107,98,89,.6)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/><circle cx="5" cy="12" r="1.2"/></svg>
+                              </button>
                             </div>
-                            <div style={{fontSize:8,fontWeight:800,padding:"3px 7px",borderRadius:7,background:"rgba(212,175,90,.22)",color:"#8A6B1E",whiteSpace:"nowrap",flexShrink:0}}>Natamam</div>
+                            {confirmDeleteChatEv===ev2.id&&(
+                              <div style={{position:"absolute",top:44,right:8,zIndex:5,background:"#FBF8F1",border:"1px solid rgba(150,120,80,.2)",borderRadius:14,padding:6,boxShadow:"0 10px 24px -8px rgba(60,40,20,.3)"}}>
+                                <button onClick={()=>{ deleteEvent(ev2.id); setConfirmDeleteChatEv(null); }}
+                                  style={{display:"flex",alignItems:"center",gap:6,padding:"8px 12px",borderRadius:10,border:"none",background:"transparent",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z"/></svg>
+                                  Sil, əminəm
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -5165,7 +5208,8 @@ ${savedEvsList||"Yoxdur"}`;
                         Yeni məclis yarat
                       </button>
                     </div>
-                  )}
+                    );
+                  })()}
                   {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(()=>{
                     const EVENT_OPTS = {
                       "💍 Toy":{label:"Toy",color:"#C9668A",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>},
@@ -5644,7 +5688,8 @@ ${savedEvsList||"Yoxdur"}`;
           onLogout={()=>{ supabase.auth.signOut(); }}
           dashProps={{
             active:"meclis", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setMeclisOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoSchema:()=>goToSchemaOrWarn(()=>setMeclisOpen(false)),
+            onGoAgent:()=>{ setMeclisOpen(false); goToAgent(); },
             onGoInvite:()=>{ setMeclisOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
             onGoStats:()=>{ setMeclisOpen(false); pushPanel("stats"); setStatsOpen(true); },
             onGoMeclis:()=>{},
@@ -5784,7 +5829,8 @@ ${savedEvsList||"Yoxdur"}`;
           onClose={closeTopPanel}
           dashProps={{
             active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setStatsOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoSchema:()=>goToSchemaOrWarn(()=>setStatsOpen(false)),
+            onGoAgent:()=>{ setStatsOpen(false); goToAgent(); },
             onGoInvite:()=>{ setStatsOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
             onGoStats:()=>{},
             onGoMeclis:()=>{ setStatsOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
@@ -5833,6 +5879,14 @@ ${savedEvsList||"Yoxdur"}`;
                 evType={evType}
                 eventId={currentEvId}
                 sessionId={sessionId}
+                dashProps={{
+                  active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
+                  onGoSchema:()=>{},
+                  onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
+                  onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+                  onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
+                  onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+                }}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
@@ -6007,31 +6061,7 @@ ${savedEvsList||"Yoxdur"}`;
               );
             })()}
             {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
-            <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.35)",backdropFilter:"blur(10px)"}}>
-              {[
-                {key:"schema", label:"Zalın sxemi", active:true, cnt:tables.length, onClick:()=>{}},
-                {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:()=>{
-                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
-                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
-                }},
-                {key:"stats", label:"Statistika", cnt:0, onClick:()=>{
-                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
-                  setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true);
-                }},
-                {key:"meclis", label:"Məclislərim", cnt:savedEvents.length, onClick:()=>{
-                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
-                  setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true);
-                }},
-              ].map(it=>(
-                <button key={it.key} onClick={it.onClick}
-                  style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
-                    border:"none",background:"transparent",cursor:"pointer",position:"relative"}}>
-                  <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
-                  <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
-                  {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
-                </button>
-              ))}
-            </div>
+            <DashNav dashProps={dashProps}/>
           </div>
         </div>
       )}
@@ -6143,7 +6173,8 @@ ${savedEvsList||"Yoxdur"}`;
           sessionId={sessionId}
           dashProps={{
             active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
-            onGoSchema:()=>{ setNotInvitedDrawerOpen(false); pushPanel("schema"); setSchemaOpen(true); },
+            onGoSchema:()=>goToSchemaOrWarn(()=>setNotInvitedDrawerOpen(false)),
+            onGoAgent:()=>{ setNotInvitedDrawerOpen(false); goToAgent(); },
             onGoInvite:()=>{},
             onGoStats:()=>{ setNotInvitedDrawerOpen(false); pushPanel("stats"); setStatsOpen(true); },
             onGoMeclis:()=>{ setNotInvitedDrawerOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
@@ -6181,6 +6212,21 @@ ${savedEvsList||"Yoxdur"}`;
                 İptal — qal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {noEventWarning&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setNoEventWarning(false)}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:16,padding:"24px 20px",width:"100%",maxWidth:300}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(212,175,90,.16)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>
+            </div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#211A16",textAlign:"center",marginBottom:8}}>Məclis yaradılmayıb</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Zalın sxeminə keçmək üçün əvvəlcə Gül Agent ilə məclis yaradın.</div>
+            <button onClick={()=>{ setNoEventWarning(false); goToAgent(); }}
+              style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              Gül Agent-ə keç
+            </button>
           </div>
         </div>
       )}
