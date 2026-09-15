@@ -732,15 +732,15 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
     {showSeatCard&&useChairImage&&firstEmptyIdx>=0&&(()=>{
       const p = positions[firstEmptyIdx];
       return (
-        <>
-          <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-135%)",
-            fontSize:17,lineHeight:1,zIndex:150,pointerEvents:"none",
-            filter:"drop-shadow(0 2px 4px rgba(0,0,0,.35))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
-          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translate(-50%,-135%);}50%{transform:translate(-50%,-120%);}}`}</style>
-          <div style={{position:"fixed", top:100, left:"50%", transform:"translateX(-50%)", width:170, zIndex:400,
-            background:"linear-gradient(155deg,rgba(255,255,255,.92),rgba(255,255,255,.75))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
-            border:"1px solid rgba(255,255,255,.7)",borderRadius:12,padding:"9px 10px",
-            boxShadow:"0 1px 0 rgba(255,255,255,.8) inset, 0 12px 24px -8px rgba(60,40,20,.4)"}}>
+        <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-115%)",
+          zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", pointerEvents:"none"}}>
+          <div style={{fontSize:20,lineHeight:1,marginBottom:2,
+            filter:"drop-shadow(0 2px 4px rgba(0,0,0,.4))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+          <style>{`@keyframes seatFingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(4px);}}`}</style>
+          <div style={{width:155, pointerEvents:"auto",
+            background:"linear-gradient(155deg,rgba(255,255,255,.94),rgba(255,255,255,.78))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
+            border:"1px solid rgba(255,255,255,.75)",borderRadius:12,padding:"9px 10px",
+            boxShadow:"0 1px 0 rgba(255,255,255,.8) inset, 0 12px 26px -8px rgba(60,40,20,.45)"}}>
             <div style={{fontSize:9,fontWeight:800,color:"#211A16",marginBottom:3}}>Oturacağa bas</div>
             <div style={{fontSize:8,color:"#3D2E1F",lineHeight:1.5,marginBottom:7}}>
               Boş yerə toxunub qonaq adını, telefon nömrəsini əlavə edin.
@@ -750,7 +750,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
               Tamam
             </button>
           </div>
-        </>
+        </div>
       );
     })()}
     </div>
@@ -1353,6 +1353,35 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
               );
             })}
 
+            {/* Onboarding — rəqs meydanının üzərində */}
+            {showHint&&(()=>{
+              const df = hasHallElements ? hall._hallElements.find(e=>e.type==="danceFloor") : null;
+              const px = df ? df.xPct : 50;
+              const py = df ? df.yPct : 50;
+              return (
+                <div style={{position:"absolute", left:px+"%", top:py+"%", transform:"translate(-50%,-50%)",
+                  zIndex:250, display:"flex", flexDirection:"column", alignItems:"center", pointerEvents:"none"}}>
+                  <div style={{fontSize:22,lineHeight:1,marginBottom:2,
+                    filter:"drop-shadow(0 2px 5px rgba(0,0,0,.4))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
+                  <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}`}</style>
+                  <div style={{width:165, pointerEvents:"auto",
+                    background:"linear-gradient(155deg,rgba(255,255,255,.94),rgba(255,255,255,.78))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
+                    border:"1px solid rgba(255,255,255,.75)",borderRadius:12,padding:"9px 10px",
+                    boxShadow:"0 1px 0 rgba(255,255,255,.8) inset, 0 12px 26px -8px rgba(60,40,20,.45)"}}>
+                    <div style={{fontSize:9,fontWeight:800,color:"#211A16",marginBottom:3}}>Masanın üzərinə bas</div>
+                    <div style={{fontSize:8,color:"#3D2E1F",lineHeight:1.5,marginBottom:7}}>
+                      Qonaqları əlavə etmək üçün istənilən masaya toxunun.<br/><br/>
+                      💡 <b>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz.
+                    </div>
+                    <button onClick={dismissSchemaHint}
+                      style={{width:"100%",padding:6,borderRadius:8,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.3)",color:"#5A4315",fontSize:8.5,fontWeight:800,cursor:"pointer"}}>
+                      Tamam
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Masalar */}
             {tables.map(t=>{
               const p=positions[t.id];
@@ -1527,29 +1556,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
             })}
         </div>
       </div>
-
-      {showHint&&(
-        <div style={{position:"fixed",top:90,left:"50%",transform:"translateX(-50%)",
-          zIndex:400,display:"flex",flexDirection:"column",alignItems:"center"}}>
-          <div style={{fontSize:20,lineHeight:1,marginBottom:2,
-            filter:"drop-shadow(0 2px 4px rgba(0,0,0,.35))",animation:"fingerBounce 1.4s ease-in-out infinite"}}>👆</div>
-          <style>{`@keyframes fingerBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}`}</style>
-          <div style={{width:170,
-            background:"linear-gradient(155deg,rgba(255,255,255,.92),rgba(255,255,255,.75))",backdropFilter:"blur(20px) saturate(160%)",WebkitBackdropFilter:"blur(20px) saturate(160%)",
-            border:"1px solid rgba(255,255,255,.7)",borderRadius:12,padding:"9px 10px",
-            boxShadow:"0 1px 0 rgba(255,255,255,.8) inset, 0 12px 24px -8px rgba(60,40,20,.4)"}}>
-            <div style={{fontSize:9,fontWeight:800,color:"#211A16",marginBottom:3}}>Masanın üzərinə bas</div>
-            <div style={{fontSize:8,color:"#3D2E1F",lineHeight:1.5,marginBottom:7}}>
-              Qonaqları əlavə etmək üçün istənilən masaya toxunun.<br/><br/>
-              💡 <b>1 saniyə basıb saxlasanız</b> — istədiyiniz sayda masaları seçib yaxın adama göndərə bilərsiniz.
-            </div>
-            <button onClick={dismissSchemaHint}
-              style={{width:"100%",padding:6,borderRadius:8,border:"1px solid rgba(212,175,90,.5)",background:"rgba(212,175,90,.3)",color:"#5A4315",fontSize:8.5,fontWeight:800,cursor:"pointer"}}>
-              Tamam
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* LONG PRESS PANEL — fixed overlay, overflow:hidden-dən təsirlənmir */}
       {showLongPressPanel&&longPressSelected.size>0&&(
