@@ -473,14 +473,18 @@ function parseLine(line){
   return { name:parts[0], phone:parts[1]||"", count:parseInt(parts[2])||1 };
 }
 
-function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
+function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null, eventId=null }){
   const [imgFailed, setImgFailed] = useState({});
+  const seatHintKey = "gonag_hint_seat_v3_"+(eventId||"none");
   const [showSeatCard, setShowSeatCard] = useState(()=>{
-    try{ return !localStorage.getItem("gonag_hint_seat_v3"); }catch(e){ return true; }
+    try{ return !localStorage.getItem(seatHintKey); }catch(e){ return true; }
   });
+  useEffect(()=>{
+    try{ setShowSeatCard(!localStorage.getItem(seatHintKey)); }catch(e){ setShowSeatCard(true); }
+  },[eventId]);
   function dismissSeatHint(){
     setShowSeatCard(false);
-    try{ localStorage.setItem("gonag_hint_seat_v3","1"); }catch(e){}
+    try{ localStorage.setItem(seatHintKey,"1"); }catch(e){}
   }
   const [zoomScale, setZoomScale] = useState(1);
   const pinchRef = useRef(null);
@@ -975,7 +979,7 @@ function HallPlanSVG({ hallName, venueName, width, height }){
   );
 }
 
-function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable, sessionId }){
+function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hall, editMode, onLabelSide, layoutMode, onAddTable, sessionId, eventId }){
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
   const zoomRef = useRef(1);
@@ -1001,14 +1005,19 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const pinch = useRef(null);
   const [gridH, setGridH] = useState(300);
   const [pulseId, setPulseId] = useState(null);
+  const schemaHintKey = "gonag_hint_schema_v3_"+(eventId||"none");
   const [showHint, setShowHint] = useState(()=>{
-    try{ return !localStorage.getItem("gonag_hint_schema_v3"); }catch(e){ return true; }
+    try{ return !localStorage.getItem(schemaHintKey); }catch(e){ return true; }
   });
   const hintTableIdRef = useRef(null);
+  useEffect(()=>{
+    try{ setShowHint(!localStorage.getItem(schemaHintKey)); }catch(e){ setShowHint(true); }
+    hintTableIdRef.current = null;
+  },[eventId]);
   if(hintTableIdRef.current===null && tables.length>0){ hintTableIdRef.current = tables[0].id; }
   function dismissSchemaHint(){
     setShowHint(false);
-    try{ localStorage.setItem("gonag_hint_schema_v3","1"); }catch(e){}
+    try{ localStorage.setItem(schemaHintKey,"1"); }catch(e){}
   }
   const STAGE_H = 48;
 
@@ -1803,7 +1812,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, eventId }){
   const [expandedId, setExpandedId] = useState(null); // YALNIZ klik ilə açılsın — köhnə activeTable-dan avtomatik miras alma xətası düzəldildi
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -2163,6 +2172,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
       {/* Floor plan - always visible */}
       <FloorPlanView
         tables={tables}
+        eventId={eventId}
         expandedId={editMode?null:expandedId}
         onTableClick={editMode?()=>{}:clickTable}
         onPositionChange={onPositionChange}
@@ -2235,7 +2245,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
 
           {/* TableSVG */}
           <div style={{display:"flex",justifyContent:"center",marginBottom:8}}>
-            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={true}
+            <TableSVG table={exTbl} size={Math.min(200,(typeof window!=="undefined"?window.innerWidth:300)-80)} clickable={true} useChairImage={true} showTapHint={true} eventId={eventId}
               selectedSlotIdx={slotInput?slotInput.slotIdx:null}
               onGuestClick={guestClick}
               onSlotClick={(idx)=>{
@@ -4175,7 +4185,20 @@ export default function App(){
     // Dəvətnamə dizaynı — HƏR MƏCLİS ÜÇÜN AYRICA (əvvəllər sıfırlanmırdı, köhnə məclisdən "yapışıb qalırdı")
     setMyInviteShablon(full.myInviteShablon!=null?full.myInviteShablon:null);
     setMyInviteMedia(full.myInviteMedia||null);
-    setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
+    // Əgər zal/masalar artıq varsa, obStep-i məcburi "done" et — yenidən "adını yazın" soruşulmasın
+    if(full.hall || (full.tables&&full.tables.length>0)){
+      setObStep("done");
+    } else {
+      setObStep(full.obStep||"done");
+    }
+    if(full.tables&&full.tables.length>0){
+      const nm = (full.obData&&(full.obData.boy||full.obData.girl))
+        ? ((full.obData.boy||"...")+" & "+(full.obData.girl||"..."))
+        : (full.obData&&(full.obData.name||full.obData.company)) || "Məclisiniz";
+      setMsgs([{role:"agent",text:nm+" — davam edirik. 👇",qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+    } else {
+      setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
+    }
     setHist(full.hist||[]);
     // Sxem AVTOMATİK açılmır — istifadəçi agent pəncərəsində qalır, özü "Zala keç" basır
     setMeclisOpen(false);
@@ -5808,6 +5831,7 @@ ${savedEvsList||"Yoxdur"}`;
                 pct={pct}
                 obData={obData}
                 evType={evType}
+                eventId={currentEvId}
                 sessionId={sessionId}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
