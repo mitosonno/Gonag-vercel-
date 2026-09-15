@@ -3947,6 +3947,9 @@ export default function App(){
     setNotInvitedDrawerOpen(false);
     setMeclisOpen(false);
     setSchemaChanged(false);
+    if(!currentEvId){
+      setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+    }
   }
   function goToSchemaOrWarn(closeCurrentFn){
     if(!currentEvId || tables.length===0){
