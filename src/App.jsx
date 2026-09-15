@@ -4436,7 +4436,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
 
   function confirmTotal(total){
     setHall(h=>({...h, totalGuests:total, _step:"seats"}));
-    const msg = `${total} nəfər qeyd edildi.\n\nBir stolda neçə nəfər planlaşdırırsınız?`;
+    const msg = `Qeyd edildi! ✅\n\nBir stolda neçə nəfər planlaşdırırsınız?`;
     const qrs = ["6","8","10","12","Digər"];
     setMsgs(m=>[...m,{role:"agent",text:msg,qrs}]);
     setHist(h=>[...h,{role:"assistant",content:msg}]);
@@ -4651,7 +4651,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
             setBusy(false); return;
           }
           setHall(h=>({...h, totalGuests:n, _step:"customSeats"}));
-          const msg = `${n} nəfər qeyd edildi! ✅\n\nHər masada neçə nəfər əyləşdirməyi planlaşdırırsınız? (Masalar daha böyük ola bilər, amma az adam əyləşdirə bilərsiniz — məs. 12 yerlik masada 10 nəfər)`;
+          const msg = `Qeyd edildi! ✅\n\nHər masada neçə nəfər əyləşdirməyi planlaşdırırsınız? (Masalar daha böyük ola bilər, amma az adam əyləşdirə bilərsiniz — məs. 12 yerlik masada 10 nəfər)`;
           setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:msg,qrs:["6","8","10","12","Masanın öz tutumu"]}]);
           setHist(hh=>[...hh,{role:"user",content:txt},{role:"assistant",content:msg}]);
           setBusy(false); return;
