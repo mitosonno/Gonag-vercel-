@@ -1816,7 +1816,7 @@ function GuestPopup({ popup, exTbl, tables, onMove, onDelete, onEdit, onClose, p
   );
 }
 
-function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, eventId, dashProps }){
+function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, onTableClick, onMove, onDelete, onEdit, onLabel, onAddGuest, hall, pct, onPositionChange, onSave, layoutMode, onAddTable, obData, evType, onOpenStats, onOpenInvite, sessionId, eventId, dashProps, onOpenVideo, onOpenRealPhoto }){
   const [expandedId, setExpandedId] = useState(null); // YALNIZ klik ilə açılsın — köhnə activeTable-dan avtomatik miras alma xətası düzəldildi
   const [editLbl, setEditLbl] = useState(false);
   const [lblVal, setLblVal] = useState("");
@@ -2020,7 +2020,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
             <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Sürüşdür</>
           )}
         </button>
-        {hall&&(hall._videoUrl||hall.planImageUrl||DEMO_HALL.imageUrl)&&(
+        {hall&&(hall._videoUrl||hall.planImageUrl)&&(
           <button onClick={()=>setMediaChoice(true)}
             style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,padding:"8px 4px",borderRadius:11,
               border:"1px solid rgba(212,175,90,.4)",background:"rgba(212,175,90,.1)",color:"#8A6B1E",fontSize:9.5,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap"}}>
@@ -2038,14 +2038,14 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
             <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12,textAlign:"center"}}>Zalın real görüntüsü</div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {hall&&hall._videoUrl&&(
-                <button onClick={()=>{setMediaChoice(false);setVideoPlayerOpen(true);}}
+                <button onClick={()=>{setMediaChoice(false);if(onOpenVideo)onOpenVideo();}}
                   style={{padding:"14px",borderRadius:12,border:"1px solid rgba(193,56,42,.3)",background:"rgba(193,56,42,.08)",color:"#C1382A",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="5" width="15" height="14" rx="2"/><path d="m22 8-5 4 5 4V8Z"/></svg>
                   Video
                 </button>
               )}
-              {hall&&(hall.planImageUrl||DEMO_HALL.imageUrl)&&(
-                <button onClick={()=>{setMediaChoice(false);setRealPhotoOpen(true);}}
+              {hall&&hall.planImageUrl&&(
+                <button onClick={()=>{setMediaChoice(false);if(onOpenRealPhoto)onOpenRealPhoto();}}
                   style={{padding:"14px",borderRadius:12,border:"1px solid rgba(91,132,176,.3)",background:"rgba(91,132,176,.08)",color:"#5B84B0",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
                   Şəkil
@@ -5716,9 +5716,9 @@ ${savedEvsList||"Yoxdur"}`;
       )}
 
       {/* RESTAURANT MODAL */}
-      {realPhotoOpen&&hall&&(
+      {realPhotoOpen&&hall&&hall.planImageUrl&&(
         <div style={{position:"fixed",inset:0,zIndex:300,
-          backgroundImage:`url(${hall.planImageUrl||DEMO_HALL.imageUrl})`,
+          backgroundImage:`url(${hall.planImageUrl})`,
           backgroundSize:"contain",backgroundRepeat:"no-repeat",backgroundPosition:"center",
           backgroundColor:"rgba(0,0,0,.95)"}}
           onClick={()=>setRealPhotoOpen(false)}>
@@ -5896,6 +5896,8 @@ ${savedEvsList||"Yoxdur"}`;
                 }}
                 onOpenStats={()=>{ pushPanel("stats"); setStatsOpen(true); }}
                 onOpenInvite={()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
+                onOpenVideo={()=>setVideoPlayerOpen(true)}
+                onOpenRealPhoto={()=>setRealPhotoOpen(true)}
                 onSave={()=>{ saveCurrentEvent({tables}); setSchemaChanged(false); }}
                 layoutMode={layoutMode}
                 onAddTable={()=>{
