@@ -729,10 +729,15 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
         }}>{name}</div>
       );
     })}
-    {showSeatCard&&useChairImage&&firstEmptyIdx>=0&&(()=>{
-      const p = positions[firstEmptyIdx];
+    {showSeatCard&&useChairImage&&(()=>{
+      // Aşağı hissədəki boş oturacağı seç (yuxarıdakı başlıqla toqquşmasın)
+      const emptyBottom = positions.filter(q=>q.isEmpty && q.sy > cy);
+      const target = emptyBottom.length>0
+        ? emptyBottom.reduce((best,q)=> q.sy>best.sy ? q : best, emptyBottom[0])
+        : (firstEmptyIdx>=0 ? positions[firstEmptyIdx] : null);
+      if(!target) return null;
       return (
-        <div style={{position:"absolute", left:p.sx, top:p.sy, transform:"translate(-50%,-115%)",
+        <div style={{position:"absolute", left:target.sx, top:target.sy, transform:"translate(-50%,-115%)",
           zIndex:300, display:"flex", flexDirection:"column", alignItems:"center", pointerEvents:"none"}}>
           <div style={{fontSize:20,lineHeight:1,marginBottom:2,
             filter:"drop-shadow(0 2px 4px rgba(0,0,0,.4))",animation:"seatFingerBounce 1.4s ease-in-out infinite"}}>👆</div>
