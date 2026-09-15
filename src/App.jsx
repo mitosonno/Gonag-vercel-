@@ -117,7 +117,7 @@ function DashNav({ dashProps }){
   if(!dashProps) return null;
   const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis, onGoAgent } = dashProps;
   const items = [
-    {key:"schema", label:"Zalın sxemi", cnt:tableCount||0, onClick:onGoSchema},
+    {key:"schema", label:"Zalın sxemi", cnt:0, onClick:onGoSchema},
     {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:onGoInvite},
     {key:"stats", label:"Statistika", cnt:0, onClick:onGoStats},
     {key:"meclis", label:"Məclislərim", cnt:eventCount||0, onClick:onGoMeclis},
@@ -4455,7 +4455,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setHall({...h, tblCount:tbls.length, seatsPerTable:seats, _step:"done"});
       setTables(tbls);
       pushPanel("schema"); setSchemaOpen(true);
-      setSchemaTutStep(1); // tutorial başlat
       setFillMode("one-by-one");
       setActiveTable(null);
       const msg = `✅ ${tbls.length} masa hazır — hər masada ${seats} yer · ümumilikdə ${base} nəfər.
@@ -4472,7 +4471,6 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     setHall({...h, tblCount, seatsPerTable:seats, _step:"done"});
     setTables(tbls);
     pushPanel("schema"); setSchemaOpen(true);
-    setSchemaTutStep(1); // tutorial başlat
     setFillMode("one-by-one");
     const msg = `✅ ${tblCount} masa hazır — hər masada ${seats} yer · ümumilikdə ${base} nəfər.
 
@@ -5474,9 +5472,9 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
           <div style={{display:"flex",padding:"8px 4px",borderTop:"1px solid rgba(255,255,255,.4)",flexShrink:0,background:"rgba(255,255,255,.25)",backdropFilter:"blur(10px)"}}>
             {[
-              {key:"schema", label:"Zalın sxemi", enabled:hasS, cnt:tables.length,
+              {key:"schema", label:"Zalın sxemi", enabled:hasS, cnt:0,
                 hint:"Əvvəlcə məclis yaradın və restoran seçin 🙏",
-                onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); if(schemaTutStep===0) setSchemaTutStep(1); }},
+                onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); }},
               {key:"invite", label:"Dəvətnamələr", enabled:tables.length>0&&totG>0,
                 hint:tables.length===0?"Əvvəlcə zal sxemini qurun 🙏":"Əvvəlcə masalara qonaq əlavə edin 🙏",
                 onClick:()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }},
