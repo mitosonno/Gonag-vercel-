@@ -106,11 +106,11 @@ function NavIcon({ type }){
 }
 
 function TypeIcon({type, size=18}){
-  const common = {width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8};
-  if(type==="toy") return <svg {...common}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>;
-  if(type==="nishan") return <svg {...common}><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>;
-  if(type==="adgunu") return <svg {...common}><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>;
-  return <svg {...common}><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>;
+  const common = {width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.3, strokeLinecap:"round", strokeLinejoin:"round"};
+  if(type==="toy") return <svg {...common}><circle cx="7" cy="5" r="2.1"/><path d="M7 8.3 4 18.5h6L7 8.3Z"/><circle cx="15.3" cy="5" r="2.1"/><path d="M12.9 18.5v-5a2.4 2.4 0 0 1 4.8 0v5"/><path d="M15.3 18.5v3.3"/></svg>;
+  if(type==="nishan") return <svg {...common}><circle cx="8.8" cy="14.5" r="5"/><circle cx="15.2" cy="14.5" r="5"/><path d="m13.4 8-1.4-1.8L10.6 8h1v1.6h1.8V8h1Z"/></svg>;
+  if(type==="adgunu") return <svg {...common}><path d="M12 2.2v3.3"/><rect x="4.5" y="9.5" width="15" height="10" rx="1.3"/><path d="M4.5 12.8c1.4-1.6 2.8-1.6 4.2 0s2.8 1.6 4.2 0 2.8-1.6 4.2 0 1.4 1.6 1.4 1.6"/></svg>;
+  return <svg {...common}><rect x="8" y="3.5" width="8" height="3" rx="1"/><rect x="3.5" y="6.5" width="17" height="12.5" rx="1.8"/><path d="M3.5 12.5h17M12 11.3v2.4"/></svg>;
 }
 
 function DashNav({ dashProps }){
@@ -4517,10 +4517,10 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     const empty = !txt.trim();
 
     if(obStep==="type"){
-      if(txt==="💍 Toy"){    setEvType("toy");        setObStep("toy_couple"); obReply("Gözəl! 💍\n\nBəyin və gəlinin adını yazın:\n(məs: Rəşad Əliyev / Günel Həsənova)"); setTimeout(()=>saveCurrentEvent({evType:"toy",obStep:"toy_couple"}),100); return; }
-      if(txt==="💫 Nişan"){  setEvType("nishan");     setObStep("nishan_couple"); obReply("Mübarək! 💫\n\nOğlan və qızın adını yazın:\n(məs: Tural Quliyev / Aytən Məmmədova)"); setTimeout(()=>saveCurrentEvent({evType:"nishan",obStep:"nishan_couple"}),100); return; }
-      if(txt==="🎂 Ad günü"){setEvType("adgunu");     setObStep("adgunu_name");   obReply("Əla! 🎂\n\nAd sahibinin adı-soyadı?"); setTimeout(()=>saveCurrentEvent({evType:"adgunu",obStep:"adgunu_name"}),100); return; }
-      if(txt==="🏢 Korporativ"){setEvType("korporativ");setObStep("korp_company");obReply("Əla! 🏢\n\nŞirkətin adı nədir?"); setTimeout(()=>saveCurrentEvent({evType:"korporativ",obStep:"korp_company"}),100); return; }
+      if(txt==="💍 Toy"){    setEvType("toy");        setObStep("toy_couple"); obReply("Gözəl!\n\nBəyin və gəlinin adını yazın:\n(məs: Rəşad Əliyev / Günel Həsənova)"); setTimeout(()=>saveCurrentEvent({evType:"toy",obStep:"toy_couple"}),100); return; }
+      if(txt==="💫 Nişan"){  setEvType("nishan");     setObStep("nishan_couple"); obReply("Mübarək!\n\nOğlan və qızın adını yazın:\n(məs: Tural Quliyev / Aytən Məmmədova)"); setTimeout(()=>saveCurrentEvent({evType:"nishan",obStep:"nishan_couple"}),100); return; }
+      if(txt==="🎂 Ad günü"){setEvType("adgunu");     setObStep("adgunu_name");   obReply("Əla!\n\nAd sahibinin adı-soyadı?"); setTimeout(()=>saveCurrentEvent({evType:"adgunu",obStep:"adgunu_name"}),100); return; }
+      if(txt==="🏢 Korporativ"){setEvType("korporativ");setObStep("korp_company");obReply("Əla!\n\nŞirkətin adı nədir?"); setTimeout(()=>saveCurrentEvent({evType:"korporativ",obStep:"korp_company"}),100); return; }
       // İstifadəçi düymələrdən başqa bir şey yazıbsa — məcburi növbədən əvvəl məclis növünü seçdir
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Əvvəlcə məclis növünü seçin 👇",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
       setHist(h=>[...h,{role:"user",content:txt},{role:"assistant",content:"Əvvəlcə məclis növünü seçin"}]);
@@ -4551,13 +4551,13 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setObData(d=>({...d,boy,girl}));
       setObStep("toy_date");
       setTimeout(()=>saveCurrentEvent({obStep:"toy_date",obData:{...obDataRef.current,boy,girl}}),100);
-      obReply(boy+" & "+girl+" — nə gözəl cüt! 🥂\n\nToy tarixi? (məs: 15 Avqust 2025)"); return;
+      obReply("Nə gözəl cüt!\n\nToy tarixi? (məs: 15 Avqust 2025)"); return;
     }
     if(obStep==="toy_date"){
       if(empty){ obWarn("Toy tarixini yazın zəhmət olmasa 📅"); return; }
       setObData(d=>({...d,date:txt})); setObStep("restoran");
       setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt}}),100);
-      obReply("📅 "+txt+" — qeyd edildi!\n\nİndi zal seçək 👇",["🔍 Restoran axtar"]);
+      obReply("📅 Qeyd edildi!\n\nİndi zal seçək 👇",["🔍 Restoran axtar"]);
       setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt},status:"natamam"}),100);
       return;
     }
@@ -4581,7 +4581,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(!girl){ obWarn(boy+" — qızın adını da əlavə edin 🙏"); return; }
       setObData(d=>({...d,boy,girl})); setObStep("nishan_date");
       setTimeout(()=>saveCurrentEvent({obStep:"nishan_date",obData:{...obDataRef.current,boy,girl}}),100);
-      obReply(boy+" & "+girl+" — mübarək! 💫\n\nNişan tarixi?"); return;
+      obReply("Mübarək!\n\nNişan tarixi?"); return;
     }
     if(obStep==="nishan_date"){
       if(empty){ obWarn("Nişan tarixini yazın zəhmət olmasa 📅"); return; }
@@ -4598,12 +4598,12 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(empty){ obWarn("Ad sahibinin adını yazın zəhmət olmasa 🙏"); return; }
       setObData(d=>({...d,name:txt})); setObStep("adgunu_age");
       setTimeout(()=>saveCurrentEvent({obStep:"adgunu_age",obData:{...obDataRef.current,name:txt}}),100);
-      obReply(txt+" — neçə yaşı tamam olur?"); return;
+      obReply("Neçə yaşı tamam olur?"); return;
     }
     if(obStep==="adgunu_age"){
       if(empty){ obWarn("Yaşı yazın zəhmət olmasa 🎂"); return; }
       setObData(d=>({...d,age:txt})); setObStep("adgunu_date");
-      obReply(txt+" yaş — gözəl! 🎂\n\nTədbir tarixi?"); return;
+      obReply("Gözəl!\n\nTədbir tarixi?"); return;
     }
     if(obStep==="adgunu_date"){
       if(empty){ obWarn("Tarixi yazın zəhmət olmasa 📅"); return; }
@@ -4619,7 +4619,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     if(obStep==="korp_company"){
       if(empty){ obWarn("Şirkətin adını yazın zəhmət olmasa 🙏"); return; }
       setObData(d=>({...d,company:txt})); setObStep("korp_topic");
-      obReply(txt+" — mövzunu/tədbirin adını deyin?"); return;
+      obReply("Mövzunu/tədbirin adını deyin?"); return;
     }
     if(obStep==="korp_topic"){
       if(empty){ obWarn("Tədbirin mövzusunu yazın zəhmət olmasa 🙏"); return; }
@@ -4630,7 +4630,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(empty){ obWarn("Tarixi yazın zəhmət olmasa 📅"); return; }
       setObData(d=>({...d,date:txt})); setObStep("restoran");
       setTimeout(()=>saveCurrentEvent({obStep:"restoran",obData:{...obDataRef.current,date:txt}}),100);
-      obReply("📅 "+txt+" — qeyd edildi! Zal seçək 👇",["🔍 Restoran axtar"]); return;
+      obReply("📅 Qeyd edildi! Zal seçək 👇",["🔍 Restoran axtar"]); return;
     }
     // Hall total step — neçə nəfər
     if(hall && hall._step==="total"){
@@ -5216,10 +5216,10 @@ ${savedEvsList||"Yoxdur"}`;
                   })()}
                   {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(()=>{
                     const EVENT_OPTS = {
-                      "💍 Toy":{label:"Toy",color:"#C9668A",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>},
-                      "💫 Nişan":{label:"Nişan",color:"#8A6B1E",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>},
-                      "🎂 Ad günü":{label:"Ad günü",color:"#5B84B0",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>},
-                      "🏢 Korporativ":{label:"Korporativ",color:"#6B6259",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>},
+                      "💍 Toy":{label:"Toy",color:"#C9668A",icon:<TypeIcon type="toy" size={19}/>},
+                      "💫 Nişan":{label:"Nişan",color:"#8A6B1E",icon:<TypeIcon type="nishan" size={19}/>},
+                      "🎂 Ad günü":{label:"Ad günü",color:"#5B84B0",icon:<TypeIcon type="adgunu" size={19}/>},
+                      "🏢 Korporativ":{label:"Korporativ",color:"#6B6259",icon:<TypeIcon type="korporativ" size={19}/>},
                     };
                     const isEventChoice = m.qrs.every(q=>EVENT_OPTS[q]);
                     if(isEventChoice){
