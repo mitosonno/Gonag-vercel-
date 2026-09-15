@@ -102,6 +102,14 @@ function NavIcon({ type }){
   return null;
 }
 
+function TypeIcon({type, size=18}){
+  const common = {width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8};
+  if(type==="toy") return <svg {...common}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>;
+  if(type==="nishan") return <svg {...common}><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>;
+  if(type==="adgunu") return <svg {...common}><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>;
+  return <svg {...common}><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>;
+}
+
 function DashNav({ dashProps }){
   if(!dashProps) return null;
   const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis } = dashProps;
@@ -2745,13 +2753,6 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
 
   const statusColor = s => s==="tamamlandi"?"#4C9A6E":s==="devetname"?"#5B84B0":"#8A6B1E";
   const statusLabel = s => s==="tamamlandi"?"Tamamlandı":s==="devetname"?"Dəvətnamə göndərildi":"Natamam";
-  function TypeIcon({type, size=18}){
-    const common = {width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8};
-    if(type==="toy") return <svg {...common}><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>;
-    if(type==="nishan") return <svg {...common}><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>;
-    if(type==="adgunu") return <svg {...common}><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>;
-    return <svg {...common}><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>;
-  }
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.4)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)"}} onClick={onClose}>
@@ -3777,7 +3778,7 @@ export default function App(){
   // (rəqəmsal dbId ilə) yazılır — bax aşağıda savePromise.then(...) daxilində.
 
   const [msgs, setMsgs] = useState([{
-    role:"agent",text:"Salam! 👋 QONAQ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
+    role:"agent",text:"Salam! QONAQ-a xoş gəlmisiniz.\n\nMən Gul Agent — məclis koordinatorunuzam.\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
   }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -4035,12 +4036,16 @@ export default function App(){
         // localStorage-i də güncəllə
         try{ localStorage.setItem("gonag_events_v2", JSON.stringify(evs.slice(0,20))); }catch(e){}
         try{ window.storage.set("gonag_events_v2", JSON.stringify(evs.slice(0,20))); }catch(e){}
-        // Yarımçıq qalan son aktiv məclisi avtomatik davam etdir (istifadəçi əl ilə "Məclislərim"ə girmədən)
+        // Təkrar giriş — aktiv (natamam) məclisləri agent pəncərəsində göstər
         try{
-          const lastActiveId = localStorage.getItem("gonag_last_active_evid");
-          if(lastActiveId){
-            const found = evs.find(e=>e.id===lastActiveId && e.status!=="done" && e.status!=="tamamlandı");
-            if(found) loadEvent(found);
+          const active = evs.filter(e=>e.status!=="done" && e.status!=="tamamlandı" && e.status!=="tamamlandi").slice(0,2);
+          if(active.length>0){
+            setMsgs([{
+              role:"agent",
+              text:"Xoş gəldiniz!\n\nSizin aktiv məclisiniz var — davam etmək üçün seçin, ya da yeni məclis yaradın.",
+              qrs:[],
+              activeEvents: active
+            }]);
           }
         }catch(e){}
       } else {
@@ -5099,9 +5104,73 @@ ${savedEvsList||"Yoxdur"}`;
                       </div>
                     );
                   })()}
-                  {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(
-                    <div className="qw">{m.qrs.map((q,qi)=><button key={qi} className="qb" onClick={()=>send(q)}>{q}</button>)}</div>
+                  {m.role==="agent"&&i===msgs.length-1&&m.activeEvents&&m.activeEvents.length>0&&(
+                    <div style={{marginTop:10}}>
+                      {m.activeEvents.map((ev2,ei)=>{
+                        const tw = ev2.evType==="toy"?"#C9668A":ev2.evType==="nishan"?"#8A6B1E":ev2.evType==="adgunu"?"#5B84B0":"#6B6259";
+                        const nm = ev2.obData&&(ev2.obData.boy||ev2.obData.girl)
+                          ? ((ev2.obData.boy||"...")+" & "+(ev2.obData.girl||"..."))
+                          : (ev2.obData&&(ev2.obData.name||ev2.obData.company)) || "Məclis";
+                        return (
+                          <div key={ei} onClick={()=>loadEvent(ev2)}
+                            style={{display:"flex",alignItems:"center",gap:11,padding:12,borderRadius:16,marginBottom:9,cursor:"pointer",
+                              background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
+                              border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
+                            <div style={{width:36,height:36,borderRadius:11,background:tw+"26",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:tw}}>
+                              <TypeIcon type={ev2.evType} size={17}/>
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:12.5,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
+                              <div style={{fontSize:9.5,color:"#8a7548",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                                {ev2.hallName?ev2.hallName+" · ":""}{ev2.obData&&ev2.obData.date?ev2.obData.date+" · ":""}{ev2.totalGuests>0?ev2.totalGuests+" qonaq":"başlanğıc"}
+                              </div>
+                            </div>
+                            <div style={{fontSize:8,fontWeight:800,padding:"3px 7px",borderRadius:7,background:"rgba(212,175,90,.22)",color:"#8A6B1E",whiteSpace:"nowrap",flexShrink:0}}>Natamam</div>
+                          </div>
+                        );
+                      })}
+                      <button onClick={()=>{
+                          setEvType(null); setObStep("type"); setObData({});
+                          setTables([]); setHall(null); setCurrentEvId(null);
+                          setMyInviteShablon(null); setMyInviteMedia(null);
+                          setHist([]);
+                          setMsgs([{role:"agent",text:"Salam! Yeni məclis başladırıq.\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+                        }}
+                        style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7,width:"100%",padding:12,borderRadius:14,cursor:"pointer",marginTop:3,
+                          background:"rgba(33,26,22,.7)",backdropFilter:"blur(16px)",border:"1px solid rgba(255,255,255,.2)",color:"#F5EEE0",fontSize:12,fontWeight:700}}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                        Yeni məclis yarat
+                      </button>
+                    </div>
                   )}
+                  {m.role==="agent"&&i===msgs.length-1&&(m.qrs&&m.qrs.length)>0&&(()=>{
+                    const EVENT_OPTS = {
+                      "💍 Toy":{label:"Toy",color:"#C9668A",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>},
+                      "💫 Nişan":{label:"Nişan",color:"#8A6B1E",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="14" r="6"/><path d="M12 8V4M9 4h6"/></svg>},
+                      "🎂 Ad günü":{label:"Ad günü",color:"#5B84B0",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/><circle cx="12" cy="12" r="4"/></svg>},
+                      "🏢 Korporativ":{label:"Korporativ",color:"#6B6259",icon:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>},
+                    };
+                    const isEventChoice = m.qrs.every(q=>EVENT_OPTS[q]);
+                    if(isEventChoice){
+                      return (
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginTop:10}}>
+                          {m.qrs.map((q,qi)=>{
+                            const o = EVENT_OPTS[q];
+                            return (
+                              <button key={qi} onClick={()=>send(q)}
+                                style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"14px 10px",borderRadius:16,cursor:"pointer",
+                                  background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
+                                  border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
+                                <span style={{width:36,height:36,borderRadius:11,background:o.color+"26",display:"flex",alignItems:"center",justifyContent:"center",color:o.color}}>{o.icon}</span>
+                                <span style={{fontSize:11.5,fontWeight:700,color:"#211A16"}}>{o.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+                    return <div className="qw">{m.qrs.map((q,qi)=><button key={qi} className="qb" onClick={()=>send(q)}>{q}</button>)}</div>;
+                  })()}
                 </div>
               </div>
             ))}
