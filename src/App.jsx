@@ -6227,10 +6227,10 @@ ${savedEvsList||"Yoxdur"}`;
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>
             </div>
             <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#211A16",textAlign:"center",marginBottom:8}}>Məclis yaradılmayıb</div>
-            <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Zalın sxeminə keçmək üçün əvvəlcə Gül Agent ilə məclis yaradın.</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Zalın sxeminə keçmək üçün əvvəlcə Gül-Ai ilə məclis yaradın.</div>
             <button onClick={()=>{ setNoEventWarning(false); goToAgent(); }}
               style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-              Gül Agent-ə keç
+              Gül-Ai-a keç
             </button>
           </div>
         </div>
