@@ -4172,7 +4172,7 @@ export default function App(){
     setMyInviteMedia(full.myInviteMedia||null);
     setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
     setHist(full.hist||[]);
-    if(full.tables&&full.tables.length>0){ pushPanel("schema"); setSchemaOpen(true); }
+    // Sxem AVTOMATİK açılmır — istifadəçi agent pəncərəsində qalır, özü "Zala keç" basır
     setMeclisOpen(false);
   }
 
@@ -6031,6 +6031,7 @@ ${savedEvsList||"Yoxdur"}`;
       {/* GÖNDƏRILMƏYƏN QONAQLAR DRAWER */}
       {notInvitedDrawerOpen&&(
         <NotInvDrawerBody
+          evType={evType}
           notInvTables={tables.filter(t=>t.guests.length>0)}
           allTables={tables}
           onClose={closeTopPanel}
@@ -6234,7 +6235,8 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId, dashProps }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId, dashProps, evType }){
+  const evTypeWord = evType==="toy"?"toy":evType==="nishan"?"nişan":evType==="adgunu"?"ad günü":evType==="korporativ"?"tədbir":"məclis";
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"sendChoice"|"bulk"|"single"
   // Toplu göndər
@@ -6369,7 +6371,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
         await shareMsg(phone,waMsg,c,waWin);
 
-        const smsText="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+        const smsText="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -6402,7 +6404,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-        const text="Hörmətli "+g.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+        const text="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -6450,7 +6452,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const code=await createRsvp(guest,tbl);
       const rsvpLink=baseUrl+"/rsvp/"+code;
       const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-      const text="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+      const text="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
@@ -6487,7 +6489,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
       await shareMsg(phone,waMsg,c,waWin);
 
-      const smsText="Hörmətli "+guest.name+", "+evName+" mərasiminə dəvət olunursunuz! Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n\n- GONAG.AZ";
+      const smsText="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
       const j=await r.json().catch(()=>({ok:false}));
       onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok);
