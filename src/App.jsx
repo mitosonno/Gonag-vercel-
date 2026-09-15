@@ -5848,7 +5848,7 @@ ${savedEvsList||"Yoxdur"}`;
 
       {schemaOpen&&(
         <div style={{position:"fixed",inset:0,background:"rgba(33,26,22,.4)",backdropFilter:"blur(8px)",zIndex:100}} onClick={()=>tryCloseSchema()}>
-          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"linear-gradient(180deg,rgba(255,255,255,.8),rgba(245,238,224,.65))",backdropFilter:"blur(26px) saturate(160%)",WebkitBackdropFilter:"blur(26px) saturate(160%)",borderTop:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset",borderRadius:"26px 26px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,maxHeight:"90vh",background:"linear-gradient(180deg,rgba(255,255,255,.92),rgba(245,238,224,.88))",backdropFilter:"blur(12px) saturate(140%)",WebkitBackdropFilter:"blur(12px) saturate(140%)",borderTop:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset",borderRadius:"26px 26px 0 0",display:"flex",flexDirection:"column",overflowY:"hidden"}} onClick={e=>e.stopPropagation()}>
             {/* Handle */}
             <div style={{display:"flex",justifyContent:"center",padding:"10px 0 4px"}}>
               <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
@@ -6070,7 +6070,14 @@ ${savedEvsList||"Yoxdur"}`;
               );
             })()}
             {/* Alt — daim görünən dashboard (əsas app-dakı kimi) */}
-            <DashNav dashProps={dashProps}/>
+            <DashNav dashProps={{
+              active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
+              onGoSchema:()=>{},
+              onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
+              onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+              onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
+              onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+            }}/>
           </div>
         </div>
       )}
