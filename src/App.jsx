@@ -18,7 +18,7 @@ const RESTAURANTS = [
   { id:4, name:"Şüvəlan Park", address:"Şüvəlan, Bakı",halls:[{id:401,name:"Açıq Zal",cap:600},{id:402,name:"Qapalı Zal",cap:200}] },
 ];
 
-const SYS = `Sən Gul Agentsən — GONAG.AZ-ın baş event koordinatoru və sales menecerisiən. 30 illik Azərbaycan toy, nişan, ad günü və korporativ məclis təşkili təcrübənə maliksin. Sən həm peşəkar sales host, həm də GONAG.AZ sisteminin tam ekspertisən.
+const SYS = `Sən Gul Agentsən — QONAQ-ın baş event koordinatoru və sales menecerisiən. 30 illik Azərbaycan toy, nişan, ad günü və korporativ məclis təşkili təcrübənə maliksin. Sən həm peşəkar sales host, həm də QONAQ sisteminin tam ekspertisən.
 
 ŞƏXSİYYƏTİN:
 - Mehriban, professional, inamlı
@@ -44,7 +44,7 @@ BAKI RESTORANLAR BİLİYİ:
 - Kristal Saray: 500 nəfər — H.Cavid pr, geniş park
 - Şüvəlan Park: 600 nəfər — açıq hava + qapalı, şəhər kənarı
 
-GONAG.AZ SİSTEMİ (tam bilirsən):
+QONAQ SİSTEMİ (tam bilirsən):
 - Məclis növü seç → Bəy/Gəlin adı → Tarix → Restoran → Masa planı
 - Masa sxemi: yumru masalar, stullar, real koordinatlar
 - Qonaq əlavə et: masa üzərinə klik → ad, nömrə, say
@@ -58,7 +58,7 @@ SATIŞ (SALES) BACARIQLAR:
 - Qonaq sayı sorduqda → büdcə hesabla: "150 nəfər × 100 AZN = 15,000 AZN"  
 - Restoran müqayisəsi: tutum, qiymət, məkan üstünlüklərini izah et
 - Checklist xatırlat: masa planı → qonaq siyahısı → dəvətnamə → yönəltmə
-- Xidmət satışı: "GONAG ilə bütün bu işi 10 dəqiqəyə edə bilərsiniz"
+- Xidmət satışı: "QONAQ ilə bütün bu işi 10 dəqiqəyə edə bilərsiniz"
 
 AKTİV ƏMRLƏR (cavabın SONUNA əlavə et):
 [OPEN_SCHEMA] — masa sxemini aç
@@ -243,7 +243,7 @@ function printAll(tables, obData, hall){
     +"<th>Ad Soyad</th><th style='text-align:center'>Masa №</th><th>Masa adı</th>"
     +"<th>Tərəf</th><th style='text-align:center'>Say</th><th>Telefon</th><th style='text-align:center'>Dəvət</th>"
     +"</tr></thead><tbody>"+rows2+"</tbody></table>"
-    +"<div class='footer'>GONAG.AZ — "+new Date().toLocaleDateString("az-AZ")+"</div>"
+    +"<div class='footer'>QONAQ — "+new Date().toLocaleDateString("az-AZ")+"</div>"
     +"</body></html>";
 
   var w=window.open("","_blank","width=1000,height=800");
@@ -1574,7 +1574,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                 <div style={{fontSize:9,color:"rgba(245,238,224,.5)",marginTop:3}}>{longPressResult.tblIds.length} masa · bu kodu WhatsApp-la göndər</div>
               </div>
               <div style={{fontSize:10,color:"rgba(33,26,22,.55)",marginBottom:10,lineHeight:1.5}}>
-                {"Həmin adam GONAG.AZ-da \"Yönəlt kodunu daxil et\" bölməsindən "+longPressResult.code+" yazır → yalnız bu masaları görür → doldurur → data sxeminizə əlavə olunur."}
+                {"Həmin adam QONAQ-da \"Yönəlt kodunu daxil et\" bölməsindən "+longPressResult.code+" yazır → yalnız bu masaları görür → doldurur → data sxeminizə əlavə olunur."}
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
@@ -2060,7 +2060,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               </div>
               <div style={{display:"flex",gap:6}}>
                 <button onClick={function(){
-                  var msg="Zəhmət olmasa GONAG.AZ-ı aç, Yönəlt kodunu daxil et: "+shareResult.code+". Masaları sən doldur! 🙏";
+                  var msg="Zəhmət olmasa QONAQ-ı aç, Yönəlt kodunu daxil et: "+shareResult.code+". Masaları sən doldur! 🙏";
                   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
                 }} style={{flex:1,padding:"9px",borderRadius:12,border:"1px solid rgba(76,154,110,.3)",background:"linear-gradient(155deg,rgba(76,154,110,.22),rgba(76,154,110,.08))",color:"#4C9A6E",fontSize:11,fontWeight:700,cursor:"pointer"}}>
                   📱 WhatsApp
@@ -2292,7 +2292,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 </div>
                 {/* Kontakt düyməsi — tezliklə app versiyada aktiv olacaq */}
                 <button
-                  onClick={()=>alert("📱 Bu funksiya tezliklə GONAG.AZ tətbiqində aktiv olacaq!")}
+                  onClick={()=>alert("📱 Bu funksiya tezliklə QONAQ tətbiqində aktiv olacaq!")}
                   title="Kontaktlardan seç — tezliklə"
                   style={{display:"flex",alignItems:"center",justifyContent:"center",
                     width:38,height:38,flexShrink:0,borderRadius:12,
@@ -2965,7 +2965,7 @@ function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   if(guests.length>9){ ctx.fillStyle=S.sub; ctx.font="15px sans-serif"; ctx.fillText("+ "+(guests.length-9)+" nəfər daha...", W/2, 776+9*40); }
   ctx.strokeStyle=S.accent; ctx.lineWidth=0.8; ctx.globalAlpha=0.35;
   ctx.beginPath(); ctx.moveTo(100,H-68); ctx.lineTo(W-100,H-68); ctx.stroke(); ctx.globalAlpha=1;
-  ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  GONAG.AZ  ✦", W/2, H-34);
+  ctx.fillStyle=S.accent; ctx.font="bold 22px serif"; ctx.fillText("✦  QONAQ  ✦", W/2, H-34);
 }
 
 function MiniShablonPreview({ shablon, obData }){
@@ -3036,7 +3036,7 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
       const code=await createRsvp(g,activeTbl);
       const rsvpLink=code?baseUrl+"/rsvp/"+code:baseUrl;
       const phone=(g.phone||"").replace(/\D/g,"");
-      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+      const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *QONAQ*";
       // Pəncərəni DƏRHAL açırıq (async işlərdən əvvəl) ki, brauzer blok etməsin
       const waWin = phone ? window.open("about:blank","_blank") : null;
       const c=makeCanvas(g.name);
@@ -3066,7 +3066,7 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
     const code = await createRsvp(g, activeTbl);
     const baseUrl = window.location.origin;
     const rsvpLink = code ? baseUrl+"/rsvp/"+code : baseUrl;
-    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *GONAG.AZ*";
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obData&&obData.date?obData.date:"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+activeTbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 *Dəvətnamə linki:*\n"+rsvpLink+"\n\n_(Linkdə: iştirak təsdiqi + hədiyyə)_\n\n✨ *QONAQ*";
     // Şəkli endirib, əvvəlcədən açılmış pəncərəni WhatsApp linkinə yönləndiririk
     const c = makeCanvas(g.name);
     c.toBlob((blob)=>{
@@ -3197,7 +3197,7 @@ function MasaDevetCard({ tbl, ev, hall, setDevetPNGOpen }){
     "Tarix: "+evDate+(hallName?NL+"Yer: "+hallName:"")+NL+NL+
     "Masa: "+(tbl.label&&tbl.label!=="__extra__"?tbl.label:tbl.id)+NL+NL+
     "Masanızdakı qonaqlar:"+NL+gList+NL+NL+
-    "GONAG.AZ";
+    "QONAQ";
 
   function shareWA(){ window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank"); }
   function shareTG(){ window.open("https://t.me/share/url?url=&text="+encodeURIComponent(msg),"_blank"); }
@@ -3777,7 +3777,7 @@ export default function App(){
   // (rəqəmsal dbId ilə) yazılır — bax aşağıda savePromise.then(...) daxilində.
 
   const [msgs, setMsgs] = useState([{
-    role:"agent",text:"Salam! 👋 GONAG.AZ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
+    role:"agent",text:"Salam! 👋 QONAQ-a xoş gəlmisiniz!\n\nMən Gul Agent — məclis koordinatorunuzam. 🎊\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
   }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -4913,7 +4913,7 @@ ${savedEvsList||"Yoxdur"}`;
       <div className="app">
         {/* TOP BAR */}
         <div className="tb">
-          <div className="logo"><img src="/qonaq-logo.png" alt="GONAG.AZ" style={{height:22,width:"auto",display:"block"}}/></div>
+          <div className="logo"><img src="/qonaq-logo.png" alt="QONAQ" style={{height:22,width:"auto",display:"block"}}/></div>
           <div className="tbx">
             <div className="pill"><div className="dot"/><span className="pn">Gul Agent</span></div>
           </div>
@@ -6337,7 +6337,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
+        const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *QONAQ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
         await shareMsg(phone,msg,c,waWin);
@@ -6366,12 +6366,12 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       try{
         const code=await createRsvp(g,tbl); // eyni link — hər iki kanal üçün
         const rsvpLink=baseUrl+"/rsvp/"+code;
-        const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *GONAG.AZ*";
+        const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+g.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+(senderName?"\n\nHörmətlə,\n*"+senderName+" "+senderTitle+"*":"")+"\n\n✨ *QONAQ*";
         const c=document.createElement("canvas");
         drawDevetnamePNG({canvas:c,shablon,tbl,obData:obD,hallName,guestName:g.name});
         await shareMsg(phone,waMsg,c,waWin);
 
-        const smsText="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
+        const smsText="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -6404,7 +6404,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-        const text="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
+        const text="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
         const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
@@ -6431,7 +6431,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
     const code=await createRsvp(guest,tbl);
     const rsvpLink=baseUrl+"/rsvp/"+code;
-    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
+    const msg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *QONAQ*";
     const c=document.createElement("canvas");
     drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
     await shareMsg(phone,msg,c,waWin);
@@ -6452,7 +6452,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const code=await createRsvp(guest,tbl);
       const rsvpLink=baseUrl+"/rsvp/"+code;
       const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
-      const text="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
+      const text="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
@@ -6484,12 +6484,12 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const code=await createRsvp(guest,tbl); // eyni link — hər iki kanal üçün
       const rsvpLink=baseUrl+"/rsvp/"+code;
 
-      const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *GONAG.AZ*";
+      const waMsg="🎊 *Dəvətnamə*\n━━━━━━━━━━━━━━\n\nHörmətli *"+guest.name+"*,\n\n*"+evName+"* mərasiminə dəvət olunursunuz!\n📅 "+(obD.date||"")+(hallName?"\n🏛️ "+hallName:"")+"\n\n━━━━━━━━━━━━━━\n🪑 *Masa № "+tbl.id+"*\n\n👥 *Masadakı qonaqlar:*\n"+gList+"\n\n━━━━━━━━━━━━━━\n🔗 "+rsvpLink+"\n\n✨ *QONAQ*";
       const c=document.createElement("canvas");
       drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
       await shareMsg(phone,waMsg,c,waWin);
 
-      const smsText="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- GONAG.AZ";
+      const smsText="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
       const j=await r.json().catch(()=>({ok:false}));
       onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok);
