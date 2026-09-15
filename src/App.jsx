@@ -4474,6 +4474,9 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
     pushPanel("schema"); setSchemaOpen(true);
     setSchemaTutStep(1); // tutorial başlat
     setFillMode("one-by-one");
+    const msg = `✅ ${tblCount} masa hazır — hər masada ${seats} yer · ümumilikdə ${base} nəfər.
+
+🗺️ Zalın sxemi hazırdır!`;
     setMsgs(m=>[...m,{role:"agent",text:msg,qrs:[]}]);
     setHist(h2=>[...h2,{role:"assistant",content:msg}]);
     setTimeout(()=>saveCurrentEvent({tables:tbls,status:"natamam"}),100);
