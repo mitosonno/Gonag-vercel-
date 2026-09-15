@@ -468,11 +468,11 @@ function parseLine(line){
 function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick, useChairImage=false, showTapHint=false, selectedSlotIdx=null }){
   const [imgFailed, setImgFailed] = useState({});
   const [showSeatCard, setShowSeatCard] = useState(()=>{
-    try{ return !localStorage.getItem("gonag_hint_seat_2026"); }catch(e){ return true; }
+    try{ return !localStorage.getItem("gonag_hint_seat_v3"); }catch(e){ return true; }
   });
   function dismissSeatHint(){
     setShowSeatCard(false);
-    try{ localStorage.setItem("gonag_hint_seat_2026","1"); }catch(e){}
+    try{ localStorage.setItem("gonag_hint_seat_v3","1"); }catch(e){}
   }
   const [zoomScale, setZoomScale] = useState(1);
   const pinchRef = useRef(null);
@@ -989,13 +989,13 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
   const [gridH, setGridH] = useState(300);
   const [pulseId, setPulseId] = useState(null);
   const [showHint, setShowHint] = useState(()=>{
-    try{ return !localStorage.getItem("gonag_hint_schema_2026"); }catch(e){ return true; }
+    try{ return !localStorage.getItem("gonag_hint_schema_v3"); }catch(e){ return true; }
   });
   const hintTableIdRef = useRef(null);
   if(hintTableIdRef.current===null && tables.length>0){ hintTableIdRef.current = tables[0].id; }
   function dismissSchemaHint(){
     setShowHint(false);
-    try{ localStorage.setItem("gonag_hint_schema_2026","1"); }catch(e){}
+    try{ localStorage.setItem("gonag_hint_schema_v3","1"); }catch(e){}
   }
   const STAGE_H = 48;
 
@@ -1172,8 +1172,6 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
           return next;
         });
       },50);
-      setShowHint(true);
-      setTimeout(()=>setShowHint(false),1800);
     }
   },[tables.length, canvasH]);
 
