@@ -5479,16 +5479,18 @@ ${savedEvsList||"Yoxdur"}`;
                 onClick:()=>{ pushPanel("stats"); setStatsOpen(true); }},
               {key:"meclis", label:"Məclislərim", enabled:true, cnt:savedEvents.length,
                 onClick:()=>{ pushPanel("meclis"); setMeclisOpen(true); }},
+              {key:"agent", label:"Gül-AI", enabled:true, active:true, onClick:()=>{}},
             ].map(it=>(
               <button key={it.key} onClick={()=>{
+                  if(it.active) return;
                   if(it.enabled){ it.onClick(); }
                   else { setMsgs(m=>[...m,{role:"agent",text:it.hint,qrs:[]}]); }
                 }}
                 style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
-                  border:"none",background:"transparent",cursor:"pointer",position:"relative",
+                  border:"none",background:"transparent",cursor:it.active?"default":"pointer",position:"relative",
                   opacity:it.enabled?1:0.4}}>
-                <NavIcon type={it.key}/>
-                <span style={{fontSize:10,fontWeight:600,color:"#6B6259"}}>{it.label}</span>
+                <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
+                <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
                 {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
               </button>
             ))}
