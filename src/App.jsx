@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
 import AuthScreen from "./AuthScreen.jsx";
 
@@ -3736,7 +3736,7 @@ function HallBuilderPanel({ onClose, onSaved, currentUserId, isAdmin }){
 }
 
 
-export default function App(){
+function AppInner(){
   // ── Giriş / Auth ──
   const [session, setSession] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
@@ -6242,7 +6242,39 @@ ${savedEvsList||"Yoxdur"}`;
     </div>
   );
 }
-// ─── SCHEMA TUTORIAL TOOLTIP ────────────────────────────────
+// ─── ERROR BOUNDARY — bir hissə çökəndə bütün tətbiqi qara ekrana aparmasın ────
+class AppErrorBoundary extends Component {
+  constructor(props){ super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error){ return { error }; }
+  componentDidCatch(error, info){ console.error("QONAQ crash:", error, info); }
+  render(){
+    if(this.state.error){
+      return (
+        <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+          gap:14,padding:24,textAlign:"center",fontFamily:"'Inter',sans-serif",
+          background:"radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%)"}}>
+          <div style={{fontSize:32}}>⚠️</div>
+          <div style={{fontSize:15,fontWeight:700,color:"#211A16"}}>Bir xəta baş verdi</div>
+          <div style={{fontSize:12,color:"rgba(33,26,22,.6)",maxWidth:320,lineHeight:1.6}}>
+            Bu ekranı yenidən yükləyin. Problem davam edərsə, hansı addımı atdığınızı bizə bildirin.
+          </div>
+          <div style={{fontSize:10,color:"rgba(33,26,22,.35)",maxWidth:320,wordBreak:"break-word",fontFamily:"'IBM Plex Mono',monospace"}}>
+            {String(this.state.error&&this.state.error.message||this.state.error)}
+          </div>
+          <button onClick={()=>{ this.setState({error:null}); }}
+            style={{marginTop:6,padding:"12px 24px",borderRadius:14,border:"none",
+              background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            Yenidən cəhd et
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+export default function App(){
+  return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
+}
 function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
   const steps=[
     {
