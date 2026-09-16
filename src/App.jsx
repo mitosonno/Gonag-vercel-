@@ -4223,7 +4223,7 @@ function AppInner(){
       const nm = (full.obData&&(full.obData.boy||full.obData.girl))
         ? ((full.obData.boy||"...")+" & "+(full.obData.girl||"..."))
         : (full.obData&&(full.obData.name||full.obData.company)) || "Məclisiniz";
-      setMsgs([{role:"agent",text:nm+" — davam edirik. 👇",qrs:["🗺️ Zalın sxemini aç və qonaq əlavə elə"],hallOverview:true}]);
+      setMsgs([{role:"agent",text:nm+" — davam edirik. 👇",qrs:[],hallOverview:true}]);
     } else {
       setMsgs(full.msgs&&full.msgs.length>0?full.msgs:[{role:"agent",text:"Məclis yükləndi! Davam edə bilərsiniz. 👇",qrs:[]}]);
     }
@@ -4488,18 +4488,16 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
 
 
     if(txt==="🔍 Restoran axtar"){ setRestOpen(true); setBusy(false); return; }
-    if(txt==="➕ Növbəti qonaq"){
-      const lastTid = tabRef.current.length>0 ? activeTable : null;
-      if(lastTid){
-        setChatWizard({tableId:lastTid, step:"name", name:"", phone:"", gender:"", count:"1"});
-        setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
-      }
-      setBusy(false); return;
-    }
-    if(txt==="→ Sxemə keç"){
+    if(txt==="→ Sxemə keç"||txt==="🗺️ Sxemi aç"||txt==="🗺️ Zalın sxemini aç və qonaq əlavə elə"){
       setChatWizard(null);
       pushPanel("schema"); setSchemaOpen(true);
       setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]}]);
+      setBusy(false); return;
+    }
+    // Sxem artıq hazırdırsa (masalar qurulub) — qonaq əlavəetmə/dəvətnamə kimi əməliyyatlar
+    // yalnız Zal sxemi ekranından edilir, çatdan deyil.
+    if(hall && hall._step==="done"){
+      setMsgs(m=>[...m,{role:"user",text:txt,qrs:[]},{role:"agent",text:"Zal sxeminə keçib davam edə bilərsiniz 👇",qrs:["🗺️ Sxemi aç"]}]);
       setBusy(false); return;
     }
     // ═══ ONBOARDING STATE MACHINE — tamamilə client-side ═══
@@ -4551,7 +4549,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       setObData(d=>({...d,boy,girl}));
       setObStep("toy_date");
       setTimeout(()=>saveCurrentEvent({obStep:"toy_date",obData:{...obDataRef.current,boy,girl}}),100);
-      obReply("Nə gözəl cüt!\n\nToy tarixi? (məs: 15 Avqust 2025)"); return;
+      obReply(boy+" & "+girl+" — nə gözəl cüt!\n\nToy tarixi? (məs: 15 Avqust 2025)"); return;
     }
     if(obStep==="toy_date"){
       if(empty){ obWarn("Toy tarixini yazın zəhmət olmasa 📅"); return; }
@@ -4581,7 +4579,7 @@ ${evLabel} ümumilikdə neçə nəfər gələcək? Rəqəm yazın:`;
       if(!girl){ obWarn(boy+" — qızın adını da əlavə edin 🙏"); return; }
       setObData(d=>({...d,boy,girl})); setObStep("nishan_date");
       setTimeout(()=>saveCurrentEvent({obStep:"nishan_date",obData:{...obDataRef.current,boy,girl}}),100);
-      obReply("Mübarək!\n\nNişan tarixi?"); return;
+      obReply(boy+" & "+girl+" — mübarək!\n\nNişan tarixi?"); return;
     }
     if(obStep==="nishan_date"){
       if(empty){ obWarn("Nişan tarixini yazın zəhmət olmasa 📅"); return; }
