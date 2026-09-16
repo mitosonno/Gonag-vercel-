@@ -3963,6 +3963,7 @@ function AppInner(){
   }
   const [statsOpen, setStatsOpen] = useState(false);
   const [myInviteOpen, setMyInviteOpen] = useState(false);
+  const [notinvAutoJump, setNotinvAutoJump] = useState(false);
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
@@ -5641,56 +5642,6 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{width:28}}/>
             </div>
             <div className="rsb">
-              <div style={{fontSize:11.5,color:"#6B6259",marginBottom:14,lineHeight:1.5}}>
-                Öz video və ya şəkil dəvətnamənizi yükləyin — qonaqlara göndərəndə bizim hazır şablonla **birlikdə** gedə bilər.
-              </div>
-
-              {myInviteMedia?(
-                <div style={{marginBottom:16,padding:12,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
-                  {myInviteMedia.type==="video"?(
-                    <video src={myInviteMedia.url} controls style={{width:"100%",borderRadius:12,display:"block"}}/>
-                  ):(
-                    <img src={myInviteMedia.url} style={{width:"100%",borderRadius:12,display:"block"}}/>
-                  )}
-                  <div style={{display:"flex",gap:8,marginTop:10}}>
-                    <label style={{flex:1,padding:"9px",borderRadius:11,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer"}}>
-                      Dəyiş
-                      <input type="file" accept="image/*,video/*" style={{display:"none"}}
-                        onChange={e=>{
-                          const f=e.target.files&&e.target.files[0]; if(!f) return;
-                          if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
-                          const isVideo=f.type.startsWith("video/");
-                          const reader=new FileReader();
-                          reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
-                          reader.readAsDataURL(f);
-                        }}/>
-                    </label>
-                    <button onClick={()=>setMyInviteMedia(null)} style={{padding:"9px 14px",borderRadius:11,background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
-                  </div>
-                  <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"9px 12px",borderRadius:11,background:"rgba(76,154,110,.08)",cursor:"pointer"}}>
-                    <input type="checkbox" checked={myInviteIncludeMedia} onChange={e=>setMyInviteIncludeMedia(e.target.checked)}
-                      style={{width:16,height:16,accentColor:"#4C9A6E"}}/>
-                    <span style={{fontSize:11.5,color:"#4C9A6E",fontWeight:600}}>Qonaqlara göndərəndə bu {myInviteMedia.type==="video"?"videonu":"şəkli"} də əlavə et</span>
-                  </label>
-                </div>
-              ):(
-                <label style={{display:"block",padding:"20px 14px",borderRadius:16,border:"1px dashed rgba(150,120,80,.4)",
-                  background:"rgba(255,255,255,.3)",textAlign:"center",cursor:"pointer",marginBottom:16}}>
-                  <div style={{fontSize:24,marginBottom:6}}>📤</div>
-                  <div style={{fontSize:12,color:"#6B6259",fontWeight:600}}>Video və ya şəkil yükləyin</div>
-                  <div style={{fontSize:10,color:"rgba(33,26,22,.4)",marginTop:3}}>maks. 15MB</div>
-                  <input type="file" accept="image/*,video/*" style={{display:"none"}}
-                    onChange={e=>{
-                      const f=e.target.files&&e.target.files[0]; if(!f) return;
-                      if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
-                      const isVideo=f.type.startsWith("video/");
-                      const reader=new FileReader();
-                      reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
-                      reader.readAsDataURL(f);
-                    }}/>
-                </label>
-              )}
-
               <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Hazır şablonlarımız</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:16}}>
                 {DEVETNAME_SHABLONLAR.map((s,i)=>(
@@ -5712,49 +5663,6 @@ ${savedEvsList||"Yoxdur"}`;
                     </div>
                   </div>
                 ))}
-              </div>
-
-              {myInviteShablon!=null&&(
-                <div style={{marginBottom:16,padding:14,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:10,textAlign:"center"}}>
-                    👁 Tam önizləmə — qonaq belə görəcək
-                  </div>
-                  <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-                    <div style={{width:140,borderRadius:12,overflow:"hidden",border:"1px solid rgba(150,120,80,.2)",boxShadow:"0 6px 16px -8px rgba(60,40,20,.3)"}}>
-                      <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[myInviteShablon]} obData={obData}/>
-                      <div style={{padding:"4px",textAlign:"center",fontSize:8.5,color:"#6B6259",background:"rgba(255,255,255,.7)"}}>Bizim şablon</div>
-                    </div>
-                    {myInviteMedia&&myInviteIncludeMedia&&(
-                      <div style={{width:140,borderRadius:12,overflow:"hidden",border:"1px solid rgba(76,154,110,.35)",boxShadow:"0 6px 16px -8px rgba(60,40,20,.3)"}}>
-                        {myInviteMedia.type==="video"?(
-                          <video src={myInviteMedia.url} style={{width:"100%",aspectRatio:"2/3",objectFit:"cover",display:"block"}} muted/>
-                        ):(
-                          <img src={myInviteMedia.url} style={{width:"100%",aspectRatio:"2/3",objectFit:"cover",display:"block"}}/>
-                        )}
-                        <div style={{padding:"4px",textAlign:"center",fontSize:8.5,color:"#4C9A6E",background:"rgba(76,154,110,.1)",fontWeight:700}}>+ Sizin {myInviteMedia.type==="video"?"videonuz":"şəkliniz"}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{textAlign:"center",marginTop:10,fontSize:10,color:"rgba(33,26,22,.5)"}}>
-                    Bəyənmədinizsə aşağıdan başqa şablon seçin, ya da yeni video/şəkil yükləyin
-                  </div>
-                </div>
-              )}
-
-              <div style={{fontSize:10,color:"rgba(33,26,22,.45)",lineHeight:1.5,padding:"10px 12px",background:"rgba(212,175,90,.08)",borderRadius:12,marginBottom:14}}>
-                💡 {myInviteMedia&&myInviteIncludeMedia?"Seçdiyiniz şablon + öz "+(myInviteMedia.type==="video"?"videonuz":"şəkliniz")+" birgə göndəriləcək.":"Yalnız seçdiyiniz şablon göndəriləcək (video/şəkil əlavə etmək istəsəniz yuxarıdakı qutunu işarələyin)."}
-              </div>
-
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>{
-                    if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
-                    setMyInviteOpen(false);
-                  }}
-                  style={{flex:1,padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
-                    background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
-                    boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
-                  ✓ Bəyəndim — Yadda saxla
-                </button>
               </div>
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
             </div>
@@ -5786,7 +5694,7 @@ ${savedEvsList||"Yoxdur"}`;
               style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
               Bağla
             </button>
-            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); }}
+            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); setNotinvAutoJump(true); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
               ✓ Bəyəndim, seç
             </button>
@@ -6303,10 +6211,16 @@ ${savedEvsList||"Yoxdur"}`;
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
           onOpenMyInvite={()=>setMyInviteOpen(true)}
+          autoJumpToSendChoice={notinvAutoJump}
+          onAutoJumpConsumed={()=>setNotinvAutoJump(false)}
           onGoToSchema={()=>{ closeTopPanel(); pushPanel("schema"); setSchemaOpen(true); }}
           onPrint={()=>printAll(tables,obData,hall)}
           myInviteShablon={myInviteShablon}
           myInviteMedia={myInviteIncludeMedia?myInviteMedia:null}
+          myInviteMediaRaw={myInviteMedia}
+          setMyInviteMedia={setMyInviteMedia}
+          myInviteIncludeMedia={myInviteIncludeMedia}
+          setMyInviteIncludeMedia={setMyInviteIncludeMedia}
           sessionId={sessionId}
           dashProps={{
             active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
@@ -6651,10 +6565,11 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, sessionId, dashProps, evType }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, myInviteMediaRaw, setMyInviteMedia, myInviteIncludeMedia, setMyInviteIncludeMedia, sessionId, dashProps, evType, autoJumpToSendChoice, onAutoJumpConsumed }){
   const evTypeWord = evType==="toy"?"toy":evType==="nishan"?"nişan":evType==="adgunu"?"ad günü":evType==="korporativ"?"tədbir":"məclis";
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"sendChoice"|"bulk"|"single"
+  useEffect(()=>{ if(autoJumpToSendChoice){ setPanel("sendChoice"); onAutoJumpConsumed&&onAutoJumpConsumed(); } }, [autoJumpToSendChoice]);
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
   const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
@@ -7180,6 +7095,54 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
             <div style={{display:"flex",justifyContent:"center"}}>
               <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
+            </div>
+            <div style={{marginTop:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Öz video/şəklinizi əlavə edin (istəyə bağlı)</div>
+              {myInviteMediaRaw?(
+                <div style={{padding:12,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
+                  {myInviteMediaRaw.type==="video"?(
+                    <video src={myInviteMediaRaw.url} controls style={{width:"100%",borderRadius:12,display:"block"}}/>
+                  ):(
+                    <img src={myInviteMediaRaw.url} style={{width:"100%",borderRadius:12,display:"block"}}/>
+                  )}
+                  <div style={{display:"flex",gap:8,marginTop:10}}>
+                    <label style={{flex:1,padding:"9px",borderRadius:11,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer"}}>
+                      Dəyiş
+                      <input type="file" accept="image/*,video/*" style={{display:"none"}}
+                        onChange={e=>{
+                          const f=e.target.files&&e.target.files[0]; if(!f) return;
+                          if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
+                          const isVideo=f.type.startsWith("video/");
+                          const reader=new FileReader();
+                          reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
+                          reader.readAsDataURL(f);
+                        }}/>
+                    </label>
+                    <button onClick={()=>setMyInviteMedia(null)} style={{padding:"9px 14px",borderRadius:11,background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
+                  </div>
+                  <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"9px 12px",borderRadius:11,background:"rgba(76,154,110,.08)",cursor:"pointer"}}>
+                    <input type="checkbox" checked={myInviteIncludeMedia} onChange={e=>setMyInviteIncludeMedia(e.target.checked)}
+                      style={{width:16,height:16,accentColor:"#4C9A6E"}}/>
+                    <span style={{fontSize:11.5,color:"#4C9A6E",fontWeight:600}}>Qonaqlara göndərəndə bu {myInviteMediaRaw.type==="video"?"videonu":"şəkli"} də əlavə et</span>
+                  </label>
+                </div>
+              ):(
+                <label style={{display:"block",padding:"18px 14px",borderRadius:16,border:"1px dashed rgba(150,120,80,.4)",
+                  background:"rgba(255,255,255,.3)",textAlign:"center",cursor:"pointer"}}>
+                  <div style={{fontSize:20,marginBottom:4}}>📤</div>
+                  <div style={{fontSize:11.5,color:"#6B6259",fontWeight:600}}>Video və ya şəkil yükləyin</div>
+                  <div style={{fontSize:10,color:"rgba(33,26,22,.4)",marginTop:2}}>maks. 15MB</div>
+                  <input type="file" accept="image/*,video/*" style={{display:"none"}}
+                    onChange={e=>{
+                      const f=e.target.files&&e.target.files[0]; if(!f) return;
+                      if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
+                      const isVideo=f.type.startsWith("video/");
+                      const reader=new FileReader();
+                      reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
+                      reader.readAsDataURL(f);
+                    }}/>
+                </label>
+              )}
             </div>
           </div>
           <div style={{padding:"10px 14px 16px",flexShrink:0}}>
