@@ -3940,7 +3940,6 @@ function AppInner(){
   const [inviteChoiceFromNav, setInviteChoiceFromNav] = useState(false);
   const [schemaShareOpen, setSchemaShareOpen] = useState(false);
   const [printShareTarget, setPrintShareTarget] = useState(null); // "schema" | "invite" | null
-  const [myInviteConfirmed, setMyInviteConfirmed] = useState(false);
   const shareCanvasRef = useRef(null);
   const [devetData, setDevetData] = useState({metn:"", media:null});
   const [cardNumber, setCardNumber] = useState("");
@@ -3964,7 +3963,6 @@ function AppInner(){
   }
   const [statsOpen, setStatsOpen] = useState(false);
   const [myInviteOpen, setMyInviteOpen] = useState(false);
-  useEffect(()=>{ if(myInviteOpen) setMyInviteConfirmed(myInviteShablon!=null); }, [myInviteOpen]);
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
@@ -5638,13 +5636,11 @@ ${savedEvsList||"Yoxdur"}`;
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={()=>setMyInviteOpen(false)}>
           <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
-              <button onClick={()=>{ setMyInviteOpen(false); setInviteChoiceOpen(true); }} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
+              <button onClick={()=>setMyInviteOpen(false)} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
               <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
               <div style={{width:28}}/>
             </div>
             <div className="rsb">
-              {!myInviteConfirmed?(
-              <>
               <div style={{fontSize:11.5,color:"#6B6259",marginBottom:14,lineHeight:1.5}}>
                 Öz video və ya şəkil dəvətnamənizi yükləyin — qonaqlara göndərəndə bizim hazır şablonla **birlikdə** gedə bilər.
               </div>
@@ -5752,7 +5748,7 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>{
                     if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
-                    setMyInviteConfirmed(true);
+                    setMyInviteOpen(false);
                   }}
                   style={{flex:1,padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
                     background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
@@ -5761,39 +5757,6 @@ ${savedEvsList||"Yoxdur"}`;
                 </button>
               </div>
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
-              </>
-              ):(
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:10}}>
-                {myInviteShablon!=null&&(
-                  <div style={{width:160,borderRadius:14,overflow:"hidden",border:"1px solid rgba(150,120,80,.25)",boxShadow:"0 8px 20px -10px rgba(60,40,20,.35)",marginBottom:18}}>
-                    <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[myInviteShablon]} obData={obData}/>
-                  </div>
-                )}
-                <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.6)",textAlign:"center",marginBottom:22,maxWidth:280}}>
-                  Dəvətnamə hazırdır. Qonaqlara necə göndərək?
-                </div>
-                <button onClick={()=>{ setMyInviteOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
-                  style={{width:"100%",maxWidth:320,padding:"16px",borderRadius:16,border:"none",marginBottom:10,
-                    background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",
-                    fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",
-                    boxShadow:"0 8px 20px -8px rgba(76,154,110,.45)"}}>
-                  📱 WhatsApp + SMS göndər
-                </button>
-                <button onClick={()=>setPrintShareTarget("invite")}
-                  style={{width:"100%",maxWidth:320,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",marginBottom:10,
-                    background:"rgba(255,255,255,.55)",color:"#211A16",
-                    fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-                  🖨️ Çap et və ya Hostesə göndər
-                </button>
-                <button onClick={()=>setMyInviteConfirmed(false)}
-                  style={{width:"100%",maxWidth:320,padding:"13px",borderRadius:16,border:"none",
-                    background:"transparent",color:"#8A6B1E",
-                    fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,cursor:"pointer"}}>
-                  ✏️ Dəvətnaməni dəyiş
-                </button>
-                <canvas ref={shareCanvasRef} style={{display:"none"}}/>
-              </div>
-              )}
             </div>
             <DashNav dashProps={{
               active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
@@ -6441,7 +6404,7 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:28,color:"#211A16",textAlign:"center",marginBottom:8}}>Necə davam edək?</div>
               <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:30,maxWidth:280}}>Qonaqlara göndəriləcək dəvətnaməni seçin, ya da zalın masa sxemini Hostesə paylaşın.</div>
-              <button onClick={()=>{ setInviteChoiceOpen(false); setMyInviteOpen(true); }}
+              <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
                   background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
                   fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
