@@ -6064,11 +6064,12 @@ ${savedEvsList||"Yoxdur"}`;
                   setSchemaOpen(false);
                   openInviteChoice();
                 }}
-                style={{width:"100%",padding:"12px",borderRadius:14,border:"1px solid rgba(212,175,90,.4)",
-                  background:"rgba(212,175,90,.14)",backdropFilter:"blur(12px)",color:"#8A6B1E",
-                  fontSize:12.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                Dəvətnamə seç və göndər
+                style={{width:"100%",padding:"14px",borderRadius:14,border:"none",
+                  background:"linear-gradient(155deg,#E14B36,#A02A1E)",color:"#FFFFFF",
+                  boxShadow:"0 6px 18px -6px rgba(160,42,30,.6),0 1px 0 rgba(255,255,255,.25) inset",
+                  fontFamily:"'Manrope',sans-serif",fontSize:13.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                Dəvətnaməni seç və göndər
               </button>
             </div>
 
