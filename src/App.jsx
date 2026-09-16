@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { jsPDF } from "jspdf";
 import AuthScreen from "./AuthScreen.jsx";
 
 const supabase = createClient(
@@ -118,7 +119,7 @@ function DashNav({ dashProps }){
   const { active, tableCount, eventCount, onGoSchema, onGoInvite, onGoStats, onGoMeclis, onGoAgent } = dashProps;
   const items = [
     {key:"schema", label:"Zalın sxemi", cnt:0, onClick:onGoSchema},
-    {key:"invite", label:"Dəvətnamələr", cnt:0, onClick:onGoInvite},
+    {key:"invite", label:"Dəvətnamələrim", cnt:0, onClick:onGoInvite},
     {key:"stats", label:"Statistika", cnt:0, onClick:onGoStats},
     {key:"meclis", label:"Məclislərim", cnt:eventCount||0, onClick:onGoMeclis},
     {key:"agent", label:"Gül-AI", cnt:0, onClick:onGoAgent},
@@ -263,6 +264,65 @@ function printAll(tables, obData, hall){
   w.document.close();
   w.focus();
   setTimeout(function(){w.print();},600);
+}
+
+function buildFloorPlanPDF(tables, obData, hall){
+  const doc = new jsPDF({unit:"pt", format:"a4"});
+  const evName = (obData&&obData.boy&&obData.girl) ? (obData.boy+" & "+obData.girl) : (obData&&(obData.name||obData.company)) || "Məclis";
+  const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
+  let y = 50;
+  doc.setFont("helvetica","bold"); doc.setFontSize(18);
+  doc.text(evName, 40, y); y+=22;
+  doc.setFont("helvetica","normal"); doc.setFontSize(11); doc.setTextColor(110,100,85);
+  doc.text((obData&&obData.date?obData.date+"  ·  ":"")+(hall?((hall._venueName||"")+(hall.name?" — "+hall.name:"")):"")+"  ·  "+tables.length+" masa  ·  "+totG+" qonaq", 40, y);
+  y+=26;
+  doc.setDrawColor(220,205,170); doc.line(40,y,555,y); y+=22;
+  doc.setTextColor(30,25,20);
+  tables.forEach(t=>{
+    if(y>760){ doc.addPage(); y=50; }
+    const filled = (t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
+    doc.setFont("helvetica","bold"); doc.setFontSize(12.5);
+    doc.text("Masa "+(t.label||t.id)+"  ("+filled+"/"+t.seats+")", 40, y); y+=17;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(70,62,52);
+    if(!t.guests||t.guests.length===0){
+      doc.text("— boş —", 52, y); y+=15;
+    } else {
+      t.guests.forEach(g=>{
+        const extra = (g.ushaqCount?", "+g.ushaqCount+" uşaq":"")+(g.spouseCount?", "+g.spouseCount+" nəfər əlavə":"");
+        doc.text("• "+(g.name||"Adsız")+" ("+(g.count||1)+" nəfər"+extra+")", 52, y);
+        y+=15;
+        if(y>770){ doc.addPage(); y=50; }
+      });
+    }
+    doc.setTextColor(30,25,20);
+    y+=8;
+  });
+  const blob = doc.output("blob");
+  return new File([blob], "Masa-sxemi.pdf", {type:"application/pdf"});
+}
+function buildImagePDF(dataUrl, fileName){
+  const doc = new jsPDF({unit:"pt", format:"a4"});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const img = new window.Image();
+  // dataUrl is already loaded synchronously from canvas, so size is known via a temp canvas measure
+  const maxW = pageW-60, maxH = pageH-60;
+  doc.addImage(dataUrl, "PNG", 30, 30, maxW, maxH, undefined, "FAST");
+  const blob = doc.output("blob");
+  return new File([blob], fileName, {type:"application/pdf"});
+}
+async function shareFileOrDownload(file, setMsgs){
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:file.name});
+      return;
+    }
+  }catch(e){ /* user cancelled or share failed — fall back to download */ }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  if(setMsgs) setMsgs(m=>[...m,{role:"agent",text:"PDF fayl endirildi 📥 — indi onu WhatsApp və ya istənilən proqramla Hostesə göndərə bilərsiniz.",qrs:[]}]);
 }
 
 function printInvitationImage(dataUrl, evName){
@@ -3879,6 +3939,7 @@ function AppInner(){
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
   const [schemaTutStep, setSchemaTutStep] = useState(0);
   const [inviteChoiceOpen, setInviteChoiceOpen] = useState(false);
+  const [inviteChoiceFromNav, setInviteChoiceFromNav] = useState(false);
   const [schemaShareOpen, setSchemaShareOpen] = useState(false);
   const [inviteShareChoiceOpen, setInviteShareChoiceOpen] = useState(false);
   const shareCanvasRef = useRef(null);
@@ -3992,12 +4053,13 @@ function AppInner(){
       setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
     }
   }
-  function openInviteChoice(){
+  function openInviteChoice(fromNav){
     const totGuestsNow = tabRef.current.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
     if(totGuestsNow===0){
       setMsgs(m=>[...m,{role:"agent",text:"Zal hələ doldurulmayıb — dəvətnamə göndərmək üçün əvvəlcə ən azı 1 qonaq əlavə edin 🙏",qrs:["🗺️ Sxemi aç"]}]);
       return;
     }
+    setInviteChoiceFromNav(!!fromNav);
     setInviteChoiceOpen(true);
   }
   function goToSchemaOrWarn(closeCurrentFn){
@@ -5528,7 +5590,7 @@ ${savedEvsList||"Yoxdur"}`;
               {key:"schema", label:"Zalın sxemi", enabled:hasS, cnt:0,
                 hint:"Əvvəlcə məclis yaradın və restoran seçin 🙏",
                 onClick:()=>{ pushPanel("schema"); setSchemaOpen(true); }},
-              {key:"invite", label:"Dəvətnamələr", enabled:tables.length>0&&totG>0,
+              {key:"invite", label:"Dəvətnamələrim", enabled:tables.length>0&&totG>0,
                 hint:tables.length===0?"Əvvəlcə zal sxemini qurun 🙏":"Əvvəlcə masalara qonaq əlavə edin 🙏",
                 onClick:()=>{ pushPanel("notinv"); setNotInvitedDrawerOpen(true); }},
               {key:"stats", label:"Statistika", enabled:totG>0,
@@ -5576,7 +5638,7 @@ ${savedEvsList||"Yoxdur"}`;
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={()=>setMyInviteOpen(false)}>
           <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
-              <button onClick={()=>setMyInviteOpen(false)} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
+              <button onClick={()=>{ setMyInviteOpen(false); setInviteChoiceOpen(true); }} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
               <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
               <div style={{width:28}}/>
             </div>
@@ -5705,6 +5767,14 @@ ${savedEvsList||"Yoxdur"}`;
               </div>
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
             </div>
+            <DashNav dashProps={{
+              active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
+              onGoSchema:()=>{ setMyInviteOpen(false); goToSchemaOrWarn(()=>{}); },
+              onGoAgent:()=>{ setMyInviteOpen(false); goToAgent(); },
+              onGoInvite:()=>{},
+              onGoStats:()=>{ setMyInviteOpen(false); pushPanel("stats"); setStatsOpen(true); },
+              onGoMeclis:()=>{ setMyInviteOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+            }}/>
           </div>
         </div>
       )}
@@ -5757,7 +5827,7 @@ ${savedEvsList||"Yoxdur"}`;
             active:"meclis", tableCount:tables.length, eventCount:savedEvents.length,
             onGoSchema:()=>goToSchemaOrWarn(()=>setMeclisOpen(false)),
             onGoAgent:()=>{ setMeclisOpen(false); goToAgent(); },
-            onGoInvite:()=>{ setMeclisOpen(false); openInviteChoice(); },
+            onGoInvite:()=>{ setMeclisOpen(false); openInviteChoice(true); },
             onGoStats:()=>{ setMeclisOpen(false); pushPanel("stats"); setStatsOpen(true); },
             onGoMeclis:()=>{},
           }}
@@ -5898,7 +5968,7 @@ ${savedEvsList||"Yoxdur"}`;
             active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
             onGoSchema:()=>goToSchemaOrWarn(()=>setStatsOpen(false)),
             onGoAgent:()=>{ setStatsOpen(false); goToAgent(); },
-            onGoInvite:()=>{ setStatsOpen(false); openInviteChoice(); },
+            onGoInvite:()=>{ setStatsOpen(false); openInviteChoice(true); },
             onGoStats:()=>{},
             onGoMeclis:()=>{ setStatsOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
           }}
@@ -5950,7 +6020,7 @@ ${savedEvsList||"Yoxdur"}`;
                   active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
                   onGoSchema:()=>{},
                   onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
-                  onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(); },
+                  onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(true); },
                   onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
                   onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
                 }}
@@ -6134,7 +6204,7 @@ ${savedEvsList||"Yoxdur"}`;
               active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
               onGoSchema:()=>{},
               onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
-              onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(); },
+              onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(true); },
               onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
               onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
             }}/>
@@ -6313,7 +6383,11 @@ ${savedEvsList||"Yoxdur"}`;
                       fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
                     🖨️ Çap et
                   </button>
-                  <button onClick={()=>{ setInviteShareChoiceOpen(false); drawAndPrint(); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); }}
+                  <button onClick={()=>{ setInviteShareChoiceOpen(false);
+                      const c = shareCanvasRef.current;
+                      drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                      shareFileOrDownload(buildImagePDF(c.toDataURL("image/png"), "Devetname.pdf"), setMsgs);
+                    }}
                     style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
                       background:"rgba(255,255,255,.5)",color:"#211A16",
                       fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
@@ -6330,7 +6404,7 @@ ${savedEvsList||"Yoxdur"}`;
           <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
               <button onClick={()=>setInviteChoiceOpen(false)} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
-              <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>Dəvətnamə Yarat və Göndər</div>
+              <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>{inviteChoiceFromNav?"Dəvətnamələrim":"Dəvətnamə Yarat və Göndər"}</div>
               <div style={{width:28}}/>
             </div>
             <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
@@ -6341,7 +6415,7 @@ ${savedEvsList||"Yoxdur"}`;
                   background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
                   fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
                   boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
-                💌 Dəvətnamə seç
+                💌 {inviteChoiceFromNav?"Dəvətnamələrim":"Dəvətnaməni hazırla"}
               </button>
               <button onClick={()=>{ setInviteChoiceOpen(false); setSchemaShareOpen(true); }}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
@@ -6350,6 +6424,14 @@ ${savedEvsList||"Yoxdur"}`;
                 🗺️ Zalın sxemini paylaş
               </button>
             </div>
+            <DashNav dashProps={{
+              active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
+              onGoSchema:()=>{ setInviteChoiceOpen(false); goToSchemaOrWarn(()=>{}); },
+              onGoAgent:()=>{ setInviteChoiceOpen(false); goToAgent(); },
+              onGoInvite:()=>{},
+              onGoStats:()=>{ setInviteChoiceOpen(false); pushPanel("stats"); setStatsOpen(true); },
+              onGoMeclis:()=>{ setInviteChoiceOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+            }}/>
           </div>
         </div>
       )}
@@ -6372,13 +6454,21 @@ ${savedEvsList||"Yoxdur"}`;
                   boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
                 🖨️ Çap et
               </button>
-              <button onClick={()=>{ printAll(tabRef.current,obDataRef.current,hallRef.current); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); setSchemaShareOpen(false); }}
+              <button onClick={()=>{ shareFileOrDownload(buildFloorPlanPDF(tabRef.current,obDataRef.current,hallRef.current), setMsgs); setSchemaShareOpen(false); }}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
                   background:"rgba(255,255,255,.55)",color:"#211A16",
                   fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
                 📄 PDF fayl Hostesə göndər
               </button>
             </div>
+            <DashNav dashProps={{
+              active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
+              onGoSchema:()=>{ setSchemaShareOpen(false); goToSchemaOrWarn(()=>{}); },
+              onGoAgent:()=>{ setSchemaShareOpen(false); goToAgent(); },
+              onGoInvite:()=>{ setSchemaShareOpen(false); setInviteChoiceOpen(true); },
+              onGoStats:()=>{ setSchemaShareOpen(false); pushPanel("stats"); setStatsOpen(true); },
+              onGoMeclis:()=>{ setSchemaShareOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
+            }}/>
           </div>
         </div>
       )}
