@@ -6859,7 +6859,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               }
             }} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>
-            {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
+            {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Bütün masalara göndər":"👤 Tək qonağa göndər"}
           </div>
         </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -6992,14 +6992,14 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                 setPanel("bulk");
               }}
               icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>}
-              title="Toplu göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
+              title="Bütün masalara göndər" desc="Masaları seçin, hamısına bir dəfəyə göndərin."/>
             <Card2 accent="#5B84B0" onClick={()=>{
                 const totalG = allTables.reduce((s,t)=>s+(t.guests||[]).length,0);
                 if(totalG===0){ alert("Hələ heç bir masaya qonaq əlavə edilməyib.\n\nƏvvəlcə Zal Sxemindən qonaq əlavə edin, sonra dəvətnamə göndərə bilərsiniz."); return; }
                 setPanel("single");
               }}
               icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>}
-              title="Tək-tək göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
+              title="Tək qonağa göndər" desc="Hər qonağa adı ilə ayrıca. Göndərmədən əvvəl önizləmə."/>
           </div>
         );
       })()}
@@ -7011,6 +7011,13 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <button onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(212,175,90,.25)",color:gold,fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
             <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.5)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
             <span style={{marginLeft:"auto",fontSize:11,color:"rgba(212,175,90,.8)"}}>{selTbls.size}/{notInvTables.length}</span>
+          </div>
+          <div onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))}
+            style={{margin:"12px 12px 0",padding:"14px 16px",borderRadius:16,background:"rgba(212,175,90,.12)",border:"1px solid rgba(212,175,90,.3)",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
+            <div style={{fontSize:22,flexShrink:0}}>👆</div>
+            <div style={{fontSize:11.5,color:"#8A6B1E",lineHeight:1.5,fontFamily:"'Manrope',sans-serif"}}>
+              Göndərmək üçün masaların üzərinə basın, ya da <b>bir dəfəyə bütün masaları seçmək üçün buraya toxunun</b>.
+            </div>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
             <div style={{display:"flex",flexWrap:"wrap",gap:14,justifyContent:"center"}}>
