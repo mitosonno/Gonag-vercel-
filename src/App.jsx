@@ -3964,6 +3964,7 @@ function AppInner(){
   const [statsOpen, setStatsOpen] = useState(false);
   const [myInviteOpen, setMyInviteOpen] = useState(false);
   const [notinvAutoJump, setNotinvAutoJump] = useState(false);
+  const [myInviteJumpAfter, setMyInviteJumpAfter] = useState(false);
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
@@ -5694,7 +5695,7 @@ ${savedEvsList||"Yoxdur"}`;
               style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
               Bağla
             </button>
-            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); setNotinvAutoJump(true); }}
+            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
               ✓ Bəyəndim, seç
             </button>
@@ -6210,7 +6211,7 @@ ${savedEvsList||"Yoxdur"}`;
           hall={hall}
           cardNumber={cardNumber}
           setCardNumber={setCardNumber}
-          onOpenMyInvite={()=>setMyInviteOpen(true)}
+          onOpenMyInvite={(shouldJump)=>{ setMyInviteJumpAfter(!!shouldJump); setMyInviteOpen(true); }}
           autoJumpToSendChoice={notinvAutoJump}
           onAutoJumpConsumed={()=>setNotinvAutoJump(false)}
           onGoToSchema={()=>{ closeTopPanel(); pushPanel("schema"); setSchemaOpen(true); }}
@@ -6318,7 +6319,7 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:28,color:"#211A16",textAlign:"center",marginBottom:8}}>Necə davam edək?</div>
               <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:30,maxWidth:280}}>Qonaqlara göndəriləcək dəvətnaməni seçin, ya da zalın masa sxemini Hostesə paylaşın.</div>
-              <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
+              <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setMyInviteJumpAfter(true); setMyInviteOpen(true); }}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
                   background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
                   fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
@@ -6936,7 +6937,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         );
         return (
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",padding:"18px 16px"}}>
-          <div onClick={onOpenMyInvite} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+          <div onClick={()=>onOpenMyInvite&&onOpenMyInvite(true)} style={{display:"flex",alignItems:"center",gap:14,padding:16,
             border:"1px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
             background:"rgba(212,175,90,.16)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
             boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
