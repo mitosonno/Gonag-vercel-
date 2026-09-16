@@ -471,6 +471,19 @@ const DEMO_HALL_2 = {
 function sideColor(s){ return s==="Oğlan evi"?"#B23A2E":s==="Qız evi"?"#C9A84C":"#6B6259"; }
 function sideBg(s){ return s==="Oğlan evi"?"rgba(178,58,46,.1)":s==="Qız evi"?"rgba(201,168,76,.14)":"rgba(107,98,89,.08)"; }
 
+const AZ_MONTHS_LIST = ["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+function parseAzDateParts(str){
+  if(!str) return null;
+  const AZ_MONTHS = {yanvar:0,fevral:1,mart:2,aprel:3,may:4,iyun:5,iyul:6,avqust:7,sentyabr:8,oktyabr:9,noyabr:10,dekabr:11};
+  const m = str.match(/(\d{1,2})\s+([a-zA-Zəıöüğçş]+)\s+(\d{4})(?:,?\s*(\d{1,2}):(\d{2}))?/i);
+  if(!m) return null;
+  const day=+m[1], monthName=m[2].toLowerCase(), year=+m[3];
+  const hasTime = !!m[4];
+  const hh=hasTime?+m[4]:19, mm=hasTime?+m[5]:0;
+  const monthIdx = AZ_MONTHS[monthName];
+  if(monthIdx===undefined) return null;
+  return {day, month:AZ_MONTHS_LIST[monthIdx], year, hour:hh, min:mm, hasTime};
+}
 function parseLine(line){
   const parts = line.split(/[,|;]+/).map(s=>s.trim()).filter(Boolean);
   if(!parts[0]) return null;
@@ -1935,64 +1948,78 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
           </div>
         </div>
       )}
-      {/* Başlıq: ad, tarix, sayğac, doluluq */}
+      {/* Başlıq: ad, tarix, sayğac, doluluq — yeni premium dizayn */}
       {(hall||tables.length>0||(obData&&(obData.boy||obData.name||obData.company)))&&(()=>{
         const title = obData&&obData.boy&&obData.girl ? (
-          <>{obData.boy} <span style={{color:"#C9A25E",fontWeight:400,fontStyle:"italic"}}>&amp;</span> {obData.girl}</>
+          <>{obData.boy} <em style={{fontStyle:"normal",color:"#80653c",fontSize:".85em"}}>&amp;</em> {obData.girl}</>
         ) : (obData&&(obData.name||obData.company)) || (hall&&hall.name) || "Məclis";
         const totG = tables.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
         const evLabel = evType==="toy"?"Toy":evType==="nishan"?"Nişan":evType==="adgunu"?"Ad günü":evType==="korporativ"?"Korporativ":"Məclis";
+        const eyebrow = evType==="toy"||evType==="nishan"?"BİZİM GÜNÜMÜZ":evType==="adgunu"?"AD GÜNÜMÜZ":evType==="korporativ"?"TƏDBİRİMİZ":"MƏCLİSİMİZ";
+        const dparts = parseAzDateParts(obData&&obData.date);
+        const place = hall&&(hall._venueName||hall.name);
+        const pctVal = pct||0;
         return (
-          <div style={{marginBottom:10,padding:"11px 12px 10px",borderRadius:16,position:"relative",
-            background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
-            border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
+          <div style={{marginBottom:10,padding:"20px 18px 18px",borderRadius:20,position:"relative",
+            background:"#FCFBF8",border:"1px solid #E7E1D7",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset"}}>
 
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:8,letterSpacing:2,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:4}}>
-                {evLabel}{obData&&obData.date?" · "+obData.date:""}
-              </div>
-              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:17,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.2}}>{title}</div>
-              {hall&&hall.name&&<div style={{fontSize:9.5,color:"#8a7548",marginTop:3}}>{hall.name}</div>}
-
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontFamily:"'Manrope',sans-serif",fontSize:10,letterSpacing:1.8,color:"#796a52",fontWeight:500,textTransform:"uppercase"}}>
+              <span>{evLabel}</span>
               {countdown&&!countdown.passed&&(
-                <div style={{display:"flex",justifyContent:"center",gap:5,marginTop:8}}>
-                  {[["G",countdown.days],["S",countdown.hours],["D",countdown.mins],["S",countdown.secs]].map(([lbl,val],i)=>(
-                    <div key={i} style={{textAlign:"center"}}>
-                      <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:600,
-                        color:i===3?"#C9A25E":"#211A16",
-                        background:i===3?"rgba(212,175,90,.14)":"rgba(255,255,255,.55)",
-                        borderRadius:7,padding:"3px 6px",minWidth:24}}>{String(val).padStart(2,"0")}</div>
-                      <div style={{fontSize:5.5,color:"#8a7548",fontWeight:700,marginTop:2}}>{lbl}</div>
-                    </div>
-                  ))}
-                </div>
+                <span style={{letterSpacing:0,fontSize:11,color:"#645e52",padding:"5px 9px",background:"#F0EDE5",borderRadius:7,textTransform:"none"}}>
+                  {countdown.days>0?countdown.days+" gün qaldı":"Bu gün!"}
+                </span>
               )}
               {countdown&&countdown.passed&&(
-                <div style={{marginTop:7,fontSize:9.5,color:"#4C9A6E",fontWeight:700}}>✦ Mübarək olsun!</div>
+                <span style={{letterSpacing:0,fontSize:11,color:"#4C9A6E",padding:"5px 9px",background:"rgba(76,154,110,.12)",borderRadius:7,textTransform:"none"}}>✦ Baş tutdu</span>
               )}
             </div>
 
-            <div style={{display:"flex",alignItems:"center",gap:9,marginTop:9,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.5)"}}>
-              <svg width="30" height="30" viewBox="0 0 30 30" style={{flexShrink:0}}>
-                <circle cx="15" cy="15" r="12" fill="none" stroke="rgba(150,120,80,.15)" strokeWidth="2.4"/>
-                <circle cx="15" cy="15" r="12" fill="none" stroke="#4C9A6E" strokeWidth="2.4"
-                  strokeDasharray={2*Math.PI*12} strokeDashoffset={2*Math.PI*12*(1-(pct||0)/100)}
-                  strokeLinecap="round" transform="rotate(-90 15 15)"/>
-                <text x="15" y="18.5" textAnchor="middle" fontFamily="'Manrope',sans-serif" fontSize="7.5" fontWeight="600" fill="#211A16">{pct||0}%</text>
-              </svg>
-              <div style={{flex:1,display:"flex",justifyContent:"space-around"}}>
-                <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:600,color:"#211A16"}}>{tables.length}</div>
-                  <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>MASA</div>
-                </div>
-                <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
-                <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:600,color:"#211A16"}}>
-                    {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:9,fontWeight:500,color:"#a89a80"}}> / {hall.totalGuests}</span>}
+            <div style={{textAlign:"center",margin:"18px 0 16px"}}>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:9,letterSpacing:2.2,color:"#8b7b60",fontWeight:500}}>{eyebrow}</div>
+              <h1 style={{font:"600 clamp(30px,9vw,42px)/1.15 'Cormorant Garamond',serif",color:"#201e1a",letterSpacing:-0.5,margin:"7px 0 0",overflowWrap:"anywhere"}}>{title}</h1>
+              {hall&&hall.name&&<div style={{fontFamily:"'Manrope',sans-serif",fontSize:11,color:"#8a7548",marginTop:5}}>{hall.name}</div>}
+            </div>
+
+            {(dparts||place)&&(
+              <div style={{borderTop:"1px solid #E9E3D9",borderBottom:"1px solid #E9E3D9",padding:"14px 0",display:"flex",alignItems:"center",justifyContent:"center",gap:22}}>
+                {dparts&&(
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <strong style={{fontFamily:"'Manrope',sans-serif",fontSize:26,fontWeight:500,color:"#80653c",lineHeight:1}}>{dparts.day}</strong>
+                    <div style={{display:"flex",flexDirection:"column",gap:2,fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,color:"#28251f"}}>
+                      <span>{dparts.month}</span>
+                      <small style={{fontSize:11,color:"#797267",fontWeight:400}}>{dparts.year}</small>
+                    </div>
                   </div>
-                  <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>QONAQ</div>
-                </div>
+                )}
+                {place&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:3,fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,color:"#28251f",
+                    borderLeft:dparts?"1px solid #E2DBCF":"none",paddingLeft:dparts?20:0}}>
+                    <span>{place}</span>
+                    {dparts&&<small style={{fontSize:11,color:"#514a40",fontWeight:500}}>Saat {String(dparts.hour).padStart(2,"0")}:{String(dparts.min).padStart(2,"0")}</small>}
+                  </div>
+                )}
               </div>
+            )}
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",marginTop:16,textAlign:"center"}}>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:19,lineHeight:1.2,fontWeight:500,color:"#211A16",fontVariantNumeric:"tabular-nums"}}>{tables.length}</span>
+                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:10,color:"#797267"}}>masa</span>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:19,lineHeight:1.2,fontWeight:500,color:"#211A16",fontVariantNumeric:"tabular-nums"}}>
+                  {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:13,color:"#8d8475",fontWeight:400}}> / {hall.totalGuests}</span>}
+                </span>
+                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:10,color:"#797267"}}>qonaq yerləşdirilib</span>
+              </div>
+            </div>
+
+            <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'Manrope',sans-serif",fontSize:9,color:"#797267",marginTop:16,marginBottom:6}}>
+              <span>Yerləşdirmə</span><span>{pctVal}%</span>
+            </div>
+            <div style={{height:3,borderRadius:3,background:"#EBE6DD",overflow:"hidden"}} role="progressbar" aria-valuenow={pctVal} aria-valuemin={0} aria-valuemax={100}>
+              <div style={{height:"100%",width:pctVal+"%",borderRadius:3,background:"linear-gradient(90deg,#FF9B85,#C1382A)",transition:"width .5s"}}/>
             </div>
           </div>
         );
