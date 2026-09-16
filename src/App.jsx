@@ -265,6 +265,16 @@ function printAll(tables, obData, hall){
   setTimeout(function(){w.print();},600);
 }
 
+function printInvitationImage(dataUrl, evName){
+  var w = window.open("","_blank","width=520,height=780");
+  w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>"+evName+"</title>"
+    +"<style>body{margin:0;display:flex;align-items:center;justify-content:center;background:#fff;min-height:100vh;}img{max-width:100%;display:block;}@media print{body{padding:0;}}</style>"
+    +"</head><body><img src='"+dataUrl+"'/></body></html>");
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},600);
+}
+
 // ── SUPABASE ──────────────────────────────────
 const SB_URL = "https://dpvoluttxelwnqcfnsbh.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368";
@@ -3868,6 +3878,10 @@ function AppInner(){
   },[schemaOpen]);
   const [devetPNGOpen, setDevetPNGOpen] = useState(null); // {tbl}
   const [schemaTutStep, setSchemaTutStep] = useState(0);
+  const [inviteChoiceOpen, setInviteChoiceOpen] = useState(false);
+  const [schemaShareOpen, setSchemaShareOpen] = useState(false);
+  const [inviteShareChoiceOpen, setInviteShareChoiceOpen] = useState(false);
+  const shareCanvasRef = useRef(null);
   const [devetData, setDevetData] = useState({metn:"", media:null});
   const [cardNumber, setCardNumber] = useState("");
   const [rsvpStats, setRsvpStats] = useState({});
@@ -3977,6 +3991,14 @@ function AppInner(){
     if(!currentEvId){
       setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
     }
+  }
+  function openInviteChoice(){
+    const totGuestsNow = tabRef.current.reduce((s,t)=>s+(t.guests||[]).reduce((ss,g)=>ss+(g.count||1),0),0);
+    if(totGuestsNow===0){
+      setMsgs(m=>[...m,{role:"agent",text:"Zal hələ doldurulmayıb — dəvətnamə göndərmək üçün əvvəlcə ən azı 1 qonaq əlavə edin 🙏",qrs:["🗺️ Sxemi aç"]}]);
+      return;
+    }
+    setInviteChoiceOpen(true);
   }
   function goToSchemaOrWarn(closeCurrentFn){
     if(!currentEvId || tables.length===0){
@@ -5664,15 +5686,25 @@ ${savedEvsList||"Yoxdur"}`;
                 💡 {myInviteMedia&&myInviteIncludeMedia?"Seçdiyiniz şablon + öz "+(myInviteMedia.type==="video"?"videonuz":"şəkliniz")+" birgə göndəriləcək.":"Yalnız seçdiyiniz şablon göndəriləcək (video/şəkil əlavə etmək istəsəniz yuxarıdakı qutunu işarələyin)."}
               </div>
 
-              <button onClick={()=>{
-                  if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
-                  setMyInviteOpen(false);
-                }}
-                style={{width:"100%",padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
-                  background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
-                  boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
-                ✓ Bəyəndim — Yadda saxla
-              </button>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{
+                    if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
+                    setMyInviteOpen(false);
+                  }}
+                  style={{flex:1,padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
+                    background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
+                    boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
+                  ✓ Bəyəndim — Yadda saxla
+                </button>
+                {myInviteShablon!=null&&(
+                  <button onClick={()=>setInviteShareChoiceOpen(true)}
+                    style={{padding:"13px 16px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",cursor:"pointer",
+                      background:"rgba(255,255,255,.5)",color:"#211A16",fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500}}>
+                    📤 Paylaş
+                  </button>
+                )}
+              </div>
+              <canvas ref={shareCanvasRef} style={{display:"none"}}/>
             </div>
           </div>
         </div>
@@ -5726,7 +5758,7 @@ ${savedEvsList||"Yoxdur"}`;
             active:"meclis", tableCount:tables.length, eventCount:savedEvents.length,
             onGoSchema:()=>goToSchemaOrWarn(()=>setMeclisOpen(false)),
             onGoAgent:()=>{ setMeclisOpen(false); goToAgent(); },
-            onGoInvite:()=>{ setMeclisOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+            onGoInvite:()=>{ setMeclisOpen(false); openInviteChoice(); },
             onGoStats:()=>{ setMeclisOpen(false); pushPanel("stats"); setStatsOpen(true); },
             onGoMeclis:()=>{},
           }}
@@ -5867,7 +5899,7 @@ ${savedEvsList||"Yoxdur"}`;
             active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
             onGoSchema:()=>goToSchemaOrWarn(()=>setStatsOpen(false)),
             onGoAgent:()=>{ setStatsOpen(false); goToAgent(); },
-            onGoInvite:()=>{ setStatsOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+            onGoInvite:()=>{ setStatsOpen(false); openInviteChoice(); },
             onGoStats:()=>{},
             onGoMeclis:()=>{ setStatsOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
           }}
@@ -5919,7 +5951,7 @@ ${savedEvsList||"Yoxdur"}`;
                   active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
                   onGoSchema:()=>{},
                   onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
-                  onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+                  onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(); },
                   onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
                   onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
                 }}
@@ -6103,7 +6135,7 @@ ${savedEvsList||"Yoxdur"}`;
               active:"schema", tableCount:tables.length, eventCount:savedEvents.length,
               onGoSchema:()=>{},
               onGoAgent:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); goToAgent(); },
-              onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); },
+              onGoInvite:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); openInviteChoice(); },
               onGoStats:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("stats"); setStatsOpen(true); },
               onGoMeclis:()=>{ setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current}); setSchemaOpen(false); pushPanel("meclis"); setMeclisOpen(true); },
             }}/>
@@ -6257,6 +6289,82 @@ ${savedEvsList||"Yoxdur"}`;
                 İptal — qal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {inviteShareChoiceOpen&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setInviteShareChoiceOpen(false)}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>Dəvətnaməni paylaş</div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:20}}>
+              Dəvətnaməni çap və ya PDF formatda Hostesə göndərin.
+            </div>
+            {(()=>{
+              const evName = (obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&(obData.name||obData.company))||"Məclis";
+              function drawAndPrint(){
+                const c = shareCanvasRef.current;
+                drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                printInvitationImage(c.toDataURL("image/png"), evName);
+              }
+              return (
+                <>
+                  <button onClick={()=>{ setInviteShareChoiceOpen(false); drawAndPrint(); }}
+                    style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
+                      background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                    🖨️ Çap et
+                  </button>
+                  <button onClick={()=>{ setInviteShareChoiceOpen(false); drawAndPrint(); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); }}
+                    style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
+                      background:"rgba(255,255,255,.5)",color:"#211A16",
+                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                    📄 PDF fayl Hostesə göndər
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+      {inviteChoiceOpen&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setInviteChoiceOpen(false)}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:24,color:"#211A16",textAlign:"center",marginBottom:4}}>Dəvətnamə Yarat və Göndər</div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:20}}>Nə etmək istəyirsiniz?</div>
+            <button onClick={()=>{ setInviteChoiceOpen(false); setMyInviteOpen(true); }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
+                background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              💌 Dəvətnamə seç
+            </button>
+            <button onClick={()=>{ setInviteChoiceOpen(false); setSchemaShareOpen(true); }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
+                background:"rgba(255,255,255,.5)",color:"#211A16",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              🗺️ Zalın sxemini paylaş
+            </button>
+          </div>
+        </div>
+      )}
+      {schemaShareOpen&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSchemaShareOpen(false)}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>Masa sxemini paylaş</div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:20}}>
+              Masa sxeminizi çap və ya PDF formatda Hostesə göndərin.
+            </div>
+            <button onClick={()=>{ setSchemaShareOpen(false); printAll(tabRef.current,obDataRef.current,hallRef.current); }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
+                background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              🖨️ Çap et
+            </button>
+            <button onClick={()=>{ setSchemaShareOpen(false); printAll(tabRef.current,obDataRef.current,hallRef.current); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
+                background:"rgba(255,255,255,.5)",color:"#211A16",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              📄 PDF fayl Hostesə göndər
+            </button>
           </div>
         </div>
       )}
