@@ -6573,6 +6573,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
   const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
+  useEffect(()=>{ if(myInviteShablon!=null) setShablon(DEVETNAME_SHABLONLAR[myInviteShablon]); }, [myInviteShablon]);
   const [step, setStep] = useState("select"); // "select"|"shablon"|"preview"|"confirm"
   const [previewTbl, setPreviewTbl] = useState(null);
   const [senderName, setSenderName] = useState("");
@@ -6845,9 +6846,16 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           {panel!=="home"&&<button onClick={()=>{
-              if(panel==="bulk"||panel==="single") setPanel("sendChoice");
-              else setPanel("home");
-              setStep("select");setSingleStep("list");setSingleGuest(null);
+              if(panel==="bulk"){
+                if(step==="confirm") setStep("preview");
+                else if(step==="preview"||step==="shablon") setStep("select");
+                else { setPanel("sendChoice"); setStep("select"); }
+              } else if(panel==="single"){
+                if(singleStep==="preview"||singleStep==="shablon"){ setSingleStep("list"); setSingleGuest(null); }
+                else { setPanel("sendChoice"); setSingleStep("list"); setSingleGuest(null); }
+              } else {
+                setPanel("home");
+              }
             }} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>
             {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
@@ -7095,54 +7103,6 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
             <div style={{display:"flex",justifyContent:"center"}}>
               <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
-            </div>
-            <div style={{marginTop:14}}>
-              <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Öz video/şəklinizi əlavə edin (istəyə bağlı)</div>
-              {myInviteMediaRaw?(
-                <div style={{padding:12,borderRadius:16,background:"rgba(255,255,255,.5)",border:"1px solid rgba(255,255,255,.5)"}}>
-                  {myInviteMediaRaw.type==="video"?(
-                    <video src={myInviteMediaRaw.url} controls style={{width:"100%",borderRadius:12,display:"block"}}/>
-                  ):(
-                    <img src={myInviteMediaRaw.url} style={{width:"100%",borderRadius:12,display:"block"}}/>
-                  )}
-                  <div style={{display:"flex",gap:8,marginTop:10}}>
-                    <label style={{flex:1,padding:"9px",borderRadius:11,background:"rgba(91,132,176,.14)",color:"#5B84B0",fontSize:12,fontWeight:700,textAlign:"center",cursor:"pointer"}}>
-                      Dəyiş
-                      <input type="file" accept="image/*,video/*" style={{display:"none"}}
-                        onChange={e=>{
-                          const f=e.target.files&&e.target.files[0]; if(!f) return;
-                          if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
-                          const isVideo=f.type.startsWith("video/");
-                          const reader=new FileReader();
-                          reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
-                          reader.readAsDataURL(f);
-                        }}/>
-                    </label>
-                    <button onClick={()=>setMyInviteMedia(null)} style={{padding:"9px 14px",borderRadius:11,background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>Sil</button>
-                  </div>
-                  <label style={{display:"flex",alignItems:"center",gap:8,marginTop:10,padding:"9px 12px",borderRadius:11,background:"rgba(76,154,110,.08)",cursor:"pointer"}}>
-                    <input type="checkbox" checked={myInviteIncludeMedia} onChange={e=>setMyInviteIncludeMedia(e.target.checked)}
-                      style={{width:16,height:16,accentColor:"#4C9A6E"}}/>
-                    <span style={{fontSize:11.5,color:"#4C9A6E",fontWeight:600}}>Qonaqlara göndərəndə bu {myInviteMediaRaw.type==="video"?"videonu":"şəkli"} də əlavə et</span>
-                  </label>
-                </div>
-              ):(
-                <label style={{display:"block",padding:"18px 14px",borderRadius:16,border:"1px dashed rgba(150,120,80,.4)",
-                  background:"rgba(255,255,255,.3)",textAlign:"center",cursor:"pointer"}}>
-                  <div style={{fontSize:20,marginBottom:4}}>📤</div>
-                  <div style={{fontSize:11.5,color:"#6B6259",fontWeight:600}}>Video və ya şəkil yükləyin</div>
-                  <div style={{fontSize:10,color:"rgba(33,26,22,.4)",marginTop:2}}>maks. 15MB</div>
-                  <input type="file" accept="image/*,video/*" style={{display:"none"}}
-                    onChange={e=>{
-                      const f=e.target.files&&e.target.files[0]; if(!f) return;
-                      if(f.size>15*1024*1024){ alert("⚠️ Fayl çox böyükdür (maks. 15MB)"); return; }
-                      const isVideo=f.type.startsWith("video/");
-                      const reader=new FileReader();
-                      reader.onload=ev=>setMyInviteMedia({type:isVideo?"video":"photo",url:ev.target.result});
-                      reader.readAsDataURL(f);
-                    }}/>
-                </label>
-              )}
             </div>
           </div>
           <div style={{padding:"10px 14px 16px",flexShrink:0}}>
