@@ -132,8 +132,8 @@ function DashNav({ dashProps }){
             style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 2px",
               border:"none",background:"transparent",cursor:isActive?"default":"pointer",position:"relative"}}>
             <span style={{color:isActive?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
-            <span style={{fontSize:10,fontWeight:isActive?700:600,color:isActive?"#C1382A":"#6B6259"}}>{it.label}</span>
-            {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+            <span style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:500,color:isActive?"#C1382A":"#6B6259"}}>{it.label}</span>
+            {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontFamily:"'Manrope',sans-serif",fontSize:9,fontWeight:600}}>{it.cnt}</span>}
           </button>
         );
       })}
@@ -675,7 +675,7 @@ function TableSVG({ table, size=120, clickable=false, onGuestClick, onSlotClick,
       {useChairImage?(
         <>
           <text x={cx} y={cy-(size>100?7:4)} textAnchor="middle" dominantBaseline="middle"
-            fontFamily="'Fraunces',serif" fontSize={size>100?22:14} fill="#211A16" fontWeight="700" letterSpacing="-0.5">
+            fontFamily="'Manrope',sans-serif" fontSize={size>100?22:14} fill="#211A16" fontWeight="600" letterSpacing="-0.5">
             {table.label==="__extra__"?"Extra":String(table.id)}
           </text>
           <line x1={cx-(size>100?11:7)} y1={cy+(size>100?4:3)} x2={cx+(size>100?11:7)} y2={cy+(size>100?4:3)}
@@ -836,7 +836,7 @@ function FpTablePopup({ t, posY, onClose, onSaveLabel, onSaveSide, onExtra }){
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <div>
-            <div style={{fontSize:16,fontWeight:800,color:"#211A16",fontFamily:"'Fraunces',serif"}}>
+            <div style={{fontSize:16,fontWeight:600,color:"#211A16",fontFamily:"'Manrope',sans-serif"}}>
               Masa {t.id}
             </div>
             {t.label&&t.label!=="__extra__"&&(
@@ -1557,7 +1557,7 @@ function FloorPlanView({ tables, expandedId, onTableClick, onPositionChange, hal
                             width:"60%",height:"60%",borderRadius:"50%",
                             background:isVip?"linear-gradient(155deg,#D4AF5A,#B8923E)":"linear-gradient(155deg,#3D2E1F,#211A16)",
                             display:"flex",alignItems:"center",justifyContent:"center",
-                            color:"#FFF9EC",fontFamily:"'Fraunces',serif",fontWeight:700,fontSize:Math.max(9,S*0.26)
+                            color:"#FFF9EC",fontFamily:"'Manrope',sans-serif",fontWeight:600,fontSize:Math.max(9,S*0.26)
                           }}>
                             {isExtra?"E":t.id}
                           </div>
@@ -1951,14 +1951,14 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{fontSize:8,letterSpacing:2,textTransform:"uppercase",color:"#9B7A3D",fontWeight:700,marginBottom:4}}>
                 {evLabel}{obData&&obData.date?" · "+obData.date:""}
               </div>
-              <div style={{fontFamily:"'Fraunces',serif",fontSize:17,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.2}}>{title}</div>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:17,fontWeight:600,color:"#211A16",lineHeight:1.1,letterSpacing:-0.2}}>{title}</div>
               {hall&&hall.name&&<div style={{fontSize:9.5,color:"#8a7548",marginTop:3}}>{hall.name}</div>}
 
               {countdown&&!countdown.passed&&(
                 <div style={{display:"flex",justifyContent:"center",gap:5,marginTop:8}}>
                   {[["G",countdown.days],["S",countdown.hours],["D",countdown.mins],["S",countdown.secs]].map(([lbl,val],i)=>(
                     <div key={i} style={{textAlign:"center"}}>
-                      <div style={{fontFamily:"'Fraunces',serif",fontSize:12,fontWeight:700,
+                      <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:600,
                         color:i===3?"#C9A25E":"#211A16",
                         background:i===3?"rgba(212,175,90,.14)":"rgba(255,255,255,.55)",
                         borderRadius:7,padding:"3px 6px",minWidth:24}}>{String(val).padStart(2,"0")}</div>
@@ -1978,16 +1978,16 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 <circle cx="15" cy="15" r="12" fill="none" stroke="#4C9A6E" strokeWidth="2.4"
                   strokeDasharray={2*Math.PI*12} strokeDashoffset={2*Math.PI*12*(1-(pct||0)/100)}
                   strokeLinecap="round" transform="rotate(-90 15 15)"/>
-                <text x="15" y="18.5" textAnchor="middle" fontFamily="'Fraunces',serif" fontSize="7.5" fontWeight="700" fill="#211A16">{pct||0}%</text>
+                <text x="15" y="18.5" textAnchor="middle" fontFamily="'Manrope',sans-serif" fontSize="7.5" fontWeight="600" fill="#211A16">{pct||0}%</text>
               </svg>
               <div style={{flex:1,display:"flex",justifyContent:"space-around"}}>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>{tables.length}</div>
+                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:600,color:"#211A16"}}>{tables.length}</div>
                   <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>MASA</div>
                 </div>
                 <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
                 <div style={{textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:13,fontWeight:700,color:"#211A16"}}>
+                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:600,color:"#211A16"}}>
                     {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:9,fontWeight:500,color:"#a89a80"}}> / {hall.totalGuests}</span>}
                   </div>
                   <div style={{fontSize:5.5,color:"#a89a80",fontWeight:700,marginTop:1}}>QONAQ</div>
@@ -2128,7 +2128,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                         border:(isSel?"2.5px":"1.6px")+" solid "+sc,
                         display:"flex",alignItems:"center",justifyContent:"center",
                         fontSize:12,fontWeight:800,color:isSel?"#5B84B0":tfull?"#FFF9EC":"#211A16",
-                        fontFamily:"'Fraunces',serif",
+                        fontFamily:"'Manrope',sans-serif",
                         boxShadow:isSel?"0 0 0 3px rgba(91,132,176,.18)":"0 2px 4px rgba(60,40,20,.2)",
                         transition:"box-shadow .15s"}}>
                         {t.id}
@@ -2215,7 +2215,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
                 <div style={{flex:1}} onClick={()=>{setLblVal(exTbl.label&&exTbl.label!=="__extra__"?exTbl.label:"");setEditLbl(true);}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",cursor:"pointer"}}>
-                    <span style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
+                    <span style={{fontFamily:"'Manrope',sans-serif",fontSize:16,fontWeight:600,color:occ(exTbl||{guests:[]})>=exTbl.seats?"#4C9A6E":"#211A16"}}>
                       {exTbl.label==="__extra__"?"⊕ Extra Masa":exTbl.label||"Masa "+expandedId}
                     </span>
                     <span style={{fontSize:10.5,color:"#5B84B0",fontWeight:600}}>Masaya ad qoyun ✏️</span>
@@ -2528,7 +2528,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
     <div onClick={onClick||undefined} style={{background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.22))",backdropFilter:"blur(14px) saturate(150%)",WebkitBackdropFilter:"blur(14px) saturate(150%)",border:"1px solid rgba(255,255,255,.55)",boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 4px 14px -6px rgba(60,40,20,.2)",borderRadius:16,padding:"12px",cursor:onClick?"pointer":"default"}}>
       <div style={{width:30,height:30,borderRadius:9,background:color+"1E",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8}}>{icon}</div>
       <div style={{fontSize:9,color:"rgba(33,26,22,.5)",fontWeight:600,letterSpacing:.3,textTransform:"uppercase"}}>{label}</div>
-      <div style={{fontSize:20,fontWeight:800,color,marginTop:2,fontFamily:"'Fraunces',serif"}}>{val}</div>
+      <div style={{fontSize:20,fontWeight:600,color,marginTop:2,fontFamily:"'Manrope',sans-serif"}}>{val}</div>
     </div>
   );
 
@@ -2539,7 +2539,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
           <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)"}}/>
         </div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"0 16px 12px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
-          <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
+          <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600,display:"flex",alignItems:"center",gap:8}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>
             Statistika
           </div>
@@ -2568,7 +2568,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
               <div style={{position:"fixed",inset:0,zIndex:600,background:"rgba(20,15,10,.5)",display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setListFilter(null)}>
                 <div style={{width:"100%",maxWidth:420,maxHeight:"75vh",background:"#FBF8F1",borderRadius:"20px 20px 0 0",padding:"18px 18px 24px",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexShrink:0}}>
-                    <div style={{fontFamily:"'Fraunces',serif",fontSize:16,fontWeight:700,color:"#211A16"}}>{titleMap[listFilter]} ({list.length})</div>
+                    <div style={{fontFamily:"'Manrope',sans-serif",fontSize:16,fontWeight:600,color:"#211A16"}}>{titleMap[listFilter]} ({list.length})</div>
                     <button onClick={()=>setListFilter(null)} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer"}}>✕</button>
                   </div>
                   <div style={{overflowY:"auto",display:"flex",flexDirection:"column",gap:6}}>
@@ -2780,7 +2780,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
         {/* Header */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 18px 14px"}}>
           <div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:18,color:"#211A16",fontWeight:700}}>Məclislərim</div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:18,color:"#211A16",fontWeight:600}}>Məclislərim</div>
             <div style={{fontSize:11,color:"rgba(33,26,22,.45)",marginTop:2}}>{events.length} məclis</div>
           </div>
           <button onClick={onClose} style={{width:34,height:34,borderRadius:"50%",border:"1px solid rgba(255,255,255,.5)",background:"linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25))",backdropFilter:"blur(10px)",color:"#211A16",fontSize:15,cursor:"pointer"}}>✕</button>
@@ -2818,7 +2818,7 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
                   <TypeIcon type={ev.evType}/>
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:15,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                  <div style={{fontSize:15,fontWeight:600,color:"#211A16",fontFamily:"'Manrope',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                     {ev.evType==="toy"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
                     {ev.evType==="toy"&&(!ev.obData||(!ev.obData.boy&&!ev.obData.girl))?"Toy — davam edir":""}
                     {ev.evType==="nishan"&&ev.obData&&(ev.obData.boy||ev.obData.girl)?((ev.obData.boy||"...")+" & "+(ev.obData.girl||"...")):""}
@@ -2842,26 +2842,26 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
               {/* Stats row */}
               <div style={{display:"flex",gap:6,paddingTop:11,borderTop:"1px solid rgba(255,255,255,.5)"}}>
                 <div style={{flex:1,textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#211A16"}}>{filled}</div>
+                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:"#211A16"}}>{filled}</div>
                   <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>QONAQ</div>
                 </div>
                 {kishi!=null&&(
                   <>
                     <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
                     <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#5B84B0"}}>{kishi}</div>
+                      <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:"#5B84B0"}}>{kishi}</div>
                       <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>KİŞİ</div>
                     </div>
                     <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
                     <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:"#C9668A"}}>{qadin}</div>
+                      <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:"#C9668A"}}>{qadin}</div>
                       <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>QADIN</div>
                     </div>
                   </>
                 )}
                 <div style={{width:1,background:"rgba(150,120,80,.15)"}}/>
                 <div style={{flex:1,textAlign:"center"}}>
-                  <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:800,color:pct>=100?"#4C9A6E":"#C9A25E"}}>{cap>0?pct+"%":"—"}</div>
+                  <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:pct>=100?"#4C9A6E":"#C9A25E"}}>{cap>0?pct+"%":"—"}</div>
                   <div style={{fontSize:7.5,color:"#a89a80",fontWeight:700,letterSpacing:.3,marginTop:1}}>DOLUB</div>
                 </div>
               </div>
@@ -4937,7 +4937,7 @@ ${savedEvsList||"Yoxdur"}`;
     setIsListening(false);
   }
 
-  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Inter',sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%);}\n.glass,.tb,.pill,.tt,.menu3,.bb.a,.qb,.qbn,.ir .inp,.sndb,.rsp,.back-btn,.ev-card,.gcard,.rsvp-row,.dev-opt,.stat-card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 8px 22px -8px rgba(60,40,20,.22);position:relative;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin:14px 12px 0;border-radius:22px;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#C1382A;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;}\n.dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 8px rgba(193,56,42,.65);animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,.35)}70%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 7px rgba(193,56,42,0)}100%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,0)}}\n.pn{font-size:11px;color:#211A16;font-weight:700;}\n.pn .ai{color:#B8935A;}\n.gulico{width:16px;height:16px;object-fit:contain;flex-shrink:0;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{padding:6px 12px;border-radius:16px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.tt:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.menu3{width:32px;height:32px;border-radius:50%;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.4);background:transparent;}\n.schema-panel{flex:1;overflow:hidden;background:transparent;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(150,120,80,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:linear-gradient(155deg,#FBF8F1,#F0E8D5);box-shadow:0 0 8px rgba(193,56,42,.2);border:1px solid rgba(212,175,90,.35);}\n.av.u{background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25));backdrop-filter:blur(10px);}\n.bb{padding:9px 12px;border-radius:16px;font-size:12.5px;line-height:1.55;max-width:90%;white-space:pre-wrap;}\n.bb.a{color:#211A16;border-radius:18px 18px 18px 5px;}\n.bb.u{background:linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);color:#F5EEE0;margin-left:auto;border-radius:18px 18px 5px 18px;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 26px -10px rgba(0,0,0,.5);}\n.qw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}\n.qb{padding:7px 13px;border-radius:18px;color:#211A16;font-size:11.5px;cursor:pointer;font-weight:600;}\n.qb:hover{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#C1382A;box-shadow:0 0 4px rgba(193,56,42,.6);animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:10px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.inp{flex:1;background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:10px 16px;color:#211A16;font-size:12.5px;font-family:'Inter',sans-serif;outline:none;}\n.inp:focus{border-color:rgba(193,56,42,.5);}\n.sndb{width:38px;height:38px;padding:0;background:linear-gradient(155deg,#FF6B52,#C1382A);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -2px rgba(193,56,42,.55),0 1px 0 rgba(255,255,255,.3) inset;}\n.sndb:hover{filter:brightness(1.08);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}\n.qbar{display:flex;gap:6px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.4);flex-wrap:wrap;flex-shrink:0;}\n.qbn{padding:7px 13px;border-radius:18px;color:#6B6259;font-size:11px;cursor:pointer;font-weight:600;}\n.qbn:hover{border-color:rgba(193,56,42,.4);color:#C1382A;}\n.qbn.on{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.cnt{display:inline-block;margin-left:4px;background:linear-gradient(155deg,#EFC988,#D4AF5A);color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;box-shadow:0 0 4px rgba(212,175,90,.5);}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.45);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{border-radius:26px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.4);}\n.rsi{width:100%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:9px 13px;color:#211A16;font-size:13px;margin-top:8px;outline:none;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{padding:8px 15px;border-radius:14px;color:#211A16;font-size:12px;cursor:pointer;font-weight:600;}\n.back-btn:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.pbar-bg{height:5px;background:rgba(150,120,80,.15);border-radius:3px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#FF9B85,#C1382A);border-radius:3px;transition:width .5s;box-shadow:0 0 6px rgba(193,56,42,.4);}\n.glass::before,.tb::before,.pill::before,.tt::before,.bb.a::before,.qb::before,.qbn::before,.inp::before,.rsp::before,.ev-card::before,.gcard::before,.rsvp-row::before,.dev-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.55) 0%,transparent 30%,transparent 70%,rgba(255,255,255,.2) 100%);pointer-events:none;}
+  const CSS = `\n@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500&display=swap');\n@font-face{font-family:'Manrope';src:url('/fonts/Manrope-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}\n@font-face{font-family:'Manrope';src:url('/fonts/Manrope-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;}\n@font-face{font-family:'Manrope';src:url('/fonts/Manrope-SemiBold.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;}\n@font-face{font-family:'Manrope';src:local('Segoe UI'),local('Helvetica Neue'),local('Arial'),local('Roboto'),local('Noto Sans');unicode-range:U+018F;font-weight:400 600;font-style:normal;font-display:swap;}\n@font-face{font-family:'Cormorant Garamond';src:url('/fonts/CormorantGaramond-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;}\n*{box-sizing:border-box;margin:0;padding:0;}\nhtml,body,#root{height:100%;font-family:'Manrope',-apple-system,sans-serif;color:#211A16;}\n.app{height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 15% 8%,rgba(255,235,210,.9),transparent 40%),radial-gradient(circle at 90% 85%,rgba(255,180,150,.3),transparent 45%),linear-gradient(160deg,#F5EEE0 0%,#E9DFC8 45%,#DED0AE 100%);}\n.glass,.tb,.pill,.tt,.menu3,.bb.a,.qb,.qbn,.ir .inp,.sndb,.rsp,.back-btn,.ev-card,.gcard,.rsvp-row,.dev-opt,.stat-card{background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.18));backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid rgba(255,255,255,.55);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 8px 22px -8px rgba(60,40,20,.22);position:relative;}\n.tb{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;margin:14px 12px 0;border-radius:22px;flex-shrink:0;}\n.logo{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:#211A16;letter-spacing:0.5px;}\n.logo span{color:#C1382A;font-style:normal;}\n.pill{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;}\n.dot{width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF9B85,#C1382A 70%);box-shadow:0 0 8px rgba(193,56,42,.65);animation:pulse 2s ease infinite;}\n@keyframes pulse{0%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,.35)}70%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 7px rgba(193,56,42,0)}100%{box-shadow:0 0 8px rgba(193,56,42,.65),0 0 0 0 rgba(193,56,42,0)}}\n.pn{font-family:'Manrope',sans-serif;font-size:15px;color:#211A16;font-weight:500;}\n.pn .ai{color:#B8935A;}\n.eyebrow{font-family:'Manrope',sans-serif;font-weight:500;font-size:12px;letter-spacing:1.4px;color:#8A6B1E;}\n.display-cg{font-family:'Cormorant Garamond',serif;font-weight:500;}\n.gulico{width:16px;height:16px;object-fit:contain;flex-shrink:0;}\n.tbx{display:flex;gap:6px;align-items:center;}\n.tt{font-family:'Manrope',sans-serif;padding:6px 12px;border-radius:16px;color:#211A16;font-size:13px;cursor:pointer;font-weight:500;}\n.tt:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.menu3{width:32px;height:32px;border-radius:50%;color:#211A16;cursor:pointer;display:flex;align-items:center;justify-content:center;}\n.menu3:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.split{flex:1;display:flex;overflow:hidden;}\n.chat-panel{width:320px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.4);background:transparent;}\n.schema-panel{flex:1;overflow:hidden;background:transparent;display:flex;flex-direction:column;}\n.schema-hdr{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.schema-body{flex:1;overflow:hidden;}\n.body{flex:1;display:flex;flex-direction:column;overflow:hidden;}\n.chat{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}\n.chat::-webkit-scrollbar{width:3px;}.chat::-webkit-scrollbar-thumb{background:rgba(150,120,80,.3);}\n.mw{display:flex;gap:8px;animation:mi .2s ease;}\n@keyframes mi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\n.mw.user{flex-direction:row-reverse;}\n.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}\n.av.a{background:linear-gradient(155deg,#FBF8F1,#F0E8D5);box-shadow:0 0 8px rgba(193,56,42,.2);border:1px solid rgba(212,175,90,.35);}\n.av.u{background:linear-gradient(155deg,rgba(255,255,255,.6),rgba(255,255,255,.25));backdrop-filter:blur(10px);}\n.bb{font-family:'Manrope',sans-serif;font-weight:400;padding:11px 14px;border-radius:16px;font-size:16.5px;line-height:1.5;max-width:90%;white-space:pre-wrap;}\n.bb.a{color:#211A16;border-radius:18px 18px 18px 5px;}\n.bb.u{background:linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.14);color:#F5EEE0;margin-left:auto;border-radius:18px 18px 5px 18px;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 10px 26px -10px rgba(0,0,0,.5);}\n.qw{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}\n.qb{font-family:'Manrope',sans-serif;padding:9px 15px;border-radius:18px;color:#211A16;font-size:13.5px;cursor:pointer;font-weight:500;}\n.qb:hover{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.tbb{display:flex;align-items:center;justify-content:center;min-width:44px;}\n.ds{display:flex;gap:3px;}.ds span{width:5px;height:5px;border-radius:50%;background:#C1382A;box-shadow:0 0 4px rgba(193,56,42,.6);animation:ds .9s ease infinite;}\n.ds span:nth-child(2){animation-delay:.2s;}.ds span:nth-child(3){animation-delay:.4s;}\n@keyframes ds{0%,80%,100%{opacity:.2}40%{opacity:1}}\n.ir{padding:10px 14px;display:flex;gap:6px;border-top:1px solid rgba(255,255,255,.4);flex-shrink:0;}\n.inp{flex:1;background:linear-gradient(155deg,rgba(255,255,255,.55),rgba(255,255,255,.2));backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.55);border-radius:22px;padding:12px 16px;color:#211A16;font-size:16px;font-family:'Manrope',sans-serif;font-weight:400;outline:none;}\n.inp::placeholder{font-family:'Manrope',sans-serif;font-weight:400;color:rgba(33,26,22,.4);}\n.inp:focus{border-color:rgba(193,56,42,.5);}\n.sndb{width:38px;height:38px;padding:0;background:linear-gradient(155deg,#FF6B52,#C1382A);border:1px solid rgba(255,255,255,.3);border-radius:50%;color:#FFFFFF;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px -2px rgba(193,56,42,.55),0 1px 0 rgba(255,255,255,.3) inset;}\n.sndb:hover{filter:brightness(1.08);}\n.sndb:disabled{opacity:.3;cursor:not-allowed;box-shadow:none;}\n.qbar{display:flex;gap:6px;padding:9px 14px;border-top:1px solid rgba(255,255,255,.4);flex-wrap:wrap;flex-shrink:0;}\n.qbn{font-family:'Manrope',sans-serif;padding:7px 13px;border-radius:18px;color:#6B6259;font-size:12px;cursor:pointer;font-weight:500;}\n.qbn:hover{border-color:rgba(193,56,42,.4);color:#C1382A;}\n.qbn.on{border-color:rgba(193,56,42,.4);color:#C1382A;background:linear-gradient(155deg,rgba(193,56,42,.18),rgba(193,56,42,.06));}\n.cnt{display:inline-block;margin-left:4px;background:linear-gradient(155deg,#EFC988,#D4AF5A);color:#FFFFFF;border-radius:10px;padding:0 5px;font-size:10px;font-weight:700;box-shadow:0 0 4px rgba(212,175,90,.5);}\n.ov{position:fixed;inset:0;background:rgba(33,26,22,.45);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;}\n.rsp{border-radius:26px;width:90%;max-width:480px;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;}\n.rsh{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.4);}\n.rsi{width:100%;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:9px 13px;color:#211A16;font-size:14px;margin-top:8px;outline:none;font-family:'Manrope',sans-serif;}\n.rsb{overflow-y:auto;padding:12px 16px;flex:1;}\n.dcl{background:transparent;border:none;color:#6B6259;font-size:18px;cursor:pointer;padding:4px 8px;}\n.back-btn{font-family:'Manrope',sans-serif;padding:8px 15px;border-radius:14px;color:#211A16;font-size:13px;cursor:pointer;font-weight:500;}\n.back-btn:hover{background:linear-gradient(155deg,rgba(255,255,255,.7),rgba(255,255,255,.3));}\n.pbar-bg{height:5px;background:rgba(150,120,80,.15);border-radius:3px;overflow:hidden;margin-top:4px;}\n.pbar{height:100%;background:linear-gradient(90deg,#FF9B85,#C1382A);border-radius:3px;transition:width .5s;box-shadow:0 0 6px rgba(193,56,42,.4);}\n.glass::before,.tb::before,.pill::before,.tt::before,.bb.a::before,.qb::before,.qbn::before,.inp::before,.rsp::before,.ev-card::before,.gcard::before,.rsvp-row::before,.dev-opt::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(120deg,rgba(255,255,255,.55) 0%,transparent 30%,transparent 70%,rgba(255,255,255,.2) 100%);pointer-events:none;}
 @keyframes tpulse{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-50%) scale(1.3)}65%{transform:translate(-50%,-50%) scale(0.92)}100%{transform:translate(-50%,-50%) scale(1)}}
 .tpulse{animation:tpulse 0.65s ease;}
 .lp-selected{filter:drop-shadow(0 0 8px rgba(178,58,46,0.9));}
@@ -4976,6 +4976,12 @@ ${savedEvsList||"Yoxdur"}`;
 
         <div className="body">
           <div className="chat">
+            {!currentEvId && msgs.length<=1 && (
+              <div style={{padding:"6px 4px 14px"}}>
+                <div className="eyebrow" style={{marginBottom:10}}>ŞƏXSİ TƏDBİR KÖMƏKÇİNİZ</div>
+                <div className="display-cg" style={{fontSize:34,lineHeight:1.2,color:"#211A16",maxWidth:300}}>Özəl gününüzü birlikdə planlayaq.</div>
+              </div>
+            )}
             {msgs.map((m,i)=>(
               <div key={i} className={"mw "+m.role}>
                 <div className={"av "+(m.role==="agent"?"a":"u")}>{m.role==="agent"?<img src="/gul-ai-icon.png" style={{width:"70%",height:"70%",objectFit:"contain"}}/>:"👤"}</div>
@@ -5066,7 +5072,7 @@ ${savedEvsList||"Yoxdur"}`;
                                 background:isSel?"rgba(193,56,42,.22)":tfull?statusColor:tpartial?`linear-gradient(155deg,${statusColor}55,${statusColor}25)`:"radial-gradient(circle at 35% 30%,#FFFFFF,#F5EFE2)",
                                 border:(isSel?"2px":"1.6px")+" solid "+statusColor,
                                 display:"flex",alignItems:"center",justifyContent:"center",
-                                fontSize:8.5,fontWeight:800,color:isSel?"#C1382A":tfull?"#FFF9EC":"#211A16",fontFamily:"'Fraunces',serif",
+                                fontSize:8.5,fontWeight:600,color:isSel?"#C1382A":tfull?"#FFF9EC":"#211A16",fontFamily:"'Manrope',sans-serif",
                                 boxShadow:isSel?"0 0 0 3px rgba(193,56,42,.18), 0 2px 4px rgba(60,40,20,.25)":"0 2px 4px rgba(60,40,20,.25)",
                                 transition:"width .15s,height .15s"}}>
                                 {t.id}
@@ -5174,7 +5180,7 @@ ${savedEvsList||"Yoxdur"}`;
                                 <TypeIcon type={ev2.evType} size={17}/>
                               </div>
                               <div style={{flex:1,minWidth:0}}>
-                                <div style={{fontSize:12.5,fontWeight:700,color:"#211A16",fontFamily:"'Fraunces',serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
+                                <div style={{fontSize:12.5,fontWeight:600,color:"#211A16",fontFamily:"'Manrope',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
                                 <div style={{fontSize:9.5,color:"#8a7548",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                                   {ev2.hallName?ev2.hallName+" · ":""}{ev2.obData&&ev2.obData.date?ev2.obData.date+" · ":""}{ev2.totalGuests>0?ev2.totalGuests+" qonaq":"başlanğıc"}
                                 </div>
@@ -5231,7 +5237,7 @@ ${savedEvsList||"Yoxdur"}`;
                                   background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
                                   border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
                                 <span style={{width:36,height:36,borderRadius:11,background:o.color+"26",display:"flex",alignItems:"center",justifyContent:"center",color:o.color}}>{o.icon}</span>
-                                <span style={{fontSize:11.5,fontWeight:700,color:"#211A16"}}>{o.label}</span>
+                                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:16,fontWeight:500,color:"#211A16"}}>{o.label}</span>
                               </button>
                             );
                           })}
@@ -5324,7 +5330,7 @@ ${savedEvsList||"Yoxdur"}`;
                             border:(isCurrent?"2px":"1.3px")+" solid "+sc,
                             background:isCurrent?sc+"22":tFull?sc:"rgba(255,255,255,.6)",
                             color:tFull?"#FFF9EC":"#211A16",fontWeight:800,fontSize:11,
-                            fontFamily:"'Fraunces',serif",cursor:tFull?"default":"pointer",
+                            fontFamily:"'Manrope',sans-serif",cursor:tFull?"default":"pointer",
                             opacity:tFull?0.6:1}}>
                           {tt.id}
                         </button>
@@ -5462,7 +5468,7 @@ ${savedEvsList||"Yoxdur"}`;
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4"/></svg>
               )}
             </button>
-            <input ref={inpRef} className="inp" placeholder="Yazın..." value={input}
+            <input ref={inpRef} className="inp" placeholder="Gul-Ai-yə yazın…" value={input}
               onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input);}}} disabled={busy}/>
             <button className="sndb" onClick={()=>send(input)} disabled={!input.trim()||busy}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" style={{display:"block"}}><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -5491,8 +5497,8 @@ ${savedEvsList||"Yoxdur"}`;
                   border:"none",background:"transparent",cursor:"pointer",position:"relative",
                   opacity:it.enabled?1:0.4}}>
                 <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
-                <span style={{fontSize:10,fontWeight:it.active?700:600,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
-                {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontSize:9,fontWeight:800}}>{it.cnt}</span>}
+                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:500,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
+                {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontFamily:"'Manrope',sans-serif",fontSize:9,fontWeight:600}}>{it.cnt}</span>}
               </button>
             ))}
           </div>
@@ -5522,7 +5528,7 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="rsp" onClick={e=>e.stopPropagation()} style={{maxWidth:420}}>
             <div className="rsh">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
+                <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
                 <button className="dcl" onClick={()=>setMyInviteOpen(false)}>✕</button>
               </div>
             </div>
@@ -5759,7 +5765,7 @@ ${savedEvsList||"Yoxdur"}`;
           <div className="rsp" onClick={e=>e.stopPropagation()}>
             <div className="rsh">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>🏛️ Restoran seç</div>
+                <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>🏛️ Restoran seç</div>
                 <button className="dcl" onClick={()=>setRestOpen(false)}>✕</button>
               </div>
             </div>
@@ -6233,7 +6239,7 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{width:44,height:44,borderRadius:"50%",background:"rgba(212,175,90,.16)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8.5" r="1.6"/><circle cx="16" cy="8.5" r="1.6"/><circle cx="8" cy="15.5" r="1.6"/><circle cx="16" cy="15.5" r="1.6"/></svg>
             </div>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:15,fontWeight:700,color:"#211A16",textAlign:"center",marginBottom:8}}>Məclis yaradılmayıb</div>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:8}}>Məclis yaradılmayıb</div>
             <div style={{fontSize:12,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:16}}>Zalın sxeminə keçmək üçün əvvəlcə Gül-Ai ilə məclis yaradın.</div>
             <button onClick={()=>{ setNoEventWarning(false); goToAgent(); }}
               style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))",color:"#211A16",fontSize:13,fontWeight:700,cursor:"pointer"}}>
@@ -6701,7 +6707,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               else setPanel("home");
               setStep("select");setSingleStep("list");setSingleGuest(null);
             }} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
-          <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:16,fontWeight:600}}>
+          <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>
             {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Toplu göndər":"👤 Tək-tək göndər"}
           </div>
         </div>
@@ -7178,7 +7184,7 @@ function LayoutPickerModal({ hall, onConfirm, onClose }){
         borderRadius:"26px 26px 0 0",padding:"20px 16px 36px"}}
         onClick={e=>e.stopPropagation()}>
         <div style={{width:36,height:4,borderRadius:2,background:"rgba(150,120,80,.3)",margin:"0 auto 16px"}}/>
-        <div style={{fontFamily:"'Fraunces',serif",color:"#211A16",fontSize:17,fontWeight:600,textAlign:"center",marginBottom:6}}>
+        <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:17,fontWeight:600,textAlign:"center",marginBottom:6}}>
           🗺️ Sxem növünü seçin
         </div>
         <div style={{color:"rgba(33,26,22,.5)",fontSize:11,textAlign:"center",marginBottom:20}}>
