@@ -134,7 +134,7 @@ function DashNav({ dashProps }){
               border:"none",background:"transparent",cursor:isActive?"default":"pointer",position:"relative"}}>
             <span style={{color:isActive?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
             <span style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:500,color:isActive?"#C1382A":"#6B6259"}}>{it.label}</span>
-            {it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontFamily:"'Manrope',sans-serif",fontSize:9,fontWeight:600}}>{it.cnt}</span>}
+            {it.cnt>0&&<span style={{position:"absolute",top:3,right:"24%",background:"#c9a84c",color:"#FFFFFF",borderRadius:7,minWidth:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",fontFamily:"'Manrope',sans-serif",fontSize:8,fontWeight:600,lineHeight:1}}>{it.cnt}</span>}
           </button>
         );
       })}
@@ -5093,9 +5093,9 @@ ${savedEvsList||"Yoxdur"}`;
         <div className="body">
           <div className="chat">
             {!currentEvId && msgs.length<=1 && (
-              <div style={{padding:"6px 4px 14px"}}>
-                <div className="eyebrow" style={{marginBottom:10}}>ŞƏXSİ TƏDBİR KÖMƏKÇİNİZ</div>
-                <div className="display-cg" style={{fontSize:34,lineHeight:1.2,color:"#211A16",maxWidth:300}}>Özəl gününüzü birlikdə planlayaq.</div>
+              <div style={{padding:"28px 8px 22px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center"}}>
+                <div className="display-cg" style={{fontSize:34,lineHeight:1.25,color:"#211A16",maxWidth:320}}>Özəl gününüzü birlikdə planlayaq.</div>
+                <div style={{width:44,height:2,borderRadius:2,background:"linear-gradient(90deg,transparent,#D4AF5A,transparent)",marginTop:16}}/>
               </div>
             )}
             {msgs.map((m,i)=>(
@@ -5614,7 +5614,7 @@ ${savedEvsList||"Yoxdur"}`;
                   opacity:it.enabled?1:0.4}}>
                 <span style={{color:it.active?"#C1382A":"#6B6259"}}><NavIcon type={it.key}/></span>
                 <span style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:500,color:it.active?"#C1382A":"#6B6259"}}>{it.label}</span>
-                {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:2,right:"22%",background:"#c9a84c",color:"#FFFFFF",borderRadius:9,padding:"0 5px",fontFamily:"'Manrope',sans-serif",fontSize:9,fontWeight:600}}>{it.cnt}</span>}
+                {it.enabled&&it.cnt>0&&<span style={{position:"absolute",top:3,right:"24%",background:"#c9a84c",color:"#FFFFFF",borderRadius:7,minWidth:14,height:14,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px",fontFamily:"'Manrope',sans-serif",fontSize:8,fontWeight:600,lineHeight:1}}>{it.cnt}</span>}
               </button>
             ))}
           </div>
