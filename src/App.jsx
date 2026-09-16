@@ -280,16 +280,14 @@ function buildFloorPlanPDF(tables, obData, hall){
   doc.setTextColor(30,25,20);
   tables.forEach(t=>{
     if(y>760){ doc.addPage(); y=50; }
-    const filled = (t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
     doc.setFont("helvetica","bold"); doc.setFontSize(12.5);
-    doc.text("Masa "+(t.label||t.id)+"  ("+filled+"/"+t.seats+")", 40, y); y+=17;
+    doc.text("Masa "+(t.label||t.id), 40, y); y+=17;
     doc.setFont("helvetica","normal"); doc.setFontSize(10.5); doc.setTextColor(70,62,52);
     if(!t.guests||t.guests.length===0){
       doc.text("— boş —", 52, y); y+=15;
     } else {
       t.guests.forEach(g=>{
-        const extra = (g.ushaqCount?", "+g.ushaqCount+" uşaq":"")+(g.spouseCount?", "+g.spouseCount+" nəfər əlavə":"");
-        doc.text("• "+(g.name||"Adsız")+" ("+(g.count||1)+" nəfər"+extra+")", 52, y);
+        doc.text("• "+(g.name||"Adsız"), 52, y);
         y+=15;
         if(y>770){ doc.addPage(); y=50; }
       });
@@ -3941,7 +3939,8 @@ function AppInner(){
   const [inviteChoiceOpen, setInviteChoiceOpen] = useState(false);
   const [inviteChoiceFromNav, setInviteChoiceFromNav] = useState(false);
   const [schemaShareOpen, setSchemaShareOpen] = useState(false);
-  const [inviteShareChoiceOpen, setInviteShareChoiceOpen] = useState(false);
+  const [printShareTarget, setPrintShareTarget] = useState(null); // "schema" | "invite" | null
+  const [myInviteConfirmed, setMyInviteConfirmed] = useState(false);
   const shareCanvasRef = useRef(null);
   const [devetData, setDevetData] = useState({metn:"", media:null});
   const [cardNumber, setCardNumber] = useState("");
@@ -3965,6 +3964,7 @@ function AppInner(){
   }
   const [statsOpen, setStatsOpen] = useState(false);
   const [myInviteOpen, setMyInviteOpen] = useState(false);
+  useEffect(()=>{ if(myInviteOpen) setMyInviteConfirmed(myInviteShablon!=null); }, [myInviteOpen]);
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
@@ -5643,6 +5643,8 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{width:28}}/>
             </div>
             <div className="rsb">
+              {!myInviteConfirmed?(
+              <>
               <div style={{fontSize:11.5,color:"#6B6259",marginBottom:14,lineHeight:1.5}}>
                 Öz video və ya şəkil dəvətnamənizi yükləyin — qonaqlara göndərəndə bizim hazır şablonla **birlikdə** gedə bilər.
               </div>
@@ -5750,22 +5752,48 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{display:"flex",gap:8}}>
                 <button onClick={()=>{
                     if(myInviteShablon==null && !myInviteMedia){ alert("Zəhmət olmasa bir şablon seçin, ya da öz video/şəklinizi yükləyin 🙏"); return; }
-                    setMyInviteOpen(false);
+                    setMyInviteConfirmed(true);
                   }}
                   style={{flex:1,padding:"13px",borderRadius:14,border:"none",cursor:"pointer",
                     background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,
                     boxShadow:"0 6px 16px -6px rgba(76,154,110,.5)"}}>
                   ✓ Bəyəndim — Yadda saxla
                 </button>
-                {myInviteShablon!=null&&(
-                  <button onClick={()=>setInviteShareChoiceOpen(true)}
-                    style={{padding:"13px 16px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",cursor:"pointer",
-                      background:"rgba(255,255,255,.5)",color:"#211A16",fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500}}>
-                    📤 Paylaş
-                  </button>
-                )}
               </div>
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
+              </>
+              ):(
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",paddingTop:10}}>
+                {myInviteShablon!=null&&(
+                  <div style={{width:160,borderRadius:14,overflow:"hidden",border:"1px solid rgba(150,120,80,.25)",boxShadow:"0 8px 20px -10px rgba(60,40,20,.35)",marginBottom:18}}>
+                    <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[myInviteShablon]} obData={obData}/>
+                  </div>
+                )}
+                <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.6)",textAlign:"center",marginBottom:22,maxWidth:280}}>
+                  Dəvətnamə hazırdır. Qonaqlara necə göndərək?
+                </div>
+                <button onClick={()=>{ setMyInviteOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); }}
+                  style={{width:"100%",maxWidth:320,padding:"16px",borderRadius:16,border:"none",marginBottom:10,
+                    background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",
+                    fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",
+                    boxShadow:"0 8px 20px -8px rgba(76,154,110,.45)"}}>
+                  📱 WhatsApp + SMS göndər
+                </button>
+                <button onClick={()=>setPrintShareTarget("invite")}
+                  style={{width:"100%",maxWidth:320,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",marginBottom:10,
+                    background:"rgba(255,255,255,.55)",color:"#211A16",
+                    fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                  🖨️ Çap et və ya Hostesə göndər
+                </button>
+                <button onClick={()=>setMyInviteConfirmed(false)}
+                  style={{width:"100%",maxWidth:320,padding:"13px",borderRadius:16,border:"none",
+                    background:"transparent",color:"#8A6B1E",
+                    fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,cursor:"pointer"}}>
+                  ✏️ Dəvətnaməni dəyiş
+                </button>
+                <canvas ref={shareCanvasRef} style={{display:"none"}}/>
+              </div>
+              )}
             </div>
             <DashNav dashProps={{
               active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
@@ -6361,41 +6389,44 @@ ${savedEvsList||"Yoxdur"}`;
           </div>
         </div>
       )}
-      {inviteShareChoiceOpen&&(
-        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setInviteShareChoiceOpen(false)}>
+      {printShareTarget&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setPrintShareTarget(null)}>
           <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>Dəvətnaməni paylaş</div>
-            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:20}}>
-              Dəvətnaməni çap və ya PDF formatda Hostesə göndərin.
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>
+              {printShareTarget==="schema"?"Masa sxemini paylaş":"Dəvətnaməni paylaş"}
             </div>
-            {(()=>{
-              const evName = (obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&(obData.name||obData.company))||"Məclis";
-              function drawAndPrint(){
-                const c = shareCanvasRef.current;
-                drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
-                printInvitationImage(c.toDataURL("image/png"), evName);
-              }
-              return (
-                <>
-                  <button onClick={()=>{ setInviteShareChoiceOpen(false); drawAndPrint(); }}
-                    style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
-                      background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
-                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-                    🖨️ Çap et
-                  </button>
-                  <button onClick={()=>{ setInviteShareChoiceOpen(false);
-                      const c = shareCanvasRef.current;
-                      drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
-                      shareFileOrDownload(buildImagePDF(c.toDataURL("image/png"), "Devetname.pdf"), setMsgs);
-                    }}
-                    style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
-                      background:"rgba(255,255,255,.5)",color:"#211A16",
-                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-                    📄 PDF fayl Hostesə göndər
-                  </button>
-                </>
-              );
-            })()}
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:20}}>
+              Çap edin, ya da PDF faylı birbaşa WhatsApp və ya digər proqramla Hostesə göndərin.
+            </div>
+            <button onClick={()=>{
+                setPrintShareTarget(null);
+                if(printShareTarget==="schema"){ printAll(tabRef.current,obDataRef.current,hallRef.current); }
+                else {
+                  const c = shareCanvasRef.current;
+                  const evName = (obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&(obData.name||obData.company))||"Məclis";
+                  drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                  printInvitationImage(c.toDataURL("image/png"), evName);
+                }
+              }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
+                background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              🖨️ Çap et
+            </button>
+            <button onClick={()=>{
+                setPrintShareTarget(null);
+                if(printShareTarget==="schema"){ shareFileOrDownload(buildFloorPlanPDF(tabRef.current,obDataRef.current,hallRef.current), setMsgs); }
+                else {
+                  const c = shareCanvasRef.current;
+                  drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                  shareFileOrDownload(buildImagePDF(c.toDataURL("image/png"), "Devetname.pdf"), setMsgs);
+                }
+              }}
+              style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
+                background:"rgba(255,255,255,.5)",color:"#211A16",
+                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+              📄 PDF fayl Hostesə göndər
+            </button>
           </div>
         </div>
       )}
@@ -6447,18 +6478,12 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:30,maxWidth:280}}>
                 Masa sxeminizi çap və ya PDF formatda Hostesə göndərin.
               </div>
-              <button onClick={()=>{ printAll(tabRef.current,obDataRef.current,hallRef.current); }}
+              <button onClick={()=>setPrintShareTarget("schema")}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
                   background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
                   fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
                   boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
-                🖨️ Çap et
-              </button>
-              <button onClick={()=>{ shareFileOrDownload(buildFloorPlanPDF(tabRef.current,obDataRef.current,hallRef.current), setMsgs); setSchemaShareOpen(false); }}
-                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
-                  background:"rgba(255,255,255,.55)",color:"#211A16",
-                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-                📄 PDF fayl Hostesə göndər
+                🖨️ Çap et və ya Hostesə göndər
               </button>
             </div>
             <DashNav dashProps={{
