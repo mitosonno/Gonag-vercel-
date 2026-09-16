@@ -6055,22 +6055,37 @@ ${savedEvsList||"Yoxdur"}`;
               </div>
             )}
 
-            {/* Dəvətnamə seç və göndər — aydın, minimalist */}
+            {/* Dəvətnamə seç və göndər — doluluğa görə dinamik */}
             <div style={{padding:"8px 12px 4px",flexShrink:0}}>
-              <button onClick={()=>{
-                  const filled = tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0);
-                  if(filled===0){ setSendFillWarning(true); return; }
-                  setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
-                  setSchemaOpen(false);
-                  openInviteChoice();
-                }}
-                style={{width:"100%",padding:"14px",borderRadius:14,border:"none",
-                  background:"linear-gradient(155deg,#E14B36,#A02A1E)",color:"#FFFFFF",
-                  boxShadow:"0 6px 18px -6px rgba(160,42,30,.6),0 1px 0 rgba(255,255,255,.25) inset",
-                  fontFamily:"'Manrope',sans-serif",fontSize:13.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                Dəvətnaməni seç və göndər
-              </button>
+              {(()=>{
+                const filled = tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0);
+                return (
+                  <>
+                    <div style={{textAlign:"center",fontFamily:"'Manrope',sans-serif",fontSize:11,color:filled>0?"#8A6B1E":"rgba(33,26,22,.4)",marginBottom:6}}>
+                      {filled>0?`${filled} nəfər əlavə olunub`:"Hələ heç bir qonaq əlavə olunmayıb"}
+                    </div>
+                    <button onClick={()=>{
+                        if(filled===0){ setSendFillWarning(true); return; }
+                        setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
+                        setSchemaOpen(false);
+                        openInviteChoice();
+                      }}
+                      style={filled===0?{
+                        width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.25)",
+                        background:"rgba(255,255,255,.15)",color:"rgba(33,26,22,.35)",
+                        fontFamily:"'Manrope',sans-serif",fontSize:13.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8
+                      }:{
+                        width:"100%",padding:"14px",borderRadius:14,border:"none",
+                        background:"linear-gradient(155deg,#E14B36,#A02A1E)",color:"#FFFFFF",
+                        boxShadow:"0 6px 18px -6px rgba(160,42,30,.6),0 1px 0 rgba(255,255,255,.25) inset",
+                        fontFamily:"'Manrope',sans-serif",fontSize:13.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8
+                      }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                      Dəvətnaməni seç və göndər
+                    </button>
+                  </>
+                );
+              })()}
             </div>
 
             {sendFillWarning&&(()=>{
