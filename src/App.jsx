@@ -5573,13 +5573,12 @@ ${savedEvsList||"Yoxdur"}`;
 
       {/* MƏNİM DƏVƏTNAMƏLƏRİM */}
       {myInviteOpen&&(
-        <div className="ov" style={{zIndex:300}} onClick={()=>setMyInviteOpen(false)}>
-          <div className="rsp" onClick={e=>e.stopPropagation()} style={{maxWidth:420}}>
-            <div className="rsh">
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
-                <button className="dcl" onClick={()=>setMyInviteOpen(false)}>✕</button>
-              </div>
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={()=>setMyInviteOpen(false)}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
+              <button onClick={()=>setMyInviteOpen(false)} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
+              <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>🎬 Mənim dəvətnamələrim</div>
+              <div style={{width:28}}/>
             </div>
             <div className="rsb">
               <div style={{fontSize:11.5,color:"#6B6259",marginBottom:14,lineHeight:1.5}}>
@@ -6081,20 +6080,20 @@ ${savedEvsList||"Yoxdur"}`;
               </div>
             )}
 
-            {/* Dəvəti qonaqlara göndər — aydın, minimalist */}
+            {/* Dəvətnamə seç və göndər — aydın, minimalist */}
             <div style={{padding:"8px 12px 4px",flexShrink:0}}>
               <button onClick={()=>{
-                  const cap = tables.reduce((s,t)=>s+t.seats,0);
                   const filled = tables.reduce((s,t)=>s+t.guests.reduce((ss,g)=>ss+(g.count||1)+(g.ushaqCount||0),0),0);
-                  if(cap>0 && filled<cap){ setSendFillWarning(true); return; }
+                  if(filled===0){ setSendFillWarning(true); return; }
                   setSchemaChanged(false); saveCurrentEvent({tables:tabRef.current});
-                  setSchemaOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true);
+                  setSchemaOpen(false);
+                  openInviteChoice();
                 }}
                 style={{width:"100%",padding:"12px",borderRadius:14,border:"1px solid rgba(212,175,90,.4)",
                   background:"rgba(212,175,90,.14)",backdropFilter:"blur(12px)",color:"#8A6B1E",
                   fontSize:12.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                Dəvəti qonaqlara göndər
+                Dəvətnamə seç və göndər
               </button>
             </div>
 
@@ -6327,44 +6326,59 @@ ${savedEvsList||"Yoxdur"}`;
         </div>
       )}
       {inviteChoiceOpen&&(
-        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setInviteChoiceOpen(false)}>
-          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:24,color:"#211A16",textAlign:"center",marginBottom:4}}>Dəvətnamə Yarat və Göndər</div>
-            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:20}}>Nə etmək istəyirsiniz?</div>
-            <button onClick={()=>{ setInviteChoiceOpen(false); setMyInviteOpen(true); }}
-              style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
-                background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
-                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-              💌 Dəvətnamə seç
-            </button>
-            <button onClick={()=>{ setInviteChoiceOpen(false); setSchemaShareOpen(true); }}
-              style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
-                background:"rgba(255,255,255,.5)",color:"#211A16",
-                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-              🗺️ Zalın sxemini paylaş
-            </button>
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={()=>setInviteChoiceOpen(false)}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
+              <button onClick={()=>setInviteChoiceOpen(false)} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
+              <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>Dəvətnamə Yarat və Göndər</div>
+              <div style={{width:28}}/>
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:28,color:"#211A16",textAlign:"center",marginBottom:8}}>Necə davam edək?</div>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:30,maxWidth:280}}>Qonaqlara göndəriləcək dəvətnaməni seçin, ya da zalın masa sxemini Hostesə paylaşın.</div>
+              <button onClick={()=>{ setInviteChoiceOpen(false); setMyInviteOpen(true); }}
+                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
+                  background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
+                  boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
+                💌 Dəvətnamə seç
+              </button>
+              <button onClick={()=>{ setInviteChoiceOpen(false); setSchemaShareOpen(true); }}
+                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
+                  background:"rgba(255,255,255,.55)",color:"#211A16",
+                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                🗺️ Zalın sxemini paylaş
+              </button>
+            </div>
           </div>
         </div>
       )}
       {schemaShareOpen&&(
-        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSchemaShareOpen(false)}>
-          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>Masa sxemini paylaş</div>
-            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:20}}>
-              Masa sxeminizi çap və ya PDF formatda Hostesə göndərin.
+        <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(33,26,22,.45)",backdropFilter:"blur(6px)"}} onClick={()=>setSchemaShareOpen(false)}>
+          <div style={{position:"absolute",left:0,right:0,bottom:0,top:0,background:"linear-gradient(180deg,rgba(255,255,255,.94),rgba(245,238,224,.92))",backdropFilter:"blur(24px) saturate(160%)",WebkitBackdropFilter:"blur(24px) saturate(160%)",display:"flex",flexDirection:"column"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,.4)",flexShrink:0}}>
+              <button onClick={()=>{ setSchemaShareOpen(false); setInviteChoiceOpen(true); }} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer",padding:4}}>←</button>
+              <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:15,fontWeight:600}}>Zalın sxemini paylaş</div>
+              <div style={{width:28}}/>
             </div>
-            <button onClick={()=>{ setSchemaShareOpen(false); printAll(tabRef.current,obDataRef.current,hallRef.current); }}
-              style={{width:"100%",padding:"14px",borderRadius:14,border:"none",marginBottom:10,
-                background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
-                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-              🖨️ Çap et
-            </button>
-            <button onClick={()=>{ setSchemaShareOpen(false); printAll(tabRef.current,obDataRef.current,hallRef.current); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); }}
-              style={{width:"100%",padding:"14px",borderRadius:14,border:"1px solid rgba(150,120,80,.3)",
-                background:"rgba(255,255,255,.5)",color:"#211A16",
-                fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-              📄 PDF fayl Hostesə göndər
-            </button>
+            <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.6)",textAlign:"center",lineHeight:1.6,marginBottom:30,maxWidth:280}}>
+                Masa sxeminizi çap və ya PDF formatda Hostesə göndərin.
+              </div>
+              <button onClick={()=>{ printAll(tabRef.current,obDataRef.current,hallRef.current); }}
+                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
+                  background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
+                  boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
+                🖨️ Çap et
+              </button>
+              <button onClick={()=>{ printAll(tabRef.current,obDataRef.current,hallRef.current); setMsgs(m=>[...m,{role:"agent",text:"Açılan pəncərədə çap seçimlərindən \"Saxla PDF kimi\"ni seçin, sonra faylı WhatsApp ilə Hostesə göndərə bilərsiniz. 🙏",qrs:[]}]); setSchemaShareOpen(false); }}
+                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
+                  background:"rgba(255,255,255,.55)",color:"#211A16",
+                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                📄 PDF fayl Hostesə göndər
+              </button>
+            </div>
           </div>
         </div>
       )}
