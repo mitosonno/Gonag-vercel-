@@ -4050,7 +4050,12 @@ function AppInner(){
     setMeclisOpen(false);
     setSchemaChanged(false);
     if(!currentEvId){
-      setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+      const liveEvs = savedEventsRef.current.filter(e=>e.status!=="done" && e.status!=="tamamlandı" && e.status!=="tamamlandi");
+      if(liveEvs.length>0){
+        setMsgs([{role:"agent",text:"Xoş gəldiniz!\n\nSizin aktiv məclisiniz var — davam etmək üçün seçin, ya da yeni məclis yaradın.",qrs:[],showActiveEvents:true}]);
+      } else {
+        setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+      }
     }
   }
   function openInviteChoice(fromNav){
