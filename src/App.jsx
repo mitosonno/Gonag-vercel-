@@ -5280,7 +5280,7 @@ ${savedEvsList||"Yoxdur"}`;
                     const liveActive = savedEvents.filter(e=>e.status!=="done" && e.status!=="tamamlandı" && e.status!=="tamamlandi").slice(0,2);
                     if(liveActive.length===0) return null;
                     return (
-                    <div style={{marginTop:10}}>
+                    <div style={{marginTop:10,maxWidth:"90%"}}>
                       {liveActive.map((ev2,ei)=>{
                         const tw = ev2.evType==="toy"?"#C9668A":ev2.evType==="nishan"?"#8A6B1E":ev2.evType==="adgunu"?"#5B84B0":"#6B6259";
                         const nm = ev2.obData&&(ev2.obData.boy||ev2.obData.girl)
@@ -5289,11 +5289,11 @@ ${savedEvsList||"Yoxdur"}`;
                         return (
                           <div key={ei} style={{position:"relative",marginBottom:9}}>
                             <div onClick={()=>confirmDeleteChatEv!==ev2.id&&loadEvent(ev2)}
-                              style={{display:"flex",alignItems:"center",gap:11,padding:12,borderRadius:16,cursor:"pointer",
+                              style={{display:"flex",alignItems:"center",gap:9,padding:10,borderRadius:15,cursor:"pointer",
                                 background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.35))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",
                                 border:"1px solid rgba(255,255,255,.6)",boxShadow:"0 1px 0 rgba(255,255,255,.7) inset, 0 6px 16px -8px rgba(90,60,20,.22)"}}>
-                              <div style={{width:36,height:36,borderRadius:11,background:tw+"26",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:tw}}>
-                                <TypeIcon type={ev2.evType} size={17}/>
+                              <div style={{width:32,height:32,borderRadius:10,background:tw+"26",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:tw}}>
+                                <TypeIcon type={ev2.evType} size={15}/>
                               </div>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{fontSize:12.5,fontWeight:600,color:"#211A16",fontFamily:"'Manrope',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{nm}</div>
