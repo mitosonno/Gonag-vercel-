@@ -110,7 +110,7 @@ function TableView({ tableId, seats, guests=[], label="", guestName="" }){
   return (
     <div style={{background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"18px 16px 16px",fontFamily:"'Manrope',sans-serif"}}>
       <div style={{textAlign:"center",fontFamily:"'Manrope',sans-serif",fontWeight:600,fontSize:12,letterSpacing:3,color:"#80653C",marginBottom:8,textTransform:"uppercase"}}>
-        Sizin masanız
+        Sizin masanız · {tableId}
       </div>
 
       <svg viewBox={`0 0 ${VB} ${VB}`} style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto",overflow:"visible"}}>
@@ -164,7 +164,6 @@ function TableView({ tableId, seats, guests=[], label="", guestName="" }){
         })}
       </svg>
 
-      <div style={{textAlign:"center",fontSize:11,color:"#797267",marginTop:10}}>{filled} / {seats} dolu{label?" · "+label:""}</div>
       {overflow>0&&(
         <div style={{marginTop:10,padding:"8px 12px",background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.2)",borderRadius:10,fontSize:10.5,color:"#A02A1E",textAlign:"center"}}>
           ⚠️ Bu masaya {overflow} nəfər tutumdan artıq təyin edilib — təşkilatçı ilə əlaqə saxlayın.
@@ -202,14 +201,18 @@ function GiftSection({ rsvpCode }){
   return(
     <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,overflow:"hidden"}}>
       <div style={{padding:"14px 18px",borderBottom:"1px solid #F0EAE0"}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#80653C",fontFamily:"'Manrope',sans-serif"}}>🎁 Məclis sahibindən hədiyyə</div>
+        <div style={{fontSize:13,fontWeight:700,color:"#80653C",fontFamily:"'Manrope',sans-serif",display:"flex",alignItems:"center",gap:7}}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#80653C" strokeWidth="1.8"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18M12 8v13"/><path d="M12 8c-1.5-3-6-3-6 0s4.5 0 6 0Zm0 0c1.5-3 6-3 6 0s-4.5 0-6 0Z"/></svg>
+          Məclis sahibindən hədiyyə
+        </div>
         <div style={{fontSize:10,color:"#8A8578",marginTop:2}}>Vanlav şirniyyat şəbəkəsindən tort hədiyyə</div>
       </div>
       {step==="info"&&(
         <div style={{padding:"14px 18px"}}>
           <div style={{fontSize:11,color:"#8A8578",lineHeight:1.7,marginBottom:12}}>QR kodu mağazada skan edin — hədiyyənizi əldə edin</div>
-          <button onClick={()=>setStep("form")} style={{width:"100%",padding:"11px",borderRadius:12,border:"none",background:"#F5F0E6",color:"#80653C",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-            🎁 Hədiyyəmi al
+          <button onClick={()=>setStep("form")} style={{width:"100%",padding:"11px",borderRadius:12,border:"none",background:"#F5F0E6",color:"#80653C",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#80653C" strokeWidth="1.8"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18M12 8v13"/><path d="M12 8c-1.5-3-6-3-6 0s4.5 0 6 0Zm0 0c1.5-3 6-3 6 0s-4.5 0-6 0Z"/></svg>
+            Hədiyyəmi al
           </button>
         </div>
       )}
@@ -427,6 +430,9 @@ export default function RsvpPage(){
             if(g.ushaqCount>0) extras.push(g.ushaqCount+" uşaq");
             return(
               <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<guests.length-1?"1px solid #F0EAE0":"none"}}>
+                <div style={{width:20,height:20,borderRadius:"50%",background:"#EAF1F8",color:"#3F6FA8",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  {(g.seatIdx!=null?g.seatIdx+1:i+1)}
+                </div>
                 {known?(
                   <div style={{width:32,height:32,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:isMe?"2px solid #80653C":"1px solid #EDE6D8",background:"#F5F0E6"}}>
                     <img src={RSVP_ASSET(gender==="kishi"?"seat-man":"seat-woman")} alt="" style={{width:"140%",height:"140%",objectFit:"cover",marginLeft:"-20%",marginTop:"-14%"}}/>
