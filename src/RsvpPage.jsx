@@ -27,184 +27,123 @@ const SHABLON_COLORS = [
   { bg:"#0c1410", accent:"#7fa88a", text:"#e7efe9" }
 ];
 
-function TableCircle({ tableId, seats=10, guests=[], label="" }){
-  const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
-  const W=320, r=82, cx=160, cy=160;
+// ─── YENİ MASA GÖRÜNÜŞÜ — real PNG aktivlərlə (table.png, flowers.png, chair-empty.png, seat-man/woman/child.png) ───
+// Bu komponent ayrıca stil sahəsindədir (işıqlı, #FCFAF6) — təşkilatçının ümumi zal sxeminə TƏSİR ETMİR.
+const RSVP_ASSET = n => "/rsvp-assets/"+n+".png";
 
-  // Hər qonaq + uşaqları ayrı slot kimi
-  const guestSlots = [];
-  guests.forEach(g=>{
-    for(let i=0;i<(g.count||1);i++)
-      guestSlots.push({name:i===0?g.name:"",main:i===0,gender:g.gender||"other"});
-    for(let j=0;j<(g.ushaqCount||0);j++)
-      guestSlots.push({name:"",main:false,gender:"ushaq"});
+function buildSeatOwners(guests, n){
+  // App.jsx-dəki FloorPlanView ilə EYNİ alqoritm: hər qonaq öz seatIdx-ində oturur,
+  // seatIdx yoxdursa (köhnə data) ilk boş yerlərə ardıcıl yerləşdirilir.
+  const seatOwner = new Array(n).fill(null);
+  const needsFallback = [];
+  guests.forEach((g,gi)=>{
+    const uc = g.ushaqCount||0, sc = g.spouseCount||0;
+    const parts = [];
+    for(let i=0;i<(g.count||1);i++) parts.push({isUshaq:false,isSpouse:false});
+    for(let i=0;i<sc;i++) parts.push({isUshaq:false,isSpouse:true});
+    for(let i=0;i<uc;i++) parts.push({isUshaq:true,isSpouse:false});
+    if(g.seatIdx!=null && g.seatIdx>=0 && g.seatIdx<n){
+      let placed=0;
+      for(let off=0; off<n && placed<parts.length; off++){
+        const idx=(g.seatIdx+off)%n;
+        if(seatOwner[idx]===null){ seatOwner[idx]={g,gi,...parts[placed]}; placed++; }
+      }
+      for(let k=placed;k<parts.length;k++) needsFallback.push({g,gi,...parts[k]});
+    } else {
+      parts.forEach(part=>needsFallback.push({g,gi,...part}));
+    }
   });
-
-  const chairs = Array.from({length:seats}).map((_,i)=>{
-    const angle=(2*Math.PI/seats)*i-Math.PI/2;
-    const fx=cx+(r+14)*Math.cos(angle), fy=cy+(r+14)*Math.sin(angle);
-    const nx=cx+(r+28)*Math.cos(angle), ny=cy+(r+28)*Math.sin(angle);
-    const lx=cx+(r+58)*Math.cos(angle), ly=cy+(r+58)*Math.sin(angle);
-    const guest=guestSlots[i];
-    const isRight=Math.cos(angle)>0.15, isLeft=Math.cos(angle)<-0.15;
-    const anchor=isRight?"start":isLeft?"end":"middle";
-    const sc=guest?(guest.gender==="kishi"?"#7aade8":guest.gender==="qadin"?"#e87aad":guest.gender==="ushaq"?"#f5d060":"#50c878"):"rgba(255,255,255,.15)";
-    return {angle,fx,fy,nx,ny,lx,ly,anchor,sc,guest};
+  let fbPtr=0, overflow=0;
+  needsFallback.forEach(item=>{
+    while(fbPtr<n && seatOwner[fbPtr]!==null) fbPtr++;
+    if(fbPtr<n){ seatOwner[fbPtr]=item; fbPtr++; } else overflow++;
   });
+  return {seatOwner, overflow};
+}
 
-  const pct=seats>0?Math.round(filled/seats*100):0;
-  const circ=2*Math.PI*r;
-  const dash=(pct/100)*circ;
+function effGender(item){
+  if(!item) return null;
+  if(item.isUshaq) return "ushaq";
+  if(item.isSpouse) return item.g.gender==="kishi"?"qadin":item.g.gender==="qadin"?"kishi":"";
+  return item.g.gender||"";
+}
 
-  // SVG insan fiquru — baş + bədən + salamlayan əl
-  function PersonFigure({cx:px, cy:py, angle, gender}){
-    const rot = (angle*180/Math.PI)+90;
-    const s = gender==="ushaq" ? 0.55 : 1;
+function TableView({ tableId, seats, guests=[], label="", guestName="" }){
+  const [tip, setTip] = useState(null); // toxunulan yerin adını göstərir
 
-    // Kişi — smoking + papyon
-    function Man(){
-      return(
-        <g>
-          {/* Baş */}
-          <circle cx={0} cy={-18} r={5} fill="#f5c5a0"/>
-          {/* Saç */}
-          <path d="M-5,-21 Q0,-25 5,-21 Q3,-18 -3,-18 Z" fill="#3a2a1a"/>
-          {/* Smoking — qara kostyum */}
-          <path d="M-6,-13 L-7,0 L7,0 L6,-13 L2,-10 L0,-8 L-2,-10 Z" fill="#1a1a2e"/>
-          {/* Ağ köynək */}
-          <path d="M-2,-13 L-2,-8 L2,-8 L2,-13 Z" fill="white"/>
-          {/* Papyon (babochka) */}
-          <path d="M-3,-12 L0,-10 L3,-12 L0,-10 L-3,-8 L0,-10 L3,-8 L0,-10 Z" fill="#c9a84c"/>
-          <circle cx={0} cy={-10} r={1} fill="#c9a84c"/>
-          {/* Sol əl */}
-          <line x1={-6} y1={-10} x2={-10} y2={-5} stroke="#1a1a2e" strokeWidth={2} strokeLinecap="round"/>
-          {/* Sağ əl — salamlayan */}
-          <g>
-            <animateTransform attributeName="transform" type="rotate"
-              values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite" additive="sum"/>
-            <line x1={6} y1={-10} x2={11} y2={-16} stroke="#1a1a2e" strokeWidth={2} strokeLinecap="round"/>
-            <circle cx={11} cy={-16} r={2} fill="#f5c5a0"/>
-          </g>
-          {/* Ayaqlar — qara şalvar */}
-          <rect x={-5} y={0} width={4} height={8} rx={1} fill="#1a1a2e"/>
-          <rect x={1} y={0} width={4} height={8} rx={1} fill="#1a1a2e"/>
-          {/* Ayaqqabı */}
-          <ellipse cx={-3} cy={8} rx={3} ry={1.5} fill="#0a0a0a"/>
-          <ellipse cx={3} cy={8} rx={3} ry={1.5} fill="#0a0a0a"/>
-        </g>
-      );
-    }
-
-    // Qadın — qırmızı bal donu
-    function Woman(){
-      return(
-        <g>
-          {/* Baş */}
-          <circle cx={0} cy={-19} r={5} fill="#f5c5a0"/>
-          {/* Saç — uzun */}
-          <path d="M-5,-23 Q0,-27 5,-23 Q6,-18 6,-14 Q3,-16 0,-15 Q-3,-16 -6,-14 Q-6,-18 Z" fill="#3a2010"/>
-          {/* Bal donu — qırmızı, aşağıya açılan */}
-          {/* Üst hissə — korse */}
-          <path d="M-5,-14 L-4,-6 L4,-6 L5,-14 Z" fill="#cc2200"/>
-          {/* Yaka */}
-          <path d="M-5,-14 Q0,-11 5,-14" fill="none" stroke="#ff4422" strokeWidth={1}/>
-          {/* Don ətəyi — geniş */}
-          <path d="M-4,-6 Q-14,2 -12,10 L12,10 Q14,2 4,-6 Z" fill="#cc2200"/>
-          {/* Don detalı */}
-          <path d="M-12,10 Q0,12 12,10" fill="none" stroke="#ff6644" strokeWidth={1}/>
-          {/* Sol əl */}
-          <line x1={-5} y1={-11} x2={-9} y2={-6} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
-          {/* Sağ əl — salamlayan */}
-          <g>
-            <animateTransform attributeName="transform" type="rotate"
-              values="0;-35;0;-35;0" dur="2s" repeatCount="indefinite" additive="sum"/>
-            <line x1={5} y1={-11} x2={10} y2={-17} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
-            <circle cx={10} cy={-17} r={2} fill="#f5c5a0"/>
-          </g>
-          {/* Ayaqqabı */}
-          <ellipse cx={-3} cy={10} rx={2.5} ry={1.2} fill="#880000"/>
-          <ellipse cx={3} cy={10} rx={2.5} ry={1.2} fill="#880000"/>
-        </g>
-      );
-    }
-
-    // Uşaq — böyüdülmüş, aydın görünən
-    function Child(){
-      return(
-        <g transform="scale(0.9)">
-          {/* Baş */}
-          <circle cx={0} cy={-16} r={5} fill="#f5c5a0"/>
-          {/* Saç */}
-          <path d="M-5,-20 Q0,-23 5,-20 Q4,-17 -4,-17 Z" fill="#5a3a20"/>
-          {/* Köynək */}
-          <rect x={-5} y={-11} width={10} height={9} rx={2} fill="#f5d060"/>
-          {/* Şalvar */}
-          <rect x={-4} y={-2} width={3.5} height={7} rx={1} fill="#4466aa"/>
-          <rect x={0.5} y={-2} width={3.5} height={7} rx={1} fill="#4466aa"/>
-          {/* Sağ əl — salamlayan */}
-          <g>
-            <animateTransform attributeName="transform" type="rotate"
-              values="0;-40;0;-40;0" dur="1.8s" repeatCount="indefinite" additive="sum"/>
-            <line x1={5} y1={-8} x2={9} y2={-13} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
-            <circle cx={9} cy={-13} r={2} fill="#f5c5a0"/>
-          </g>
-          {/* Sol əl */}
-          <line x1={-5} y1={-8} x2={-8} y2={-4} stroke="#f5c5a0" strokeWidth={1.5} strokeLinecap="round"/>
-        </g>
-      );
-    }
-
-    return(
-      <g transform={`translate(${px},${py}) rotate(${rot}) scale(${s})`}>
-        {gender==="kishi"&&<Man/>}
-        {gender==="qadin"&&<Woman/>}
-        {gender==="ushaq"&&<Child/>}
-        {(gender!=="kishi"&&gender!=="qadin"&&gender!=="ushaq")&&<Man/>}
-      </g>
+  if(!seats){
+    return (
+      <div style={{background:"#FCFAF6",borderRadius:20,padding:"30px 22px",textAlign:"center",fontFamily:"'Manrope',sans-serif"}}>
+        <div style={{fontSize:28,marginBottom:10}}>🪑</div>
+        <div style={{fontSize:13,color:"#292722",fontWeight:500}}>Masanız təşkilatçı tərəfindən təyin edildikdə burada görünəcək.</div>
+      </div>
     );
   }
 
-  return(
-    <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
-      <svg width={W} height={W} style={{overflow:"visible"}}>
-        <defs>
-          <radialGradient id="tg4" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#2a1f08"/>
-            <stop offset="100%" stopColor="#1a1200"/>
-          </radialGradient>
-        </defs>
+  const n = Math.min(seats, 16);
+  const { seatOwner, overflow } = buildSeatOwners(guests, n);
+  const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0)+(g.spouseCount||0),0);
+  const r = 32, seatSz = Math.max(19, 30 - n*0.55); // çox yerli masalarda kiçilt ki, üst-üstə düşməsin
 
-        {/* Progress ring */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(201,168,76,.1)" strokeWidth="6"/>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#c9a84c" strokeWidth="6"
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-          transform={`rotate(-90 ${cx} ${cy})`}/>
-
-        {/* Masa */}
-        <circle cx={cx} cy={cy} r={r-10} fill="url(#tg4)" stroke="rgba(201,168,76,.4)" strokeWidth="2"/>
-        <text x={cx} y={cy-6} textAnchor="middle" fill="#c9a84c" fontSize="28" fontWeight="800" fontFamily="Georgia,serif">{tableId}</text>
-        <text x={cx} y={cy+14} textAnchor="middle" fill="rgba(201,168,76,.4)" fontSize="10">{filled}/{seats}</text>
-
-        {/* Oturacaqlar + insan fiqurları + adlar */}
-        {chairs.map((c,i)=>(
-          <g key={i}>
-            {/* İnsan fiquru */}
-            {c.guest&&<PersonFigure cx={c.nx} cy={c.ny} angle={c.angle} gender={c.guest.gender}/>}
-
-            {/* Ad */}
-            {c.guest?.name&&(
-              <text x={c.lx} y={c.ly+3} textAnchor={c.anchor}
-                fill={c.sc} fontSize="10" fontWeight="800" fontFamily="'DM Sans',sans-serif"
-                stroke="#080604" strokeWidth="2" paintOrder="stroke">
-                {c.guest.name.length>9?c.guest.name.slice(0,9)+"…":c.guest.name}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
-      <div style={{fontSize:12,fontWeight:700,color:"#c9a84c",letterSpacing:1,textAlign:"center",marginTop:4}}>
-        MASA № {tableId}{label?" — "+label:""}
+  return (
+    <div style={{background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"22px 16px 18px",fontFamily:"'Manrope',sans-serif"}}>
+      <div style={{textAlign:"center",fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:13,letterSpacing:3,color:"#80653C",marginBottom:16,textTransform:"uppercase"}}>
+        Sizin masanız
       </div>
+
+      <div style={{position:"relative",width:"100%",maxWidth:300,aspectRatio:"1",margin:"0 auto"}} onClick={()=>setTip(null)}>
+        <img src={RSVP_ASSET("table")} alt="" style={{position:"absolute",left:"18%",top:"18%",width:"64%",height:"64%",objectFit:"contain"}}/>
+        <img src={RSVP_ASSET("flowers")} alt="" style={{position:"absolute",left:"29%",top:"29%",width:"42%",height:"43%",objectFit:"contain",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",left:"50%",top:"67%",transform:"translate(-50%,-50%)",
+          fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:15,color:"#80653C",
+          background:"rgba(252,250,246,.88)",padding:"2px 12px",borderRadius:10,whiteSpace:"nowrap"}}>
+          Masa № {tableId}
+        </div>
+
+        {Array.from({length:n}).map((_,i)=>{
+          const angle=(2*Math.PI/n)*i-Math.PI/2;
+          const rot=(angle*180/Math.PI)+90;
+          const sx=50+r*Math.cos(angle), sy=50+r*Math.sin(angle);
+          const item=seatOwner[i];
+          const gender=effGender(item);
+          const isMe = item && item.g.name && item.g.name===guestName;
+          const known = gender==="kishi"||gender==="qadin"||gender==="ushaq";
+          return (
+            <div key={i} onClick={(e)=>{ if(item){ e.stopPropagation(); setTip(tip===i?null:i);} }}
+              style={{position:"absolute",left:(sx-seatSz/2)+"%",top:(sy-seatSz/2)+"%",width:seatSz+"%",height:seatSz+"%",
+                cursor:item?"pointer":"default"}}>
+              {item&&known&&(
+                <img src={RSVP_ASSET(gender==="kishi"?"seat-man":gender==="qadin"?"seat-woman":"seat-child")} alt=""
+                  style={{width:"100%",height:"100%",objectFit:"contain",transform:`rotate(${rot}deg)`}}/>
+              )}
+              {item&&!known&&(
+                <div style={{width:"70%",height:"70%",margin:"15%",borderRadius:"50%",background:"#EFE7D8",
+                  border:"2px solid rgba(128,101,60,.35)",display:"flex",alignItems:"center",justifyContent:"center",
+                  fontWeight:600,fontSize:"38%",color:"#80653C"}}>
+                  {(item.g.name||"?")[0].toUpperCase()}
+                </div>
+              )}
+              {!item&&(
+                <img src={RSVP_ASSET("chair-empty")} alt="" style={{width:"100%",height:"100%",objectFit:"contain",transform:`rotate(${rot}deg)`,opacity:.55}}/>
+              )}
+              {isMe&&<div style={{position:"absolute",inset:"-4%",borderRadius:"50%",border:"2px solid #80653C",boxShadow:"0 0 0 3px rgba(128,101,60,.2)",pointerEvents:"none"}}/>}
+              {isMe&&<div style={{position:"absolute",bottom:"-22%",left:"50%",transform:"translateX(-50%)",fontSize:9,fontWeight:700,color:"#80653C",background:"#FCFAF6",padding:"1px 7px",borderRadius:8,whiteSpace:"nowrap",boxShadow:"0 1px 4px rgba(0,0,0,.12)"}}>Siz</div>}
+              {tip===i&&item&&!isMe&&(
+                <div style={{position:"absolute",bottom:"-24%",left:"50%",transform:"translateX(-50%)",fontSize:9,fontWeight:600,color:"#292722",background:"#fff",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",boxShadow:"0 2px 8px rgba(0,0,0,.15)",zIndex:5}}>
+                  {item.g.name||"Adsız"}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{textAlign:"center",fontSize:11,color:"#797267",marginTop:14}}>{filled} / {seats} dolu{label?" · "+label:""}</div>
+      {overflow>0&&(
+        <div style={{marginTop:10,padding:"8px 12px",background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.2)",borderRadius:10,fontSize:10.5,color:"#A02A1E",textAlign:"center"}}>
+          ⚠️ Bu masaya {overflow} nəfər tutumdan artıq təyin edilib — təşkilatçı ilə əlaqə saxlayın.
+        </div>
+      )}
     </div>
   );
 }
@@ -362,7 +301,7 @@ export default function RsvpPage(){
 
   return(
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0700 0%,#12080e 50%,#070a12 100%)",fontFamily:"'DM Sans',sans-serif",color:"#f2e8d0"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=Manrope:wght@400;500;600&family=Cormorant+Garamond:wght@600&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
 
       {/* Header */}
       <div style={{padding:"14px 18px",borderBottom:"1px solid rgba(201,168,76,.15)",background:"rgba(201,168,76,.04)",textAlign:"center"}}>
@@ -429,22 +368,36 @@ export default function RsvpPage(){
 
         {/* Masa dairəsi */}
         <div style={{margin:"0 16px 16px",textAlign:"center",padding:"10px 0"}}>
-          <TableCircle tableId={rsvp?.table_id} seats={tableData?.seats||10} guests={guests} label={tblLabel}/>
+          <TableView tableId={tableData?.id||rsvp?.table_id} seats={tableData?.seats} guests={guests} label={tblLabel} guestName={guestName}/>
         </div>
 
-        {/* Qonaqlar siyahısı */}
-        <div style={{margin:"0 16px 16px"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.4)",marginBottom:8,textAlign:"center",letterSpacing:1}}>Masadakı qonaqlar:</div>
+        {/* Masa yoldaşlarınız */}
+        <div style={{margin:"0 16px 16px",background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"18px 16px",fontFamily:"'Manrope',sans-serif"}}>
+          <div style={{fontSize:11,color:"#80653C",marginBottom:12,textAlign:"center",letterSpacing:2,fontWeight:600}}>MASA YOLDAŞLARINIZ</div>
           {guests.map((g,i)=>{
-            const sc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"rgba(201,168,76,.7)";
+            const gender = g.gender||"";
+            const known = gender==="kishi"||gender==="qadin";
+            const isMe = g.name===guestName;
+            const extras = [];
+            if(g.count>1) extras.push(g.count+" nəfər");
+            if(g.spouseCount>0) extras.push(g.spouseCount+" həyat yoldaşı");
+            if(g.ushaqCount>0) extras.push(g.ushaqCount+" uşaq");
             return(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:i<guests.length-1?"1px solid rgba(255,255,255,.04)":"none"}}>
-                <div style={{width:28,height:28,borderRadius:"50%",background:sc+"22",border:"1px solid "+sc+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:sc,flexShrink:0}}>{g.name[0]||"?"}</div>
-                <div>
-                  <div style={{fontSize:13,color:g.name===guestName?"#c9a84c":"#f2e8d0",fontWeight:g.name===guestName?700:400}}>
-                    {g.name}{g.name===guestName&&<span style={{fontSize:10,color:"#c9a84c",marginLeft:6}}>← Siz</span>}
+              <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<guests.length-1?"1px solid #F0EAE0":"none"}}>
+                {known?(
+                  <div style={{width:32,height:32,borderRadius:"50%",overflow:"hidden",flexShrink:0,border:isMe?"2px solid #80653C":"1px solid #EDE6D8",background:"#F5F0E6"}}>
+                    <img src={RSVP_ASSET(gender==="kishi"?"seat-man":"seat-woman")} alt="" style={{width:"140%",height:"140%",objectFit:"cover",marginLeft:"-20%",marginTop:"-14%"}}/>
                   </div>
-                  {g.count>1&&<div style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>{g.count} nəfər</div>}
+                ):(
+                  <div style={{width:32,height:32,borderRadius:"50%",background:"#EFE7D8",border:isMe?"2px solid #80653C":"1px solid rgba(128,101,60,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#80653C",flexShrink:0}}>
+                    {(g.name||"?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div style={{minWidth:0,flex:1}}>
+                  <div style={{fontSize:13,color:isMe?"#80653C":"#292722",fontWeight:isMe?700:500,overflowWrap:"anywhere"}}>
+                    {g.name||"Adsız"}{isMe&&<span style={{fontSize:10,color:"#80653C",marginLeft:6,fontWeight:700}}>· Siz</span>}
+                  </div>
+                  {extras.length>0&&<div style={{fontSize:10.5,color:"#8A8578",marginTop:1}}>{extras.join(" · ")}</div>}
                 </div>
               </div>
             );
