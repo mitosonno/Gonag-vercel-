@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AuthScreen({ supabase, onAuthenticated }){
   const [phase, setPhase] = useState("animating"); // animating -> form
-  const [mode, setMode] = useState("login"); // login | signup
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [step, setStep] = useState("phone"); // phone -> otp
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [seatsIn, setSeatsIn] = useState(0);
+  const [resendIn, setResendIn] = useState(0);
 
   useEffect(()=>{
     const seatCount = 8;
@@ -23,35 +24,50 @@ export default function AuthScreen({ supabase, onAuthenticated }){
     return ()=>clearInterval(iv);
   },[]);
 
-  async function submit(){
-    if(!email.trim()||!password.trim()){ setErr("E-poçt və şifrə yazın"); return; }
-    if(password.length<6){ setErr("Şifrə ən azı 6 simvol olmalıdır"); return; }
+  useEffect(()=>{
+    if(resendIn<=0) return;
+    const t = setTimeout(()=>setResendIn(r=>r-1), 1000);
+    return ()=>clearTimeout(t);
+  },[resendIn]);
+
+  function fullPhone(){
+    const digits = phone.replace(/\D/g,"");
+    return "+994"+digits;
+  }
+
+  async function sendCode(){
+    const digits = phone.replace(/\D/g,"");
+    if(digits.length<9){ setErr("Düzgün nömrə yazın (məs: 50 123 45 67)"); return; }
     setBusy(true); setErr("");
     try{
-      if(mode==="login"){
-        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if(error) throw error;
-        onAuthenticated(data.session);
-      } else {
-        const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
-        if(error) throw error;
-        if(data.session){
-          onAuthenticated(data.session);
-        } else {
-          setErr("Qeydiyyat oldu! E-poçtunuza təsdiq linki göndərildi — onu açıb sonra giriş edin.");
-          setMode("login");
-        }
-      }
+      const { error } = await supabase.auth.signInWithOtp({ phone: fullPhone() });
+      if(error) throw error;
+      setStep("otp");
+      setResendIn(45);
+    }catch(e){
+      setErr(e.message||"Kod göndərilmədi");
+    }
+    setBusy(false);
+  }
+
+  async function verifyCode(){
+    if(code.replace(/\D/g,"").length<6){ setErr("6 rəqəmli kodu tam yazın"); return; }
+    setBusy(true); setErr("");
+    try{
+      const { data, error } = await supabase.auth.verifyOtp({ phone: fullPhone(), token: code.trim(), type: "sms" });
+      if(error) throw error;
+      onAuthenticated(data.session);
     }catch(e){
       const msg = e.message||"";
-      if(msg.includes("Invalid login")) setErr("E-poçt və ya şifrə səhvdir");
-      else if(msg.includes("already registered")||msg.includes("already exists")) setErr("Bu e-poçt artıq qeydiyyatdan keçib — Giriş edin");
+      if(msg.toLowerCase().includes("expired")) setErr("Kodun vaxtı bitib — yenidən göndərin");
+      else if(msg.toLowerCase().includes("invalid")) setErr("Kod səhvdir");
       else setErr(msg||"Xəta baş verdi");
     }
     setBusy(false);
   }
 
   const seats = 8;
+  const inp = {padding:"13px 15px",borderRadius:13,border:"1px solid rgba(255,255,255,.6)",background:"rgba(255,255,255,.6)",backdropFilter:"blur(8px)",fontSize:14,outline:"none",color:"#211A16"};
 
   return (
     <div style={{position:"fixed",inset:0,zIndex:1000,
@@ -93,41 +109,64 @@ export default function AuthScreen({ supabase, onAuthenticated }){
         <div style={{width:"100%",maxWidth:340,animation:"authFadeIn .4s ease"}}>
           <style>{"@keyframes authFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}"}</style>
           <div style={{textAlign:"center",marginBottom:28}}>
-            <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:"#211A16"}}>GONAG.AZ</div>
+            <div style={{fontFamily:"'Fraunces',serif",fontSize:26,fontWeight:700,color:"#211A16"}}>QONAQ</div>
             <div style={{fontSize:12,color:"#6B6259",marginTop:4}}>Toy və məclis idarəetmə sistemi</div>
           </div>
 
-          <div style={{display:"flex",gap:6,marginBottom:18,background:"rgba(255,255,255,.4)",borderRadius:14,padding:4}}>
-            <button onClick={()=>{setMode("login");setErr("");}}
-              style={{flex:1,padding:"10px",borderRadius:11,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
-                background:mode==="login"?"linear-gradient(155deg,#5EB889,#3d8259)":"transparent",
-                color:mode==="login"?"#fff":"#6B6259"}}>Giriş</button>
-            <button onClick={()=>{setMode("signup");setErr("");}}
-              style={{flex:1,padding:"10px",borderRadius:11,border:"none",cursor:"pointer",fontWeight:700,fontSize:13,
-                background:mode==="signup"?"linear-gradient(155deg,#5EB889,#3d8259)":"transparent",
-                color:mode==="signup"?"#fff":"#6B6259"}}>Qeydiyyat</button>
-          </div>
+          {step==="phone"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"flex",alignItems:"center",borderRadius:13,border:"1px solid rgba(255,255,255,.6)",background:"rgba(255,255,255,.6)",backdropFilter:"blur(8px)",overflow:"hidden"}}>
+                <span style={{padding:"0 12px",fontSize:14,color:"#6B6259",flexShrink:0}}>+994</span>
+                <input type="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/[^\d\s]/g,""))}
+                  placeholder="50 123 45 67" onKeyDown={e=>{if(e.key==="Enter")sendCode();}}
+                  style={{flex:1,padding:"13px 15px 13px 0",border:"none",background:"transparent",fontSize:14,outline:"none",color:"#211A16"}}/>
+              </div>
 
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="E-poçt"
-              style={{padding:"13px 15px",borderRadius:13,border:"1px solid rgba(255,255,255,.6)",background:"rgba(255,255,255,.6)",backdropFilter:"blur(8px)",fontSize:14,outline:"none",color:"#211A16"}}/>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Şifrə"
-              onKeyDown={e=>{if(e.key==="Enter")submit();}}
-              style={{padding:"13px 15px",borderRadius:13,border:"1px solid rgba(255,255,255,.6)",background:"rgba(255,255,255,.6)",backdropFilter:"blur(8px)",fontSize:14,outline:"none",color:"#211A16"}}/>
+              {err&&<div style={{fontSize:12,color:"#C1382A",padding:"8px 12px",background:"rgba(193,56,42,.08)",borderRadius:10}}>{err}</div>}
 
-            {err&&<div style={{fontSize:12,color:err.includes("Qeydiyyat oldu")?"#4C9A6E":"#C1382A",padding:"8px 12px",background:err.includes("Qeydiyyat oldu")?"rgba(76,154,110,.1)":"rgba(193,56,42,.08)",borderRadius:10}}>{err}</div>}
+              <button onClick={sendCode} disabled={busy}
+                style={{padding:"14px",borderRadius:14,border:"none",cursor:busy?"default":"pointer",
+                  background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:14,fontWeight:800,
+                  opacity:busy?0.6:1,marginTop:4}}>
+                {busy?"Göndərilir...":"Kod göndər"}
+              </button>
 
-            <button onClick={submit} disabled={busy}
-              style={{padding:"14px",borderRadius:14,border:"none",cursor:busy?"default":"pointer",
-                background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:14,fontWeight:800,
-                opacity:busy?0.6:1,marginTop:4}}>
-              {busy?"Gözləyin...":mode==="login"?"Giriş et":"Qeydiyyatdan keç"}
-            </button>
-
-            <div style={{textAlign:"center",fontSize:10,color:"rgba(33,26,22,.4)",marginTop:8}}>
-              Tezliklə: Google və Apple ilə giriş
+              <div style={{textAlign:"center",fontSize:10,color:"rgba(33,26,22,.4)",marginTop:8}}>
+                Nömrənizə SMS ilə 6 rəqəmli təsdiq kodu gələcək
+              </div>
             </div>
-          </div>
+          )}
+
+          {step==="otp"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:13,color:"#6B6259",textAlign:"center",marginBottom:4}}>
+                <b style={{color:"#211A16"}}>+994 {phone}</b> nömrəsinə göndərilən kodu daxil edin
+              </div>
+              <input type="tel" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,"").slice(0,6))}
+                placeholder="• • • • • •" onKeyDown={e=>{if(e.key==="Enter")verifyCode();}}
+                style={{...inp,textAlign:"center",fontSize:22,letterSpacing:8,fontWeight:700}}/>
+
+              {err&&<div style={{fontSize:12,color:"#C1382A",padding:"8px 12px",background:"rgba(193,56,42,.08)",borderRadius:10}}>{err}</div>}
+
+              <button onClick={verifyCode} disabled={busy}
+                style={{padding:"14px",borderRadius:14,border:"none",cursor:busy?"default":"pointer",
+                  background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:14,fontWeight:800,
+                  opacity:busy?0.6:1,marginTop:4}}>
+                {busy?"Yoxlanılır...":"Təsdiqlə və daxil ol"}
+              </button>
+
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+                <button onClick={()=>{setStep("phone");setCode("");setErr("");}}
+                  style={{background:"none",border:"none",color:"#6B6259",fontSize:12,cursor:"pointer",padding:0}}>
+                  ← Nömrəni dəyiş
+                </button>
+                <button onClick={sendCode} disabled={resendIn>0||busy}
+                  style={{background:"none",border:"none",color:resendIn>0?"rgba(33,26,22,.3)":"#3d8259",fontSize:12,cursor:resendIn>0?"default":"pointer",padding:0,fontWeight:700}}>
+                  {resendIn>0?`Yenidən göndər (${resendIn}s)`:"Kodu yenidən göndər"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
