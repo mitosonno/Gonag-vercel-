@@ -64,8 +64,8 @@ function buildSeatOwners(guests, n){
 function effGender(item){
   if(!item) return null;
   if(item.isUshaq) return "ushaq";
-  if(item.isSpouse) return item.g.gender==="kishi"?"qadin":item.g.gender==="qadin"?"kishi":"";
-  return item.g.gender||"";
+  if(item.isSpouse) return item.g.gender==="kishi"?"qadin":item.g.gender==="qadin"?"kishi":"kishi";
+  return item.g.gender||"kishi";
 }
 
 const SEAT_RATIO = { kishi:0.804, qadin:0.811, ushaq:0.871, empty:0.864 }; // w/h — orijinal PNG-lərin öz nisbəti (dartılmasın deyə)
@@ -108,12 +108,12 @@ function TableView({ tableId, seats, guests=[], label="", guestName="" }){
   });
 
   return (
-    <div style={{background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"22px 16px 18px",fontFamily:"'Manrope',sans-serif"}}>
-      <div style={{textAlign:"center",fontFamily:"'Manrope',sans-serif",fontWeight:600,fontSize:12,letterSpacing:3,color:"#80653C",marginBottom:14,textTransform:"uppercase"}}>
+    <div style={{background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"18px 16px 16px",fontFamily:"'Manrope',sans-serif"}}>
+      <div style={{textAlign:"center",fontFamily:"'Manrope',sans-serif",fontWeight:600,fontSize:12,letterSpacing:3,color:"#80653C",marginBottom:8,textTransform:"uppercase"}}>
         Sizin masanız
       </div>
 
-      <svg viewBox={`0 0 ${VB} ${VB}`} style={{width:"100%",maxWidth:340,display:"block",margin:"0 auto",overflow:"visible"}}>
+      <svg viewBox={`0 0 ${VB} ${VB}`} style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto",overflow:"visible"}}>
         <image href={RSVP_ASSET("table")} xlinkHref={RSVP_ASSET("table")} x={cx-84} y={cy-84} width={168} height={168} preserveAspectRatio="xMidYMid meet"/>
         <image href={RSVP_ASSET("flowers")} xlinkHref={RSVP_ASSET("flowers")} x={cx-27} y={cy+2} width={54} height={52} preserveAspectRatio="xMidYMid meet"/>
         <text x={cx} y={cy-16} textAnchor="middle" fontFamily="'Cormorant Garamond',serif" fontWeight="600" fontSize="30" fill="#80653C">{tableId}</text>
@@ -418,7 +418,7 @@ export default function RsvpPage(){
         <div style={{margin:"0 16px 16px",background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"18px 16px",fontFamily:"'Manrope',sans-serif"}}>
           <div style={{fontSize:11,color:"#80653C",marginBottom:12,textAlign:"center",letterSpacing:2,fontWeight:600}}>MASA YOLDAŞLARINIZ</div>
           {guests.map((g,i)=>{
-            const gender = g.gender||"";
+            const gender = g.gender||"kishi";
             const known = gender==="kishi"||gender==="qadin";
             const isMe = g.name===guestName;
             const extras = [];
