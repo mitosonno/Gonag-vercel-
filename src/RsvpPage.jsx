@@ -197,42 +197,42 @@ function GiftSection({ rsvpCode }){
     setLoading(false);
   }
 
-  const inp = {width:"100%",padding:"9px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
+  const inp = {width:"100%",padding:"9px 12px",background:"#F5F0E6",border:"1px solid #EDE6D8",borderRadius:10,color:"#292722",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
 
   return(
-    <div style={{margin:"0 16px 16px",background:"rgba(201,168,76,.04)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,overflow:"hidden"}}>
-      <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(201,168,76,.08)"}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#c9a84c"}}>🎁 Məclis sahibindən hədiyyə</div>
-        <div style={{fontSize:10,color:"rgba(255,255,255,.35)",marginTop:2}}>Vanlav şirniyyat şəbəkəsindən tort hədiyyə</div>
+    <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,overflow:"hidden"}}>
+      <div style={{padding:"14px 18px",borderBottom:"1px solid #F0EAE0"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#80653C",fontFamily:"'Manrope',sans-serif"}}>🎁 Məclis sahibindən hədiyyə</div>
+        <div style={{fontSize:10,color:"#8A8578",marginTop:2}}>Vanlav şirniyyat şəbəkəsindən tort hədiyyə</div>
       </div>
       {step==="info"&&(
-        <div style={{padding:"12px 16px"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,.4)",lineHeight:1.7,marginBottom:12}}>QR kodu mağazada skan edin — hədiyyənizi əldə edin</div>
-          <button onClick={()=>setStep("form")} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+        <div style={{padding:"14px 18px"}}>
+          <div style={{fontSize:11,color:"#8A8578",lineHeight:1.7,marginBottom:12}}>QR kodu mağazada skan edin — hədiyyənizi əldə edin</div>
+          <button onClick={()=>setStep("form")} style={{width:"100%",padding:"11px",borderRadius:12,border:"none",background:"#F5F0E6",color:"#80653C",fontSize:13,fontWeight:700,cursor:"pointer"}}>
             🎁 Hədiyyəmi al
           </button>
         </div>
       )}
       {step==="form"&&(
-        <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{padding:"14px 18px",display:"flex",flexDirection:"column",gap:8}}>
           <input value={name} onChange={e=>setName(e.target.value)} placeholder="Ad Soyad" style={inp}/>
-          <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:8,overflow:"hidden"}}>
-            <span style={{padding:"0 10px",color:"rgba(201,168,76,.7)",fontSize:13,flexShrink:0}}>+994</span>
+          <div style={{display:"flex",alignItems:"center",background:"#F5F0E6",border:"1px solid #EDE6D8",borderRadius:10,overflow:"hidden"}}>
+            <span style={{padding:"0 10px",color:"#80653C",fontSize:13,flexShrink:0}}>+994</span>
             <input type="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,""))} placeholder="XX XXX XX XX"
-              style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",color:"#f2e8d0",fontSize:13,outline:"none"}}/>
+              style={{flex:1,padding:"9px 4px",background:"transparent",border:"none",color:"#292722",fontSize:13,outline:"none"}}/>
           </div>
           <button onClick={submit} disabled={loading||!name.trim()||!phone.trim()}
-            style={{padding:"10px",borderRadius:10,border:"none",background:name.trim()&&phone.trim()?"rgba(201,168,76,.3)":"rgba(255,255,255,.05)",color:name.trim()&&phone.trim()?"#c9a84c":"rgba(255,255,255,.2)",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-            {loading?"Yüklənir...":"✅ Təsdiq et"}
+            style={{padding:"11px",borderRadius:12,border:"none",background:name.trim()&&phone.trim()?"#80653C":"#F0EAE0",color:name.trim()&&phone.trim()?"#FFFFFF":"#B8B2A3",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            {loading?"Yüklənir...":"✓ Təsdiq et"}
           </button>
         </div>
       )}
       {step==="qr"&&giftCode&&(
-        <div style={{padding:"16px",textAlign:"center"}}>
-          <div style={{fontSize:12,color:"rgba(255,255,255,.5)",marginBottom:12}}>Hədiyyə QR kodunuz hazırdır!</div>
-          <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=GONAG-GIFT:"+giftCode+"&bgcolor=0e0a04&color=c9a84c&margin=2"}
-            alt="QR" style={{width:150,height:150,borderRadius:8,display:"block",margin:"0 auto 10px"}}/>
-          <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontFamily:"monospace",letterSpacing:2}}>{giftCode}</div>
+        <div style={{padding:"18px",textAlign:"center"}}>
+          <div style={{fontSize:12,color:"#5A554A",marginBottom:12}}>Hədiyyə QR kodunuz hazırdır!</div>
+          <img src={"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=GONAG-GIFT:"+giftCode+"&bgcolor=FCFAF6&color=80653C&margin=2"}
+            alt="QR" style={{width:150,height:150,borderRadius:12,display:"block",margin:"0 auto 10px",border:"1px solid #EDE6D8"}}/>
+          <div style={{fontSize:11,color:"#80653C",fontFamily:"monospace",letterSpacing:2}}>{giftCode}</div>
         </div>
       )}
     </div>
@@ -292,16 +292,16 @@ export default function RsvpPage(){
   }
 
   if(status==="loading") return(
-    <div style={{minHeight:"100vh",background:"#080604",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{color:"#c9a84c",fontSize:14}}>🎊 Yüklənir...</div>
+    <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{color:"#80653C",fontSize:14,fontFamily:"'Manrope',sans-serif"}}>🎊 Yüklənir...</div>
     </div>
   );
 
   if(status==="error") return(
-    <div style={{minHeight:"100vh",background:"#080604",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+    <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
       <div style={{textAlign:"center"}}>
         <div style={{fontSize:48,marginBottom:16}}>😕</div>
-        <div style={{color:"#ff9999",fontSize:16,fontWeight:700}}>Link tapılmadı</div>
+        <div style={{color:"#A02A1E",fontSize:16,fontWeight:700,fontFamily:"'Manrope',sans-serif"}}>Link tapılmadı</div>
       </div>
     </div>
   );
@@ -325,70 +325,70 @@ export default function RsvpPage(){
     hallName.includes("Şüvəlan")?"Şüvəlan, Bakı":"";
   const mapsQ = encodeURIComponent((fullHall||hallName)+" Bakı");
 
+  const coupleParts = evName.includes(" & ") ? evName.split(" & ") : null;
+
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0700 0%,#12080e 50%,#070a12 100%)",fontFamily:"'DM Sans',sans-serif",color:"#f2e8d0"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&family=Manrope:wght@400;500;600&family=Cormorant+Garamond:wght@600&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
+    <div style={{minHeight:"100vh",background:"#FCFAF6",fontFamily:"'Manrope',sans-serif",color:"#292722"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap');*{box-sizing:border-box;margin:0;padding:0}`}</style>
 
       {/* Header */}
-      <div style={{padding:"14px 18px",borderBottom:"1px solid rgba(201,168,76,.15)",background:"rgba(201,168,76,.04)",textAlign:"center"}}>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,color:"#c9a84c",letterSpacing:3}}>GONAG<span style={{fontStyle:"italic",color:"#f2e8d0"}}>.AZ</span></div>
+      <div style={{padding:"16px 18px",textAlign:"center"}}>
+        <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,color:"#80653C",letterSpacing:5,fontWeight:600}}>QONAQ</div>
       </div>
 
-      <div style={{maxWidth:480,margin:"0 auto",padding:"20px 0 60px"}}>
+      <div style={{maxWidth:480,margin:"0 auto",padding:"4px 0 60px"}}>
 
-        {/* Ad */}
-        <div style={{textAlign:"center",padding:"20px 16px 16px"}}>
-          <div style={{fontFamily:"'Playfair Display',serif",fontSize:26,color:"#c9a84c",marginBottom:8}}>{evName}</div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,.5)"}}>Hörmətli <span style={{color:"#f2e8d0",fontWeight:600}}>{guestName}</span>,</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,.4)",marginTop:4}}>toy mərasiminə dəvət olunursunuz!</div>
-        </div>
-
-        {/* Dəvətnamə önizləməsi — sistemin şablonu + istifadəçinin öz video/şəkli (varsa) */}
-        {(inviteShablon!=null||inviteMedia)&&(
-          <div style={{margin:"0 16px 16px",display:"flex",flexDirection:"column",gap:10}}>
-            {inviteShablon!=null&&SHABLON_COLORS[inviteShablon]&&(()=>{
-              const S=SHABLON_COLORS[inviteShablon];
-              return (
-                <div style={{borderRadius:16,overflow:"hidden",border:"1px solid "+S.accent+"40",
-                  background:"linear-gradient(155deg,"+S.bg+","+S.bg+"cc)",padding:"28px 20px",textAlign:"center"}}>
-                  <div style={{fontSize:10,letterSpacing:3,color:S.accent,fontWeight:700,marginBottom:10}}>DƏVƏTNAMƏ</div>
-                  <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:S.text,marginBottom:6}}>{evName}</div>
-                  {evDate&&<div style={{fontSize:12,color:S.accent}}>{evDate}</div>}
-                </div>
-              );
-            })()}
-            {inviteMedia&&(
-              <div style={{borderRadius:16,overflow:"hidden",border:"1px solid rgba(201,168,76,.25)"}}>
-                {inviteMedia.type==="video"?(
-                  <video src={inviteMedia.url} controls style={{width:"100%",display:"block"}}/>
-                ):(
-                  <img src={inviteMedia.url} style={{width:"100%",display:"block"}}/>
-                )}
-              </div>
-            )}
+        {/* Dəvətnamə kartı: ad, tarix, foto, xəritə */}
+        <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,padding:"26px 22px 20px",textAlign:"center",boxShadow:"0 2px 14px rgba(120,90,50,.06)"}}>
+          <div style={{fontFamily:"'Manrope',sans-serif",fontSize:11,color:"#8A8578",letterSpacing:3,fontWeight:600,marginBottom:14}}>DƏVƏTNAMƏ</div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:38,lineHeight:1.15,color:"#292722",marginBottom:10}}>
+            {coupleParts?(<>{coupleParts[0]} <span style={{color:"#80653C"}}>&amp;</span> {coupleParts[1]}</>):evName}
           </div>
-        )}
-
-        {/* Tarix və Zal */}
-        <div style={{margin:"0 16px 16px",background:"rgba(201,168,76,.06)",border:"1px solid rgba(201,168,76,.15)",borderRadius:16,overflow:"hidden"}}>
-          {evDate&&<div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",borderBottom:fullHall?"1px solid rgba(255,255,255,.06)":"none"}}>
-            <span style={{fontSize:20}}>📅</span>
-            <span style={{fontSize:15,color:"#f2e8d0",fontWeight:500}}>{evDate}</span>
-          </div>}
-          {fullHall&&<div style={{padding:"14px 18px",borderBottom:"1px solid rgba(255,255,255,.06)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:hallAddress?6:0}}>
-              <span style={{fontSize:20}}>🏛️</span>
-              <span style={{fontSize:15,color:"#f2e8d0",fontWeight:500}}>{fullHall}</span>
+          <div style={{fontSize:14,color:"#5A554A",marginBottom:14}}>
+            Əziz <span style={{color:"#292722",fontWeight:600}}>{guestName}</span>, sizi məclisimizə dəvət edirik.
+          </div>
+          {evDate&&(
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,fontSize:13,color:"#80653C",fontWeight:500}}>
+              <span style={{flex:"0 0 auto",width:26,height:1,background:"#D8CBB0"}}/>
+              {evDate}
+              <span style={{flex:"0 0 auto",width:26,height:1,background:"#D8CBB0"}}/>
             </div>
-            {hallAddress&&<div style={{fontSize:12,color:"rgba(255,255,255,.4)",paddingLeft:34}}>📍 {hallAddress}</div>}
-          </div>}
-          <div style={{display:"flex",gap:8,padding:"12px 16px"}}>
+          )}
+
+          {inviteMedia&&(
+            <div style={{marginTop:16,borderRadius:14,overflow:"hidden",border:"1px solid #EDE6D8"}}>
+              {inviteMedia.type==="video"?(
+                <video src={inviteMedia.url} controls style={{width:"100%",display:"block"}}/>
+              ):(
+                <img src={inviteMedia.url} style={{width:"100%",display:"block"}}/>
+              )}
+            </div>
+          )}
+          {inviteShablon!=null&&!inviteMedia&&SHABLON_COLORS[inviteShablon]&&(()=>{
+            const S=SHABLON_COLORS[inviteShablon];
+            return (
+              <div style={{marginTop:16,borderRadius:14,overflow:"hidden",border:"1px solid "+S.accent+"40",
+                background:"linear-gradient(155deg,"+S.bg+","+S.bg+"cc)",padding:"22px 16px",textAlign:"center"}}>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:18,color:S.text}}>{evName}</div>
+              </div>
+            );
+          })()}
+
+          {fullHall&&(
+            <div style={{marginTop:18,textAlign:"left"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#292722",fontWeight:500}}>
+                <span style={{fontSize:17}}>🏛️</span>{fullHall}
+              </div>
+              {hallAddress&&<div style={{fontSize:12,color:"#8A8578",marginTop:3,paddingLeft:27}}>📍 {hallAddress}</div>}
+            </div>
+          )}
+          <div style={{display:"flex",gap:8,marginTop:14}}>
             <a href={"https://www.google.com/maps/search/?api=1&query="+mapsQ} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"9px 4px",borderRadius:9,background:"rgba(66,133,244,.15)",border:"1px solid rgba(66,133,244,.3)",color:"#6fa8ff",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Google</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Google</a>
             <a href={"https://waze.com/ul?q="+mapsQ+"&navigate=yes"} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"9px 4px",borderRadius:9,background:"rgba(37,211,102,.1)",border:"1px solid rgba(37,211,102,.25)",color:"#50c878",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🚗 Waze</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🚗 Waze</a>
             <a href={"https://yandex.com/maps/?text="+mapsQ} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"9px 4px",borderRadius:9,background:"rgba(255,80,0,.1)",border:"1px solid rgba(255,80,0,.2)",color:"#ff7c4d",fontSize:11,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Yandex</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Yandex</a>
           </div>
         </div>
 
@@ -430,25 +430,25 @@ export default function RsvpPage(){
           })}
         </div>
 
-        {/* RSVP */}
-        <div style={{margin:"0 16px 16px",background:"rgba(255,255,255,.02)",border:"1px solid rgba(201,168,76,.12)",borderRadius:16,padding:"16px"}}>
-          <div style={{fontSize:11,color:"rgba(201,168,76,.5)",letterSpacing:2,marginBottom:14,textAlign:"center"}}>İŞTİRAK TƏSDİQİ</div>
+        {/* İştirak təsdiqi */}
+        <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,padding:"20px"}}>
+          <div style={{fontFamily:"'Manrope',sans-serif",fontSize:15,fontWeight:600,color:"#292722",marginBottom:14,textAlign:"center"}}>Bizimlə olacaqsınız?</div>
           {answered?(
             <div style={{textAlign:"center",padding:"8px"}}>
               <div style={{fontSize:36,marginBottom:8}}>{answer==="attending"?"🎉":"😔"}</div>
-              <div style={{fontSize:14,fontWeight:600,color:answer==="attending"?"#50c878":"#ff8888"}}>
+              <div style={{fontSize:14,fontWeight:600,color:answer==="attending"?"#4C9A6E":"#A02A1E"}}>
                 {answer==="attending"?"Gəldim — təsdiq edildi!":"Gəlmirəm — qeyd edildi"}
               </div>
             </div>
           ):(
-            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+            <div style={{display:"flex",gap:10}}>
               <button onClick={()=>respond("attending")}
-                style={{padding:"9px 22px",borderRadius:10,border:"1px solid rgba(80,200,120,.4)",background:"rgba(80,200,120,.12)",color:"#50c878",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                ✅ Gəldim
+                style={{flex:1,padding:"13px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#8A6B3F,#6B4F28)",color:"#FFFFFF",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Manrope',sans-serif"}}>
+                ✓ İştirak edəcəyəm
               </button>
               <button onClick={()=>respond("not_attending")}
-                style={{padding:"9px 22px",borderRadius:10,border:"1px solid rgba(255,80,80,.3)",background:"rgba(255,80,80,.08)",color:"#ff8888",fontSize:13,fontWeight:700,cursor:"pointer"}}>
-                ❌ Gəlmirəm
+                style={{flex:1,padding:"13px",borderRadius:14,border:"1px solid #EDE6D8",background:"#FFFFFF",color:"#5A554A",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'Manrope',sans-serif"}}>
+                ✕ Gələ bilməyəcəyəm
               </button>
             </div>
           )}
@@ -459,37 +459,37 @@ export default function RsvpPage(){
 
         {/* Kart */}
         {cardNumber&&(
-          <div style={{margin:"0 16px 16px",background:"rgba(201,168,76,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:16,padding:"16px"}}>
-            <div style={{fontSize:13,color:"rgba(201,168,76,.7)",fontWeight:700,marginBottom:10}}>💳 Kart nömrəsi</div>
-            <div style={{background:"rgba(0,0,0,.4)",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-              <div style={{fontSize:15,fontWeight:800,color:"#c9a84c",letterSpacing:2,fontFamily:"monospace"}}>{cardNumber}</div>
-              <button onClick={copyCard} style={{padding:"8px 12px",borderRadius:8,border:"1px solid rgba(201,168,76,.4)",background:copied?"rgba(80,200,120,.2)":"rgba(201,168,76,.12)",color:copied?"#50c878":"#c9a84c",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>
+          <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,padding:"18px"}}>
+            <div style={{fontSize:13,color:"#80653C",fontWeight:700,marginBottom:10}}>💳 Kart nömrəsi</div>
+            <div style={{background:"#F5F0E6",borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+              <div style={{fontSize:15,fontWeight:700,color:"#292722",letterSpacing:2,fontFamily:"monospace"}}>{cardNumber}</div>
+              <button onClick={copyCard} style={{padding:"8px 12px",borderRadius:10,border:"1px solid #EDE6D8",background:copied?"rgba(76,154,110,.12)":"#FFFFFF",color:copied?"#4C9A6E":"#80653C",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>
                 {copied?"✓":"📋 Kopyala"}
               </button>
             </div>
           </div>
         )}
 
-        <div style={{textAlign:"center",marginTop:20,color:"rgba(255,255,255,.15)",fontSize:11}}>
-          GONAG.AZ · Toy koordinasiya sistemi
+        <div style={{textAlign:"center",marginTop:20,color:"#B8B2A3",fontSize:11}}>
+          QONAQ · Məclis koordinasiya sistemi
         </div>
       </div>
 
       {/* Tebrik pəncərəsi */}
       {tebrikOpen&&(
-        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"flex-end"}} onClick={()=>setTebrikOpen(false)}>
-          <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
-            <div style={{fontSize:14,fontWeight:700,color:"#c9a84c",marginBottom:12}}>💌 Tebrik göndər</div>
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(41,39,34,.45)",display:"flex",alignItems:"flex-end"}} onClick={()=>setTebrikOpen(false)}>
+          <div style={{width:"100%",background:"#FCFAF6",borderTop:"1px solid #EDE6D8",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,borderRadius:2,background:"#EDE6D8",margin:"0 auto 16px"}}/>
+            <div style={{fontSize:14,fontWeight:700,color:"#80653C",marginBottom:12}}>💌 Təbrik göndər</div>
             <textarea value={tebrikText} onChange={e=>setTebrikText(e.target.value)} rows={4}
-              style={{width:"100%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none",marginBottom:10}}/>
+              style={{width:"100%",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:12,padding:"10px 12px",color:"#292722",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none",marginBottom:10}}/>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setTebrikOpen(false)} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>Sonra</button>
+              <button onClick={()=>setTebrikOpen(false)} style={{flex:1,padding:"12px",borderRadius:12,border:"1px solid #EDE6D8",background:"transparent",color:"#8A8578",fontSize:12,cursor:"pointer"}}>Sonra</button>
               <button onClick={()=>{
                 if(navigator.share) navigator.share({text:tebrikText}).catch(()=>{});
                 else window.open("https://wa.me/?text="+encodeURIComponent(tebrikText),"_blank");
                 setTebrikOpen(false);
-              }} style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"rgba(37,211,102,.2)",color:"#25d366",fontSize:13,fontWeight:700,cursor:"pointer"}}>
+              }} style={{flex:2,padding:"12px",borderRadius:12,border:"none",background:"#4C9A6E",color:"#FFFFFF",fontSize:13,fontWeight:700,cursor:"pointer"}}>
                 📱 Göndər
               </button>
             </div>
