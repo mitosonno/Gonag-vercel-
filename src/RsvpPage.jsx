@@ -342,7 +342,7 @@ export default function RsvpPage(){
         <div style={{margin:"0 16px 16px",background:"#FFFFFF",border:"1px solid #EDE6D8",borderRadius:20,padding:"26px 22px 20px",textAlign:"center",boxShadow:"0 2px 14px rgba(120,90,50,.06)"}}>
           <div style={{fontFamily:"'Manrope',sans-serif",fontSize:11,color:"#8A8578",letterSpacing:3,fontWeight:600,marginBottom:14}}>DƏVƏTNAMƏ</div>
           <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:38,lineHeight:1.15,color:"#292722",marginBottom:10}}>
-            {coupleParts?(<>{coupleParts[0]} <span style={{color:"#80653C"}}>&amp;</span> {coupleParts[1]}</>):evName}
+            {coupleParts?(<>{coupleParts[0]}<br/><span style={{color:"#80653C"}}>&amp;</span> {coupleParts[1]}</>):evName}
           </div>
           <div style={{fontSize:14,color:"#5A554A",marginBottom:14}}>
             Əziz <span style={{color:"#292722",fontWeight:600}}>{guestName}</span>, sizi məclisimizə dəvət edirik.
@@ -375,20 +375,37 @@ export default function RsvpPage(){
           })()}
 
           {fullHall&&(
-            <div style={{marginTop:18,textAlign:"left"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,fontSize:14,color:"#292722",fontWeight:500}}>
-                <span style={{fontSize:17}}>🏛️</span>{fullHall}
+            <div style={{marginTop:18,display:"flex",gap:12,textAlign:"left",alignItems:"flex-start"}}>
+              {hall.planImageUrl?(
+                <img src={hall.planImageUrl} alt="" style={{width:64,height:64,borderRadius:14,objectFit:"cover",flexShrink:0,border:"1px solid #EDE6D8"}}/>
+              ):(
+                <div style={{width:64,height:64,borderRadius:14,background:"#F5F0E6",border:"1px dashed #D8CBB0",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3}}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8AE98" strokeWidth="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-9 9"/></svg>
+                  <span style={{fontSize:9,color:"#B8AE98"}}>Foto</span>
+                </div>
+              )}
+              <div style={{paddingTop:2}}>
+                <div style={{fontSize:14,color:"#292722",fontWeight:600}}>{fullHall}</div>
+                <div style={{fontSize:12,color:"#8A8578",marginTop:3}}>{hallAddress||"Ünvan əlavə olunacaq"}</div>
               </div>
-              {hallAddress&&<div style={{fontSize:12,color:"#8A8578",marginTop:3,paddingLeft:27}}>📍 {hallAddress}</div>}
             </div>
           )}
           <div style={{display:"flex",gap:8,marginTop:14}}>
             <a href={"https://www.google.com/maps/search/?api=1&query="+mapsQ} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Google</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M12 2C7.6 2 4 5.6 4 10c0 5.4 7 11.5 7.3 11.8.4.3 1 .3 1.4 0C13 21.5 20 15.4 20 10c0-4.4-3.6-8-8-8Z"/><circle cx="12" cy="10" r="3.2" fill="#fff"/></svg>
+              Google
+            </a>
             <a href={"https://waze.com/ul?q="+mapsQ+"&navigate=yes"} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🚗 Waze</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#05C1F1"/><circle cx="9" cy="11" r="1.4" fill="#1A1A2E"/><circle cx="15" cy="11" r="1.4" fill="#1A1A2E"/><path d="M8 15c1.2 1 2.6 1.5 4 1.5s2.8-.5 4-1.5" stroke="#1A1A2E" strokeWidth="1.4" fill="none" strokeLinecap="round"/></svg>
+              Waze
+            </a>
             <a href={"https://yandex.com/maps/?text="+mapsQ} target="_blank" rel="noreferrer"
-              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"block"}}>🗺️ Yandex</a>
+              style={{flex:1,padding:"10px 4px",borderRadius:12,background:"#F5F0E6",border:"1px solid #EDE6D8",color:"#292722",fontSize:11.5,fontWeight:600,textDecoration:"none",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#FC3F1D"/><text x="12" y="16.5" textAnchor="middle" fontSize="12" fontWeight="700" fontFamily="Georgia,serif" fill="#fff">Y</text></svg>
+              Yandex
+            </a>
           </div>
         </div>
 
