@@ -29,7 +29,7 @@ const SHABLON_COLORS = [
 
 // ─── YENİ MASA GÖRÜNÜŞÜ — real PNG aktivlərlə (table.png, flowers.png, chair-empty.png, seat-man/woman/child.png) ───
 // Bu komponent ayrıca stil sahəsindədir (işıqlı, #FCFAF6) — təşkilatçının ümumi zal sxeminə TƏSİR ETMİR.
-const RSVP_ASSET = n => "/rsvp-assets/"+n+".png";
+const RSVP_ASSET = n => "/"+n+".png";
 
 function buildSeatOwners(guests, n){
   // App.jsx-dəki FloorPlanView ilə EYNİ alqoritm: hər qonaq öz seatIdx-ində oturur,
