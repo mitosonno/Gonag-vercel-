@@ -3871,6 +3871,7 @@ function AppInner(){
   const savedEventsRef = useRef([]);
   useEffect(()=>{ savedEventsRef.current=savedEvents; },[savedEvents]);
   const sessionId = session&&session.user? session.user.id : null;
+  const userName = session&&session.user&&session.user.user_metadata ? (session.user.user_metadata.full_name||session.user.user_metadata.name||"").split(" ")[0] : "";
 
   // Köhnə anonim datanı (bu telefonda əvvəldən yığılmış) bir dəfəlik yeni hesaba köçür
   useEffect(()=>{
@@ -3897,7 +3898,7 @@ function AppInner(){
   // (rəqəmsal dbId ilə) yazılır — bax aşağıda savePromise.then(...) daxilində.
 
   const [msgs, setMsgs] = useState([{
-    role:"agent",text:"Salam! QONAQ-a xoş gəlmisiniz.\n\nMən Gul-Ai — məclis koordinatorunuzam.\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
+    role:"agent",text:(userName?"Salam, "+userName+"! ":"Salam! ")+"QONAQ-a xoş gəlmisiniz.\n\nMən Gul-Ai — məclis koordinatorunuzam.\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]
   }]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -4064,7 +4065,7 @@ function AppInner(){
       if(liveEvs.length>0){
         setMsgs([{role:"agent",text:"Xoş gəldiniz!\n\nSizin aktiv məclisiniz var — davam etmək üçün seçin, ya da yeni məclis yaradın.",qrs:[],showActiveEvents:true}]);
       } else {
-        setMsgs([{role:"agent",text:"Salam! 👋\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+        setMsgs([{role:"agent",text:(userName?"Salam, "+userName+"! 👋":"Salam! 👋")+"\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
       }
     }
   }
@@ -5755,7 +5756,7 @@ ${savedEvsList||"Yoxdur"}`;
             setTables([]); setHall(null); setCurrentEvId(null);
             setMyInviteShablon(null); setMyInviteMedia(null);
             setHist([]);
-            setMsgs([{role:"agent",text:"Salam! 👋 Yeni məclis başladırıq!\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
+            setMsgs([{role:"agent",text:(userName?"Salam, "+userName+"! 👋":"Salam! 👋")+" Yeni məclis başladırıq!\n\nHansı məclis üçün planlaşdırırsınız?",qrs:["💍 Toy","💫 Nişan","🎂 Ad günü","🏢 Korporativ"]}]);
           }}
         />
       )}
