@@ -68,9 +68,9 @@ function effGender(item){
   return item.g.gender||"";
 }
 
-function TableView({ tableId, seats, guests=[], label="", guestName="" }){
-  const [tip, setTip] = useState(null); // toxunulan yerin adını göstərir
+const SEAT_RATIO = { kishi:0.804, qadin:0.811, ushaq:0.871, empty:0.864 }; // w/h — orijinal PNG-lərin öz nisbəti (dartılmasın deyə)
 
+function TableView({ tableId, seats, guests=[], label="", guestName="" }){
   if(!seats){
     return (
       <div style={{background:"#FCFAF6",borderRadius:20,padding:"30px 22px",textAlign:"center",fontFamily:"'Manrope',sans-serif"}}>
@@ -83,62 +83,88 @@ function TableView({ tableId, seats, guests=[], label="", guestName="" }){
   const n = Math.min(seats, 16);
   const { seatOwner, overflow } = buildSeatOwners(guests, n);
   const filled = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0)+(g.spouseCount||0),0);
-  const r = 32, seatSz = Math.max(19, 30 - n*0.55); // çox yerli masalarda kiçilt ki, üst-üstə düşməsin
+
+  const VB = 480, cx=240, cy=235, r=88;
+  const arc = (2*Math.PI*r)/n;
+  const seatW = Math.max(30, Math.min(58, arc*0.86));
+
+  const seatsData = Array.from({length:n}).map((_,i)=>{
+    const angle=(2*Math.PI/n)*i-Math.PI/2;
+    const rot=(angle*180/Math.PI)+90;
+    const sx=cx+r*Math.cos(angle), sy=cy+r*Math.sin(angle);
+    const item=seatOwner[i];
+    const gender=effGender(item);
+    const known = gender==="kishi"||gender==="qadin"||gender==="ushaq";
+    const ratio = known?SEAT_RATIO[gender]:SEAT_RATIO.empty;
+    const seatH = seatW/ratio;
+    const isMe = item && item.g.name && item.g.name===guestName;
+    const isRight = Math.cos(angle)>0.2, isLeft = Math.cos(angle)<-0.2;
+    const anchor = isRight?"start":isLeft?"end":"middle";
+    const lr1 = r+seatH*0.62, lr2 = r+seatH*0.62+16, lr3 = lr2+4;
+    const lx1=cx+lr1*Math.cos(angle), ly1=cy+lr1*Math.sin(angle);
+    const lx2=cx+lr2*Math.cos(angle), ly2=cy+lr2*Math.sin(angle);
+    const tx=cx+lr3*Math.cos(angle), ty=cy+lr3*Math.sin(angle);
+    return {i,angle,rot,sx,sy,item,gender,known,seatH,isMe,anchor,lx1,ly1,lx2,ly2,tx,ty};
+  });
 
   return (
     <div style={{background:"#FCFAF6",border:"1px solid #EDE6D8",borderRadius:20,padding:"22px 16px 18px",fontFamily:"'Manrope',sans-serif"}}>
-      <div style={{textAlign:"center",fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:13,letterSpacing:3,color:"#80653C",marginBottom:16,textTransform:"uppercase"}}>
+      <div style={{textAlign:"center",fontFamily:"'Manrope',sans-serif",fontWeight:600,fontSize:12,letterSpacing:3,color:"#80653C",marginBottom:14,textTransform:"uppercase"}}>
         Sizin masanız
       </div>
 
-      <div style={{position:"relative",width:"100%",maxWidth:300,aspectRatio:"1",margin:"0 auto"}} onClick={()=>setTip(null)}>
-        <img src={RSVP_ASSET("table")} alt="" style={{position:"absolute",left:"18%",top:"18%",width:"64%",height:"64%",objectFit:"contain"}}/>
-        <img src={RSVP_ASSET("flowers")} alt="" style={{position:"absolute",left:"29%",top:"29%",width:"42%",height:"43%",objectFit:"contain",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",left:"50%",top:"67%",transform:"translate(-50%,-50%)",
-          fontFamily:"'Cormorant Garamond',serif",fontWeight:600,fontSize:15,color:"#80653C",
-          background:"rgba(252,250,246,.88)",padding:"2px 12px",borderRadius:10,whiteSpace:"nowrap"}}>
-          Masa № {tableId}
-        </div>
+      <svg viewBox={`0 0 ${VB} ${VB}`} style={{width:"100%",maxWidth:340,display:"block",margin:"0 auto",overflow:"visible"}}>
+        <image href={RSVP_ASSET("table")} xlinkHref={RSVP_ASSET("table")} x={cx-84} y={cy-84} width={168} height={168} preserveAspectRatio="xMidYMid meet"/>
+        <image href={RSVP_ASSET("flowers")} xlinkHref={RSVP_ASSET("flowers")} x={cx-27} y={cy+2} width={54} height={52} preserveAspectRatio="xMidYMid meet"/>
+        <text x={cx} y={cy-16} textAnchor="middle" fontFamily="'Cormorant Garamond',serif" fontWeight="600" fontSize="30" fill="#80653C">{tableId}</text>
 
-        {Array.from({length:n}).map((_,i)=>{
-          const angle=(2*Math.PI/n)*i-Math.PI/2;
-          const rot=(angle*180/Math.PI)+90;
-          const sx=50+r*Math.cos(angle), sy=50+r*Math.sin(angle);
-          const item=seatOwner[i];
-          const gender=effGender(item);
-          const isMe = item && item.g.name && item.g.name===guestName;
-          const known = gender==="kishi"||gender==="qadin"||gender==="ushaq";
+        {seatsData.map(sd=>(
+          <g key={sd.i}>
+            {sd.item&&(
+              <>
+                <line x1={sd.lx1} y1={sd.ly1} x2={sd.lx2} y2={sd.ly2} stroke="#C9A25E" strokeWidth="1"/>
+                <text x={sd.tx} y={sd.ty} textAnchor={sd.anchor} dominantBaseline="middle"
+                  fontFamily="'Manrope',sans-serif" fontSize="10.5" fontWeight="600" fill="#292722">
+                  {sd.item.g.name||"Adsız"}
+                </text>
+                {sd.isMe&&(
+                  <g transform={`translate(${sd.tx},${sd.ty+15})`}>
+                    <rect x={-15} y={-8} width={30} height={14} rx={7} fill="#80653C"/>
+                    <text x={0} y={2} textAnchor="middle" fontFamily="'Manrope',sans-serif" fontSize="8.5" fontWeight="700" fill="#FCFAF6">Siz</text>
+                  </g>
+                )}
+              </>
+            )}
+          </g>
+        ))}
+
+        {seatsData.map(sd=>{
+          const w=seatW, h=sd.seatH;
           return (
-            <div key={i} onClick={(e)=>{ if(item){ e.stopPropagation(); setTip(tip===i?null:i);} }}
-              style={{position:"absolute",left:(sx-seatSz/2)+"%",top:(sy-seatSz/2)+"%",width:seatSz+"%",height:seatSz+"%",
-                cursor:item?"pointer":"default"}}>
-              {item&&known&&(
-                <img src={RSVP_ASSET(gender==="kishi"?"seat-man":gender==="qadin"?"seat-woman":"seat-child")} alt=""
-                  style={{width:"100%",height:"100%",objectFit:"contain",transform:`rotate(${rot}deg)`}}/>
+            <g key={"seat"+sd.i} transform={`translate(${sd.sx},${sd.sy}) rotate(${sd.rot})`}>
+              {sd.item&&sd.known&&(
+                <image href={RSVP_ASSET(sd.gender==="kishi"?"seat-man":sd.gender==="qadin"?"seat-woman":"seat-child")}
+                  xlinkHref={RSVP_ASSET(sd.gender==="kishi"?"seat-man":sd.gender==="qadin"?"seat-woman":"seat-child")}
+                  x={-w/2} y={-h/2} width={w} height={h} preserveAspectRatio="xMidYMid meet"/>
               )}
-              {item&&!known&&(
-                <div style={{width:"70%",height:"70%",margin:"15%",borderRadius:"50%",background:"#EFE7D8",
-                  border:"2px solid rgba(128,101,60,.35)",display:"flex",alignItems:"center",justifyContent:"center",
-                  fontWeight:600,fontSize:"38%",color:"#80653C"}}>
-                  {(item.g.name||"?")[0].toUpperCase()}
-                </div>
+              {!sd.item&&(
+                <image href={RSVP_ASSET("chair-empty")} xlinkHref={RSVP_ASSET("chair-empty")} x={-w/2} y={-h/2} width={w} height={h} opacity={0.55} preserveAspectRatio="xMidYMid meet"/>
               )}
-              {!item&&(
-                <img src={RSVP_ASSET("chair-empty")} alt="" style={{width:"100%",height:"100%",objectFit:"contain",transform:`rotate(${rot}deg)`,opacity:.55}}/>
+              {sd.item&&!sd.known&&(
+                <g transform={`rotate(${-sd.rot})`}>
+                  <circle r={w*0.32} fill="#EFE7D8" stroke="#80653C" strokeOpacity="0.35" strokeWidth="2"/>
+                  <text textAnchor="middle" dominantBaseline="central" fontFamily="'Manrope',sans-serif" fontWeight="700" fontSize={w*0.28} fill="#80653C">
+                    {(sd.item.g.name||"?")[0].toUpperCase()}
+                  </text>
+                </g>
               )}
-              {isMe&&<div style={{position:"absolute",inset:"-4%",borderRadius:"50%",border:"2px solid #80653C",boxShadow:"0 0 0 3px rgba(128,101,60,.2)",pointerEvents:"none"}}/>}
-              {isMe&&<div style={{position:"absolute",bottom:"-22%",left:"50%",transform:"translateX(-50%)",fontSize:9,fontWeight:700,color:"#80653C",background:"#FCFAF6",padding:"1px 7px",borderRadius:8,whiteSpace:"nowrap",boxShadow:"0 1px 4px rgba(0,0,0,.12)"}}>Siz</div>}
-              {tip===i&&item&&!isMe&&(
-                <div style={{position:"absolute",bottom:"-24%",left:"50%",transform:"translateX(-50%)",fontSize:9,fontWeight:600,color:"#292722",background:"#fff",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",boxShadow:"0 2px 8px rgba(0,0,0,.15)",zIndex:5}}>
-                  {item.g.name||"Adsız"}
-                </div>
-              )}
-            </div>
+              {sd.isMe&&<circle r={w*0.54} fill="none" stroke="#80653C" strokeWidth="2"/>}
+            </g>
           );
         })}
-      </div>
+      </svg>
 
-      <div style={{textAlign:"center",fontSize:11,color:"#797267",marginTop:14}}>{filled} / {seats} dolu{label?" · "+label:""}</div>
+      <div style={{textAlign:"center",fontSize:11,color:"#797267",marginTop:10}}>{filled} / {seats} dolu{label?" · "+label:""}</div>
       {overflow>0&&(
         <div style={{marginTop:10,padding:"8px 12px",background:"rgba(193,56,42,.08)",border:"1px solid rgba(193,56,42,.2)",borderRadius:10,fontSize:10.5,color:"#A02A1E",textAlign:"center"}}>
           ⚠️ Bu masaya {overflow} nəfər tutumdan artıq təyin edilib — təşkilatçı ilə əlaqə saxlayın.
