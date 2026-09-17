@@ -540,6 +540,16 @@ function sideColor(s){ return s==="Oğlan evi"?"#B23A2E":s==="Qız evi"?"#C9A84C
 function sideBg(s){ return s==="Oğlan evi"?"rgba(178,58,46,.1)":s==="Qız evi"?"rgba(201,168,76,.14)":"rgba(107,98,89,.08)"; }
 
 const AZ_MONTHS_LIST = ["Yanvar","Fevral","Mart","Aprel","May","İyun","İyul","Avqust","Sentyabr","Oktyabr","Noyabr","Dekabr"];
+// SMS-lər üçün: Azərbaycan hərflərini sadə latın hərflərinə çevirir (GSM-7 uyğun),
+// çünki Az əlifbası UCS-2 kodlaşdırmasına düşür və SMS-i 2-3 hissəyə bölür.
+// Həmçinin "№" işarəsini və emojiləri də təmizləyir (onlar da GSM-7-də yoxdur).
+function toSmsLatin(str){
+  if(!str) return str;
+  const map = {"ə":"e","Ə":"E","ö":"o","Ö":"O","ü":"u","Ü":"U","ı":"i","İ":"I","ş":"s","Ş":"S","ç":"c","Ç":"C","ğ":"g","Ğ":"G","№":"No "};
+  let out = str.replace(/[əƏöÖüÜıİşŞçÇğĞ№]/g, ch=>map[ch]);
+  out = out.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "");
+  return out.replace(/[ \t]{2,}/g, " ").trim();
+}
 function parseAzDateParts(str){
   if(!str) return null;
   const AZ_MONTHS = {yanvar:0,fevral:1,mart:2,aprel:3,may:4,iyun:5,iyul:6,avqust:7,sentyabr:8,oktyabr:9,noyabr:10,dekabr:11};
@@ -6726,7 +6736,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         await shareMsg(phone,waMsg,c,waWin);
 
         const smsText="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
-        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
+        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(smsText)})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+" (SMS): "+errMsg)}));
@@ -6759,7 +6769,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
         const text="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
-        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
+        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(text)})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+": "+errMsg)}));
@@ -6807,7 +6817,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const rsvpLink=baseUrl+"/rsvp/"+code;
       const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
       const text="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
-      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
+      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(text)})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
       if(j.ok){
         onMarkSmsResult&&onMarkSmsResult(guest.id, true);
@@ -6844,7 +6854,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       await shareMsg(phone,waMsg,c,waWin);
 
       const smsText="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
-      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsText})});
+      const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(smsText)})});
       const j=await r.json().catch(()=>({ok:false}));
       onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok);
       onMarkSent&&onMarkSent([guest.id],"whatsapp");
