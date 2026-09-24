@@ -6598,7 +6598,56 @@ function SchemaTutTooltip({ step, onNext, onSkip, onBack }){
 }
 
 
-function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, myInviteMediaRaw, setMyInviteMedia, myInviteIncludeMedia, setMyInviteIncludeMedia, sessionId, dashProps, evType, autoJumpToSendChoice, onAutoJumpConsumed }){
+function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMarkSmsResult, devetData, obData, hall, cardNumber, setCardNumber, onOpenMyInvite, onPrint, onGoToSchema, myInviteShablon, myInviteMedia, myInviteMediaRaw, setMyInviteMedia, myInviteIncludeMedia, setMyInviteIncludeMedia, sessionId, dashProps, evType, autoJumpToSendChoice, onAutoJumpConsumed, eventId }){
+  const [smsUnlocked, setSmsUnlocked] = useState(false);
+  const [smsGateOpen, setSmsGateOpen] = useState(false);
+  const [smsGatePending, setSmsGatePending] = useState(null); // gözləyən əməliyyatı yenidən başlatmaq üçün
+  const [promoInput, setPromoInput] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMsg, setPromoMsg] = useState("");
+
+  useEffect(()=>{
+    if(!eventId){ setSmsUnlocked(false); return; }
+    supabase.from("events").select("sms_unlocked").eq("id",eventId).single()
+      .then(({data})=>setSmsUnlocked(!!(data&&data.sms_unlocked)))
+      .catch(()=>{});
+  },[eventId]);
+
+  async function ensureSmsAllowed(count, retryFn){
+    if(smsUnlocked) return true;
+    try{
+      const { data, error } = await supabase.rpc("consume_free_sms",{ p_count: count });
+      if(error) throw error;
+      const row = data && data[0];
+      if(row && row.allowed>=count) return true;
+    }catch(e){ console.error("consume_free_sms xətası:", e); }
+    setSmsGatePending(()=>retryFn);
+    setSmsGateOpen(true);
+    return false;
+  }
+
+  async function redeemPromo(){
+    if(!promoInput.trim()){ setPromoMsg("Kodu yazın"); return; }
+    setPromoBusy(true); setPromoMsg("");
+    try{
+      const { data, error } = await supabase.rpc("redeem_promo_code",{ p_code: promoInput.trim().toUpperCase(), p_event_id: eventId });
+      if(error) throw error;
+      const row = data && data[0];
+      if(row && row.success){
+        setSmsUnlocked(true);
+        setSmsGateOpen(false);
+        setPromoInput("");
+        const fn = smsGatePending; setSmsGatePending(null);
+        if(fn) fn();
+      } else {
+        setPromoMsg((row&&row.message)||"Kod keçərsiz");
+      }
+    }catch(e){
+      setPromoMsg(e.message||"Xəta baş verdi");
+    }
+    setPromoBusy(false);
+  }
+
   const evTypeWord = evType==="toy"?"toy":evType==="nishan"?"nişan":evType==="adgunu"?"ad günü":evType==="korporativ"?"tədbir":"məclis";
   // Ana panel seçimi
   const [panel, setPanel] = useState("home"); // "home"|"sendChoice"|"bulk"|"single"
@@ -6724,6 +6773,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     }));
     setSmsSending(true);
     setSmsProgress({done:0,total:targets.length,failed:0,lastError:""});
+    if(!(await ensureSmsAllowed(targets.length, sendBulkBoth))){ setSmsSending(false); return; }
     for(const {g,tbl,phone} of targets){
       const waWin = window.open("about:blank","_blank");
       const gList=(tbl.guests||[]).map(x=>"  • "+x.name+(x.count>1?" ("+x.count+"n)":"")).join("\n");
@@ -6763,6 +6813,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     }));
     setSmsSending(true);
     setSmsProgress({done:0,total:targets.length,failed:0,lastError:""});
+    if(!(await ensureSmsAllowed(targets.length, sendBulkSMS))){ setSmsSending(false); return; }
     for(let i=0;i<targets.length;i++){
       const {g,tbl,phone}=targets[i];
       try{
@@ -6811,6 +6862,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const phone=(guest.phone||"").replace(/\D/g,"");
     if(!phone){ alert("Bu qonağın telefon nömrəsi yoxdur"); return; }
     setSmsSending(true);
+    if(!(await ensureSmsAllowed(1, sendSingleSMS))){ setSmsSending(false); return; }
     try{
       const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
       const baseUrl=window.location.origin;
@@ -6840,6 +6892,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const phone=(guest.phone||"").replace(/\D/g,"");
     if(!phone){ alert("Bu qonağın telefon nömrəsi yoxdur"); return; }
     setSmsSending(true);
+    if(!(await ensureSmsAllowed(1, sendSingleBoth))){ setSmsSending(false); return; }
     const waWin = window.open("about:blank","_blank");
     try{
       const evName=(obD.boy&&obD.girl)?obD.boy+" & "+obD.girl:(obD.name||"Məclis");
@@ -6874,6 +6927,28 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     <div style={{position:"fixed",inset:0,zIndex:200,
       background:"linear-gradient(155deg,#E8DCC0,#D4C4A0)",
       display:"flex",flexDirection:"column"}}>
+      {smsGateOpen&&(
+        <div style={{position:"fixed",inset:0,zIndex:999,background:"rgba(0,0,0,.6)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSmsGateOpen(false)}>
+          <div style={{background:"linear-gradient(145deg,#FFFFFF,#F7F4EE)",border:"1.5px solid rgba(201,168,76,.4)",borderRadius:18,padding:"26px 22px",width:"100%",maxWidth:320}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:600,color:"#211A16",textAlign:"center",marginBottom:6}}>Pulsuz test SMS limiti bitib</div>
+            <div style={{fontSize:12,color:"rgba(33,26,22,.55)",textAlign:"center",lineHeight:1.55,marginBottom:18}}>
+              5 pulsuz sınaq SMS-i istifadə olundu. Davam etmək üçün restoranınızdan aldığınız promokodu yazın, ya da kartla ödəyin.
+            </div>
+            <input value={promoInput} onChange={e=>setPromoInput(e.target.value)} placeholder="Promokod"
+              style={{width:"100%",padding:"12px 14px",borderRadius:12,border:"1px solid rgba(150,120,80,.25)",background:"#F5F0E6",fontSize:14,letterSpacing:1,textAlign:"center",outline:"none",marginBottom:8,boxSizing:"border-box",fontFamily:"'Manrope',sans-serif"}}/>
+            {promoMsg&&<div style={{fontSize:11.5,color:"#C1382A",textAlign:"center",marginBottom:8}}>{promoMsg}</div>}
+            <button onClick={redeemPromo} disabled={promoBusy}
+              style={{width:"100%",padding:"13px",borderRadius:12,border:"none",marginBottom:10,cursor:promoBusy?"default":"pointer",
+                background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:800,opacity:promoBusy?0.6:1}}>
+              {promoBusy?"Yoxlanılır...":"✓ Kodu təsdiqlə"}
+            </button>
+            <button disabled
+              style={{width:"100%",padding:"13px",borderRadius:12,border:"1px solid rgba(150,120,80,.25)",background:"transparent",color:"rgba(33,26,22,.35)",fontSize:13,fontWeight:700,cursor:"default"}}>
+              💳 Kartla ödə (tezliklə)
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,
         background:"linear-gradient(155deg,rgba(255,255,255,.65),rgba(255,255,255,.3))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)"}}>

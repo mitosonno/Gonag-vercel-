@@ -30,6 +30,7 @@ const NAV = [
   { id: "guests", label: "Qonaqlar", icon: "🔍" },
   { id: "halls", label: "Zal Builder", icon: "🛠" },
   { id: "mitoad", label: "MitoAd", icon: "📣" },
+  { id: "promo", label: "Promokodlar", icon: "🎟️" },
 ];
 
 function useIsMobile(){
@@ -607,6 +608,14 @@ export default function AdminPanel(){
   const [guestGenderFilter, setGuestGenderFilter] = useState("all"); // "all"|"kishi"|"qadin"
   const [mitoCompany, setMitoCompany] = useState("");
   const [mitoMessage, setMitoMessage] = useState("");
+  const [promoCodes, setPromoCodes] = useState(null); // null=yüklənməyib, []=yüklənib boşdur
+  const [promoUses, setPromoUses] = useState([]);
+  const [promoVenueName, setPromoVenueName] = useState("");
+  const [promoValue, setPromoValue] = useState("120");
+  const [promoAdminShare, setPromoAdminShare] = useState("30");
+  const [promoMaxUses, setPromoMaxUses] = useState("10");
+  const [promoGenBusy, setPromoGenBusy] = useState(false);
+  const [promoGenErr, setPromoGenErr] = useState("");
   const [mitoLink, setMitoLink] = useState("");
   const [mitoAudience, setMitoAudience] = useState("all"); // "all"|"kishi"|"qadin"
   const [mitoSending, setMitoSending] = useState(false);
@@ -1295,6 +1304,103 @@ export default function AdminPanel(){
             </div>
           </>
         )}
+
+        {tab==="promo"&&(()=>{
+          if(promoCodes===null){
+            Promise.all([
+              supabase.from("promo_codes").select("*").order("created_at",{ascending:false}),
+              supabase.from("promo_code_uses").select("*").order("used_at",{ascending:false})
+            ]).then(([c,u])=>{
+              setPromoCodes(c.data||[]);
+              setPromoUses(u.data||[]);
+            });
+            return <div style={{fontSize:13,color:"#6B6259"}}>Yüklənir...</div>;
+          }
+          const usesByCode = {};
+          promoUses.forEach(u=>{ usesByCode[u.code_id]=(usesByCode[u.code_id]||0)+1; });
+          const totalValue = promoCodes.reduce((s,c)=>s+c.used_count*Number(c.value_azn),0);
+          const totalAdminShare = promoCodes.reduce((s,c)=>s+c.used_count*Number(c.admin_share_azn),0);
+
+          async function generateCode(){
+            if(!promoVenueName.trim()){ setPromoGenErr("Restoran adını yazın"); return; }
+            setPromoGenBusy(true); setPromoGenErr("");
+            try{
+              const { data, error } = await supabase.rpc("admin_generate_promo_code",{
+                p_venue_name: promoVenueName.trim(),
+                p_value: Number(promoValue)||120,
+                p_admin_share: Number(promoAdminShare)||30,
+                p_max_uses: Number(promoMaxUses)||10
+              });
+              if(error) throw error;
+              setPromoVenueName(""); setPromoCodes(null); // yenidən yüklə
+            }catch(e){
+              setPromoGenErr(e.message||"Xəta baş verdi");
+            }
+            setPromoGenBusy(false);
+          }
+
+          return (
+            <>
+              <div style={{fontFamily:"'Fraunces',serif",fontSize:isMobile?19:24,fontWeight:700,color:"#211A16",marginBottom:6}}>🎟️ Promokodlar</div>
+              <div style={{fontSize:12,color:"#6B6259",marginBottom:18,maxWidth:560}}>Restoranlara verilən kodlar — hər kod məhdud sayda istifadə oluna bilər, işlədikcə statistika aşağıda görünür.</div>
+
+              <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:12,marginBottom:22}}>
+                <StatCard label="Aktiv kodlar" value={promoCodes.filter(c=>c.is_active).length} icon="🎟️" mobile={isMobile}/>
+                <StatCard label="Ümumi istifadə" value={promoCodes.reduce((s,c)=>s+c.used_count,0)} icon="📈" mobile={isMobile}/>
+                <StatCard label="Ümumi dəyər" value={totalValue+" AZN"} icon="💰" accent="#4C9A6E" mobile={isMobile}/>
+                <StatCard label="Admin payı" value={totalAdminShare+" AZN"} icon="👤" accent="#8A6B1E" mobile={isMobile}/>
+              </div>
+
+              <div style={{background:"linear-gradient(155deg,rgba(255,255,255,.95),rgba(255,255,255,.75))",border:"1px solid rgba(255,255,255,.6)",borderRadius:16,padding:18,marginBottom:22,maxWidth:560}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:12}}>+ Yeni kod yarat</div>
+                <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"2fr 1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                  <input value={promoVenueName} onChange={e=>setPromoVenueName(e.target.value)} placeholder="Restoran adı"
+                    style={{padding:"10px 12px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",fontSize:13,outline:"none"}}/>
+                  <input value={promoValue} onChange={e=>setPromoValue(e.target.value)} placeholder="Dəyər (AZN)" type="number"
+                    style={{padding:"10px 12px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",fontSize:13,outline:"none"}}/>
+                  <input value={promoAdminShare} onChange={e=>setPromoAdminShare(e.target.value)} placeholder="Admin payı" type="number"
+                    style={{padding:"10px 12px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",fontSize:13,outline:"none"}}/>
+                  <input value={promoMaxUses} onChange={e=>setPromoMaxUses(e.target.value)} placeholder="Limit" type="number"
+                    style={{padding:"10px 12px",borderRadius:10,border:"1px solid rgba(150,120,80,.2)",fontSize:13,outline:"none"}}/>
+                </div>
+                {promoGenErr&&<div style={{fontSize:11.5,color:"#C1382A",marginBottom:10}}>{promoGenErr}</div>}
+                <button onClick={generateCode} disabled={promoGenBusy}
+                  style={{padding:"10px 18px",borderRadius:10,border:"none",cursor:promoGenBusy?"default":"pointer",
+                    background:"linear-gradient(155deg,#D4AF5A,#B8923E)",color:"#fff",fontSize:12.5,fontWeight:800,opacity:promoGenBusy?0.6:1}}>
+                  {promoGenBusy?"Yaradılır...":"Kod yarat"}
+                </button>
+              </div>
+
+              <div style={{fontSize:13,fontWeight:700,color:"#211A16",marginBottom:10}}>Bütün kodlar</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {promoCodes.length===0&&<div style={{fontSize:12,color:"#6B6259"}}>Hələ kod yaradılmayıb.</div>}
+                {promoCodes.map(c=>(
+                  <div key={c.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"12px 16px",
+                    background:"linear-gradient(155deg,rgba(255,255,255,.95),rgba(255,255,255,.75))",border:"1px solid rgba(255,255,255,.6)",borderRadius:12,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#211A16"}}>{c.venue_name}</div>
+                      <div style={{fontSize:11,color:"#6B6259",fontFamily:"monospace",letterSpacing:1,marginTop:2}}>{c.code}</div>
+                    </div>
+                    <div style={{display:"flex",gap:16,alignItems:"center"}}>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:14,fontWeight:700,color:c.used_count>=c.max_uses?"#C1382A":"#211A16"}}>{c.used_count}/{c.max_uses}</div>
+                        <div style={{fontSize:9,color:"#8a7548"}}>istifadə</div>
+                      </div>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:14,fontWeight:700,color:"#4C9A6E"}}>{c.used_count*Number(c.value_azn)} AZN</div>
+                        <div style={{fontSize:9,color:"#8a7548"}}>dəyər</div>
+                      </div>
+                      <div style={{textAlign:"center"}}>
+                        <div style={{fontSize:14,fontWeight:700,color:"#8A6B1E"}}>{c.used_count*Number(c.admin_share_azn)} AZN</div>
+                        <div style={{fontSize:9,color:"#8a7548"}}>admin payı</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {hallBuilderOpen&&(
