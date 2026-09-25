@@ -2492,6 +2492,7 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               <button onClick={()=>{
                 if(!slotName.trim()) return;
                 if(!slotPhone.trim()) return;
+                if(!slotGender){ alert("⚠️ Cinsi seçin: qadın və ya kişi"); return; }
                 if(slotAdding) return;
                 setSlotAdding(true);
                 const uc=(slotExtras.find(x=>x.type==="usher")||{count:0}).count;
@@ -2507,9 +2508,9 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
                 onAddGuest(exTbl.id,{name:slotName.trim(),phone:slotPhone.trim()?("+994"+slotPhone.trim()):"",count:mainCount,gender:slotGender,spouseCount:slotSpouseCount,ushaqCount:uc,extras:[],side:exTbl.side||"",seatIdx:slotInput.slotIdx});
                 setSlotInput(null);setSlotName("");setSlotPhone("");setSlotCount("1");setSlotGender("");setSlotExtras([]);setSlotSolo(null);setSlotSpouseCount(0);setSlotCompanionCount(0);
                 setTimeout(()=>setSlotAdding(false),400);
-              }} disabled={slotAdding||!slotName.trim()||!slotPhone.trim()} style={{width:"100%",padding:"11px",borderRadius:14,border:"none",
-                background:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(150,120,80,.25)":"linear-gradient(155deg,#5EB889,#3d8259)",
-                color:(slotAdding||!slotName.trim()||!slotPhone.trim())?"rgba(107,98,89,.6)":"#fff",fontSize:12.5,fontWeight:800,cursor:(slotAdding||!slotName.trim()||!slotPhone.trim())?"default":"pointer",
+              }} disabled={slotAdding||!slotName.trim()||!slotPhone.trim()||!slotGender} style={{width:"100%",padding:"11px",borderRadius:14,border:"none",
+                background:(slotAdding||!slotName.trim()||!slotPhone.trim()||!slotGender)?"rgba(150,120,80,.25)":"linear-gradient(155deg,#5EB889,#3d8259)",
+                color:(slotAdding||!slotName.trim()||!slotPhone.trim()||!slotGender)?"rgba(107,98,89,.6)":"#fff",fontSize:12.5,fontWeight:800,cursor:(slotAdding||!slotName.trim()||!slotPhone.trim()||!slotGender)?"default":"pointer",
                 boxShadow:(slotAdding||!slotName.trim()||!slotPhone.trim())?"none":"0 4px 14px -4px rgba(76,154,110,.6)"}}>
                 ✓ Əlavə et
               </button>
@@ -5711,7 +5712,7 @@ ${savedEvsList||"Yoxdur"}`;
               style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
               Bağla
             </button>
-            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
+            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); saveCurrentEvent({myInviteShablon:fullPreviewShablon}); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
               ✓ Bəyəndim, seç
             </button>
@@ -6351,13 +6352,31 @@ ${savedEvsList||"Yoxdur"}`;
             <div style={{flex:1,overflowY:"auto",padding:"28px 20px",display:"flex",flexDirection:"column",alignItems:"center"}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:500,fontSize:28,color:"#211A16",textAlign:"center",marginBottom:8}}>Necə davam edək?</div>
               <div style={{fontFamily:"'Manrope',sans-serif",fontSize:13,color:"rgba(33,26,22,.55)",textAlign:"center",marginBottom:30,maxWidth:280}}>Qonaqlara göndəriləcək dəvətnaməni seçin, ya da zalın masa sxemini Hostesə paylaşın.</div>
-              <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setMyInviteJumpAfter(true); setMyInviteOpen(true); }}
-                style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
-                  background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
-                  fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
-                  boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
-                💌 {inviteChoiceFromNav?"Dəvətnamələrim":"Dəvətnaməni hazırla"}
-              </button>
+              {myInviteShablon!=null?(
+                <>
+                  <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setNotinvAutoJump(true); }}
+                    style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:10,
+                      background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
+                      boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
+                    ✅ Aktiv dəvətnamə ilə davam et
+                  </button>
+                  <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setMyInviteJumpAfter(true); setMyInviteOpen(true); }}
+                    style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",marginBottom:12,
+                      background:"rgba(255,255,255,.55)",color:"#211A16",
+                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
+                    🔄 Dəvətnaməni dəyiş
+                  </button>
+                </>
+              ):(
+                <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setMyInviteJumpAfter(true); setMyInviteOpen(true); }}
+                  style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:12,
+                    background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
+                    fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
+                    boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
+                  💌 {inviteChoiceFromNav?"Dəvətnamələrim":"Dəvətnaməni hazırla"}
+                </button>
+              )}
               <button onClick={()=>{ setInviteChoiceOpen(false); setSchemaShareOpen(true); }}
                 style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",
                   background:"rgba(255,255,255,.55)",color:"#211A16",
@@ -6654,6 +6673,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   useEffect(()=>{ if(autoJumpToSendChoice){ setPanel("sendChoice"); onAutoJumpConsumed&&onAutoJumpConsumed(); } }, [autoJumpToSendChoice]);
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
+  const [tapHintDismissed, setTapHintDismissed] = useState(false);
   const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
   useEffect(()=>{ if(myInviteShablon!=null) setShablon(DEVETNAME_SHABLONLAR[myInviteShablon]); }, [myInviteShablon]);
   const [step, setStep] = useState("select"); // "select"|"shablon"|"preview"|"confirm"
@@ -6744,6 +6764,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const toSend=notInvTables.filter(t=>selTbls.has(t.id));
     for(const tbl of toSend){
       for(const g of (tbl.guests||[])){
+        if(g.invited) continue;
         const phone=(g.phone||"").replace(/\D/g,"");
         if(!phone) continue;
         // Pəncərəni HƏR ŞEYDƏN ƏVVƏL açırıq (createRsvp-dəki await-dan öncə)
@@ -6768,6 +6789,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const toSend=notInvTables.filter(t=>selTbls.has(t.id));
     const targets=[];
     toSend.forEach(tbl=>(tbl.guests||[]).forEach(g=>{
+      if(g.invited) return;
       const phone=(g.phone||"").replace(/\D/g,"");
       if(phone) targets.push({g,tbl,phone});
     }));
@@ -6808,6 +6830,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const toSend=notInvTables.filter(t=>selTbls.has(t.id));
     const targets=[];
     toSend.forEach(tbl=>(tbl.guests||[]).forEach(g=>{
+      if(g.invited) return;
       const phone=(g.phone||"").replace(/\D/g,"");
       if(phone) targets.push({g,tbl,phone});
     }));
@@ -7119,18 +7142,28 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.5)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
             <span style={{marginLeft:"auto",fontSize:11,color:"rgba(212,175,90,.8)"}}>{selTbls.size}/{notInvTables.length}</span>
           </div>
-          <div onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))}
-            style={{margin:"12px 12px 0",padding:"14px 16px",borderRadius:16,background:"rgba(212,175,90,.12)",border:"1px solid rgba(212,175,90,.3)",display:"flex",alignItems:"center",gap:12,cursor:"pointer"}}>
-            <div style={{fontSize:22,flexShrink:0}}>👆</div>
-            <div style={{fontSize:11.5,color:"#8A6B1E",lineHeight:1.5,fontFamily:"'Manrope',sans-serif"}}>
-              Göndərmək üçün masaların üzərinə basın, ya da <b>bir dəfəyə bütün masaları seçmək üçün buraya toxunun</b>.
+          {!tapHintDismissed&&(
+            <div style={{margin:"12px 12px 0",padding:"14px 16px",borderRadius:16,background:"rgba(212,175,90,.12)",border:"1px solid rgba(212,175,90,.3)"}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style={{flexShrink:0,marginTop:1}}>
+                  <path d="M9 11.5V5.2a1.3 1.3 0 0 1 2.6 0v5.3M11.6 10.4V4a1.3 1.3 0 0 1 2.6 0v6.4M14.2 10.5V5.6a1.3 1.3 0 0 1 2.6 0v7.9M9 12.2 7.3 10.4a1.4 1.4 0 0 0-2.1 1.9l3.4 4.3c1 1.4 2.7 2.4 4.6 2.4h1.4c2.7 0 4.9-2.2 4.9-4.9v-3.5a1.3 1.3 0 0 0-2.6 0" stroke="#8A6B1E" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div style={{fontSize:11.5,color:"#8A6B1E",lineHeight:1.5,fontFamily:"'Manrope',sans-serif"}}>
+                  Göndərmək üçün aşağıdakı masaların üzərinə basın, ya da yuxarıdan <b>"✓ Hamısı"</b> ilə bir dəfəyə seçin.
+                </div>
+              </div>
+              <button onClick={()=>setTapHintDismissed(true)} style={{marginTop:10,width:"100%",padding:"8px",borderRadius:10,border:"none",background:"rgba(138,107,30,.15)",color:"#8A6B1E",fontSize:11.5,fontWeight:700,cursor:"pointer",fontFamily:"'Manrope',sans-serif"}}>
+                Tamam
+              </button>
             </div>
-          </div>
+          )}
           <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
             <div style={{display:"flex",flexWrap:"wrap",gap:14,justifyContent:"center"}}>
               {notInvTables.map(t=>{
                 const sel=selTbls.has(t.id);
-                const allSent=(t.guests||[]).every(g=>g.invited);
+                const anySent=(t.guests||[]).some(g=>g.invited);
+                const allSent=(t.guests||[]).length>0 && (t.guests||[]).every(g=>g.invited);
+                const partialSent = anySent && !allSent;
                 const S=68, total=S+S*0.5, cx=total/2, cy=total/2, r=S/2, seats=t.seats||8;
                 const filled=(t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
                 const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push(g.name); });
@@ -7156,13 +7189,13 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                           </g>
                         );
                       })}
-                      <circle cx={cx+30} cy={cy+20} r={r-2} fill={allSent?"#4C9A6E":"#FFFFFF"} stroke={sel?"#8A6B1E":"rgba(212,175,90,.55)"} strokeWidth={sel?2.5:1.5}/>
+                      <circle cx={cx+30} cy={cy+20} r={r-2} fill={allSent?"#4C9A6E":partialSent?"#D9A441":"#FFFFFF"} stroke={sel?"#8A6B1E":"rgba(212,175,90,.55)"} strokeWidth={sel?2.5:1.5}/>
                       <text x={cx+30} y={cy+20-4} textAnchor="middle" fill={gold} fontSize={S*0.24} fontWeight="800">{t.id}</text>
                       <text x={cx+30} y={cy+20+12} textAnchor="middle" fill="rgba(212,175,90,.75)" fontSize="9">{filled}/{seats}</text>
                     </svg>
                     {sel&&<div style={{position:"absolute",top:0,right:8,width:18,height:18,borderRadius:"50%",background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#FFFFFF"}}>✓</div>}
                     <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(33,26,22,.45)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
-                    <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(76,154,110,.8)":pulse?"rgba(212,175,90,.9)":"rgba(212,175,90,.4)",transition:"color .5s"}}>{allSent?"Göndərilib ✓":"Göndərilməyib"}</div>
+                    <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(76,154,110,.8)":partialSent?"rgba(217,164,65,.9)":pulse?"rgba(212,175,90,.9)":"rgba(212,175,90,.4)",transition:"color .5s",fontWeight:partialSent?700:400}}>{allSent?"Göndərilib ✓":partialSent?"Natamam göndərilib":"Göndərilməyib"}</div>
                   </div>
                 );
               })}
