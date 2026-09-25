@@ -242,6 +242,58 @@ function GiftSection({ rsvpCode }){
   );
 }
 
+function ChairLoader(){
+  const seats = 8;
+  const [seatsIn, setSeatsIn] = useState(0);
+
+  useEffect(()=>{
+    let i = 0, dir = 1, timer;
+    function tick(){
+      i += dir;
+      setSeatsIn(i);
+      if(i>=seats){ dir=-1; timer=setTimeout(tick, 900); }
+      else if(i<=0){ dir=1; timer=setTimeout(tick, 500); }
+      else timer=setTimeout(tick, 110);
+    }
+    timer = setTimeout(tick, 500);
+    return ()=>clearTimeout(timer);
+  },[]);
+
+  return (
+    <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+      <div style={{position:"relative",width:200,height:200}}>
+        {Array.from({length:seats}).map((_,i)=>{
+          const angle=(i/seats)*Math.PI*2-Math.PI/2;
+          const inView = i<seatsIn;
+          const finalX = 50+Math.cos(angle)*42, finalY = 50+Math.sin(angle)*42;
+          const startX = 50+Math.cos(angle)*140, startY = 50+Math.sin(angle)*140;
+          return (
+            <div key={i} style={{
+              position:"absolute",
+              left:(inView?finalX:startX)+"%", top:(inView?finalY:startY)+"%",
+              transform:`translate(-50%,-50%) rotate(${angle+Math.PI/2}rad)`,
+              width:14,height:20,borderRadius:"3px 3px 6px 6px",
+              background:"linear-gradient(180deg,#F0E9D8,#D8CFB5)",
+              border:"0.5px solid rgba(150,120,60,.45)",
+              opacity:inView?1:0,
+              transition:"left .5s cubic-bezier(.34,1.3,.64,1), top .5s cubic-bezier(.34,1.3,.64,1), opacity .3s"
+            }}/>
+          );
+        })}
+        <div style={{
+          position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",
+          width:seatsIn>0?86:0,height:seatsIn>0?86:0,borderRadius:"50%",
+          background:"radial-gradient(circle at 35% 30%, #FFFFFF, #F5EFE2)",
+          border:"2px solid #80653C",
+          boxShadow:"0 8px 20px -6px rgba(60,40,20,.25), inset 0 1px 3px rgba(255,255,255,.85)",
+          transition:"width .5s cubic-bezier(.34,1.3,.64,1), height .5s cubic-bezier(.34,1.3,.64,1)"
+        }}/>
+      </div>
+      <div style={{color:"#80653C",fontSize:13,fontFamily:"'Manrope',sans-serif",fontWeight:500}}>Yüklənir...</div>
+    </div>
+  );
+}
+
 export default function RsvpPage(){
   const { code } = useParams();
   const [status, setStatus] = useState("loading");
@@ -294,11 +346,7 @@ export default function RsvpPage(){
     setCopied(true); setTimeout(()=>setCopied(false),2000);
   }
 
-  if(status==="loading") return(
-    <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{color:"#80653C",fontSize:14,fontFamily:"'Manrope',sans-serif"}}>🎊 Yüklənir...</div>
-    </div>
-  );
+  if(status==="loading") return(<ChairLoader/>);
 
   if(status==="error") return(
     <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
