@@ -2054,52 +2054,35 @@ function SchemaDrawer({ tables, activeTable, agentSlotTable, onAgentSlotClear, o
               )}
             </div>
 
-            <div style={{textAlign:"center",margin:"18px 0 16px"}}>
+            <div style={{textAlign:"center",margin:"18px 0 14px"}}>
               <div style={{fontFamily:"'Manrope',sans-serif",fontSize:9,letterSpacing:2.2,color:"#8b7b60",fontWeight:500}}>{eyebrow}</div>
               <h1 style={{font:"600 clamp(30px,9vw,42px)/1.15 'Cormorant Garamond',serif",color:"#201e1a",letterSpacing:-0.5,margin:"7px 0 0",overflowWrap:"anywhere"}}>{title}</h1>
               {hall&&hall.name&&<div style={{fontFamily:"'Manrope',sans-serif",fontSize:11,color:"#8a7548",marginTop:5}}>{hall.name}</div>}
             </div>
 
-            {(dparts||place)&&(
-              <div style={{borderTop:"1px solid #E9E3D9",borderBottom:"1px solid #E9E3D9",padding:"14px 0",display:"flex",alignItems:"center",justifyContent:"center",gap:22}}>
-                {dparts&&(
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <strong style={{fontFamily:"'Manrope',sans-serif",fontSize:26,fontWeight:500,color:"#80653c",lineHeight:1}}>{dparts.day}</strong>
-                    <div style={{display:"flex",flexDirection:"column",gap:2,fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,color:"#28251f"}}>
-                      <span>{dparts.month}</span>
-                      <small style={{fontSize:11,color:"#797267",fontWeight:400}}>{dparts.year}</small>
-                    </div>
+            {(()=>{
+              const chip={background:"#F3EEE4",borderRadius:11,padding:"8px 4px",textAlign:"center",position:"relative",overflow:"hidden",minWidth:0};
+              const v={fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,color:"#211A16",lineHeight:1.25,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",fontVariantNumeric:"tabular-nums"};
+              const l={fontFamily:"'Manrope',sans-serif",fontSize:11,color:"#8A7E6E",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"};
+              const cap = hall&&hall.totalGuests>0 ? hall.totalGuests : 0;
+              return (
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:6,marginTop:4}}>
+                  <div style={chip}>
+                    <div style={v}>{dparts?(dparts.day+" "+String(dparts.month||"").toLocaleLowerCase("az").slice(0,3)):"—"}</div>
+                    <div style={l}>{dparts?(String(dparts.hour).padStart(2,"0")+":"+String(dparts.min).padStart(2,"0")):"tarix"}</div>
                   </div>
-                )}
-                {place&&(
-                  <div style={{display:"flex",flexDirection:"column",gap:3,fontFamily:"'Manrope',sans-serif",fontSize:13,fontWeight:500,color:"#28251f",
-                    borderLeft:dparts?"1px solid #E2DBCF":"none",paddingLeft:dparts?20:0}}>
-                    <span>{place}</span>
-                    {dparts&&<small style={{fontSize:11,color:"#514a40",fontWeight:500}}>Saat {String(dparts.hour).padStart(2,"0")}:{String(dparts.min).padStart(2,"0")}</small>}
+                  <div style={chip}>
+                    <div style={v}>{place||"Zal"}</div>
+                    <div style={l}>{tables.length} masa</div>
                   </div>
-                )}
-              </div>
-            )}
-
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",marginTop:16,textAlign:"center"}}>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:19,lineHeight:1.2,fontWeight:500,color:"#211A16",fontVariantNumeric:"tabular-nums"}}>{tables.length}</span>
-                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:10,color:"#797267"}}>masa</span>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:19,lineHeight:1.2,fontWeight:500,color:"#211A16",fontVariantNumeric:"tabular-nums"}}>
-                  {totG}{hall&&hall.totalGuests>0&&<span style={{fontSize:13,color:"#8d8475",fontWeight:400}}> / {hall.totalGuests}</span>}
-                </span>
-                <span style={{fontFamily:"'Manrope',sans-serif",fontSize:10,color:"#797267"}}>qonaq yerləşdirilib</span>
-              </div>
-            </div>
-
-            <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'Manrope',sans-serif",fontSize:9,color:"#797267",marginTop:16,marginBottom:6}}>
-              <span>Yerləşdirmə</span><span>{pctVal}%</span>
-            </div>
-            <div style={{height:3,borderRadius:3,background:"#EBE6DD",overflow:"hidden"}} role="progressbar" aria-valuenow={pctVal} aria-valuemin={0} aria-valuemax={100}>
-              <div style={{height:"100%",width:pctVal+"%",borderRadius:3,background:"linear-gradient(90deg,#FF9B85,#C1382A)",transition:"width .5s"}}/>
-            </div>
+                  <div style={chip} role="progressbar" aria-valuenow={pctVal} aria-valuemin={0} aria-valuemax={100}>
+                    <div style={v}>{totG}{cap>0&&<span style={{color:"#A08C6A",fontWeight:400}}>/{cap}</span>}</div>
+                    <div style={l}>qonaq</div>
+                    <div style={{position:"absolute",left:0,bottom:0,height:2,width:Math.min(100,pctVal)+"%",background:"#C1382A",transition:"width .5s"}}/>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         );
       })()}
