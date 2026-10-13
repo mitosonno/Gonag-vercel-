@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { jsPDF } from "jspdf";
 import AuthScreen from "./AuthScreen.jsx";
-import { INVITE_THEMES, themeAt, InviteDemo, InviteThumb } from "./inviteThemes.jsx";
+import { INVITE_THEMES, themeAt, InviteDemo, InviteThumb, InviteStage, InviteHero, InviteMedia, InviteTable } from "./inviteThemes.jsx";
 
 const supabase = createClient(
   "https://dpvoluttxelwnqcfnsbh.supabase.co",
@@ -6740,6 +6740,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   const [previewTbl, setPreviewTbl] = useState(null);
   const [senderName, setSenderName] = useState("");
   const [senderTitle, setSenderTitle] = useState("xanım");
+  const [finalPreview, setFinalPreview] = useState(false);
   const [pulse, setPulse] = useState(true);
   const [sendComplete, setSendComplete] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
@@ -7049,7 +7050,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
               }
             }} style={{background:"none",border:"none",color:"#6B6259",fontSize:16,cursor:"pointer",padding:"0 6px 0 0"}}>←</button>}
           <div style={{fontFamily:"'Manrope',sans-serif",color:"#211A16",fontSize:16,fontWeight:600}}>
-            {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"📨 Bütün masalara göndər":"👤 Tək qonağa göndər"}
+            {panel==="home"?"Dəvətnaməni göndər":panel==="sendChoice"?"Dəvətləri göndər":panel==="bulk"?"Bütün masalara göndər":"Tək qonağa göndər"}
           </div>
         </div>
         <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:20,cursor:"pointer"}}>✕</button>
@@ -7300,44 +7301,118 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       )}
 
       {/* BULK — STEP: preview */}
-      {panel==="bulk"&&step==="preview"&&previewTbl&&(
+      {panel==="bulk"&&step==="preview"&&previewTbl&&(()=>{
+        const th = themeAt(myInviteShablon);
+        const evName = obD.boy&&obD.girl ? obD.boy+" & "+obD.girl : (obD.name||obD.company||"Məclis");
+        const selList = notInvTables.filter(t=>selTbls.has(t.id));
+        const guestCnt = selList.reduce((n,t)=>n+(t.guests||[]).filter(g=>!g.invited&&(g.phone||"").replace(/\D/g,"").length>=7).length,0);
+        const card = {background:"linear-gradient(155deg,rgba(255,255,255,.72),rgba(255,255,255,.42))",backdropFilter:"blur(16px) saturate(150%)",WebkitBackdropFilter:"blur(16px) saturate(150%)",border:"1px solid rgba(255,255,255,.65)",borderRadius:18};
+        const TITLES = [
+          ["xanım", <svg key="x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="4"/><path d="M8 7c0-3 8-3 8 0M5 21c1-4 4-6 7-6s6 2 7 6"/><path d="M9 21l1.5-4M15 21l-1.5-4"/></svg>],
+          ["müəllim", <svg key="m" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="4"/><path d="M5 21c1-4 4-6 7-6s6 2 7 6"/><path d="M9 3.5h6"/></svg>],
+          ["bəy", <svg key="b" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="7.5" r="3.6"/><path d="M5 21c1-4 4-6.5 7-6.5s6 2.5 7 6.5"/><path d="m10.5 15.5 1.5 2 1.5-2"/></svg>],
+        ];
+        return (
         <>
-          <div style={{flex:1,overflowY:"auto",padding:"12px 14px"}}>
-            <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:12,paddingBottom:4}}>
-              {notInvTables.filter(t=>selTbls.has(t.id)).map(t=>(
-                <button key={t.id} onClick={()=>setPreviewTbl(t)}
-                  style={{padding:"5px 12px",borderRadius:14,border:"1px solid "+(previewTbl.id===t.id?"rgba(212,175,90,.9)":"rgba(255,255,255,.5)"),background:previewTbl.id===t.id?"rgba(212,175,90,.4)":"transparent",color:previewTbl.id===t.id?gold:"rgba(33,26,22,.5)",fontSize:10,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
-                  Masa {t.id}
-                </button>
-              ))}
+          <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{...card,padding:12,display:"flex",gap:12,alignItems:"center"}}>
+              <div style={{width:64,flexShrink:0,borderRadius:12,overflow:"hidden",boxShadow:"0 6px 14px -8px rgba(60,40,20,.5)"}}>
+                <InviteThumb themeIndex={myInviteShablon} boy={obD.boy||""} girl={obD.girl||""}/>
+              </div>
+              <div style={{minWidth:0,flex:1}}>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:".16em",textTransform:"uppercase",color:"#8A6B1E"}}>Seçilmiş dizayn</div>
+                <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:600,color:"#211A16",lineHeight:1.1,marginTop:2}}>{th.ad}</div>
+                <div style={{fontSize:11.5,color:"#6B6259",marginTop:3}}>{selList.length} masa · {guestCnt} qonağa gedəcək{myInviteMedia&&myInviteMedia.url?" · video əlavə olunub":""}</div>
+              </div>
             </div>
-            <div style={{display:"flex",justifyContent:"center"}}>
-              <canvas ref={canvasRef} style={{width:"100%",maxWidth:280,borderRadius:10,display:"block"}}/>
+
+            <button type="button" onClick={()=>setFinalPreview(true)}
+              style={{...card,padding:"15px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",textAlign:"left",width:"100%"}}>
+              <span style={{width:40,height:40,borderRadius:12,background:"#211A16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5EEE0" strokeWidth="1.7"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </span>
+              <span style={{flex:1,minWidth:0}}>
+                <span style={{display:"block",fontSize:14,fontWeight:700,color:"#211A16"}}>Dəvətnaməyə final bax</span>
+                <span style={{display:"block",fontSize:11.5,color:"#6B6259",marginTop:2}}>Qonağın görəcəyi kimi — animasiya ilə</span>
+              </span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="2"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+
+            <div style={{...card,padding:"14px 14px 12px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,color:"#211A16",fontWeight:700,marginBottom:9}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Kimdən?
+              </div>
+              <input id="bulk-sender-name" value={senderName} onChange={e=>setSenderName(e.target.value)} placeholder="Adınız (məs: Aytən)"
+                style={{width:"100%",padding:"12px 14px",background:"rgba(255,255,255,.7)",border:"1px solid rgba(150,120,80,.22)",borderRadius:12,color:"#211A16",fontSize:15,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                {TITLES.map(([t,ico])=>{
+                  const on = senderTitle===t;
+                  return (
+                    <button key={t} type="button" onClick={()=>setSenderTitle(t)}
+                      style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,padding:"9px 4px",borderRadius:11,cursor:"pointer",fontSize:12,fontWeight:600,
+                        border:"1px solid "+(on?"#211A16":"rgba(150,120,80,.22)"),background:on?"#211A16":"rgba(255,255,255,.55)",color:on?"#F5EEE0":"#6B6259"}}>
+                      {ico}{t}
+                    </button>
+                  );
+                })}
+              </div>
+              {senderName.trim()&&<div style={{fontSize:11,color:"#6B6259",marginTop:9}}>SMS-də: “{senderName.trim()} {senderTitle} sizi ... dəvət edir”</div>}
             </div>
           </div>
-          <div style={{padding:"10px 14px 16px",flexShrink:0}}>
-            <div style={{fontSize:11,color:"#8A6B1E",fontWeight:700,marginBottom:8}}>✍️ Kimdən?</div>
-            <input value={senderName} onChange={e=>setSenderName(e.target.value)} placeholder="Adınız (məs: Aytən)"
-              style={{width:"100%",padding:"10px 13px",background:"rgba(255,255,255,.5)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.55)",borderRadius:13,color:"#211A16",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:9}}/>
-            <div style={{display:"flex",gap:6,marginBottom:12}}>
-              {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
-                <button key={t} onClick={()=>setSenderTitle(t)}
-                  style={{flex:1,padding:"7px 4px",borderRadius:12,border:"1px solid "+(senderTitle===t?"rgba(212,175,90,.7)":"rgba(255,255,255,.5)"),backdropFilter:"blur(6px)",background:senderTitle===t?"rgba(212,175,90,.3)":"rgba(255,255,255,.3)",color:senderTitle===t?gold:"rgba(33,26,22,.5)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
-                  {e} {t}
-                </button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>onOpenMyInvite&&onOpenMyInvite()} style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.5)",background:"rgba(255,255,255,.35)",backdropFilter:"blur(8px)",color:"rgba(33,26,22,.6)",fontSize:12,cursor:"pointer"}}>🔄 Dizaynı dəyiş</button>
-              <button onClick={()=>setStep("confirm")}
-                style={{flex:2,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.75),rgba(30,22,16,.55))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:13,fontWeight:800,cursor:"pointer",boxShadow:"0 1px 0 rgba(255,255,255,.12) inset"}}>
-                Göndər → ({selTbls.size})
-              </button>
-            </div>
+          <div style={{padding:"10px 14px 16px",flexShrink:0,display:"flex",gap:8}}>
+            <button type="button" onClick={()=>onOpenMyInvite&&onOpenMyInvite()}
+              style={{flex:1,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.55)",background:"rgba(255,255,255,.4)",backdropFilter:"blur(8px)",color:"#211A16",fontSize:12.5,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+              Dizaynı dəyiş
+            </button>
+            <button type="button" onClick={()=>setStep("confirm")}
+              style={{flex:2,padding:"13px",borderRadius:16,border:"1px solid rgba(255,255,255,.4)",background:"linear-gradient(155deg,rgba(30,22,16,.85),rgba(30,22,16,.65))",backdropFilter:"blur(20px)",color:"#F5EEE0",fontSize:13.5,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+              Göndər ({selTbls.size} masa)
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
           </div>
           <div style={{height:16,flexShrink:0}}/>
+
+          {finalPreview&&(()=>{
+            const pg = (previewTbl.guests||[]).find(g=>g.name)||null;
+            const hallTxt = hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"";
+            return (
+              <div style={{position:"fixed",inset:0,zIndex:600,background:"rgba(15,10,6,.94)",display:"flex",flexDirection:"column",alignItems:"center",padding:"14px 14px 18px"}} onClick={()=>setFinalPreview(false)}>
+                <div style={{width:"100%",maxWidth:420,display:"flex",gap:6,overflowX:"auto",marginBottom:10,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                  {selList.map(t=>(
+                    <button key={t.id} type="button" onClick={()=>setPreviewTbl(t)}
+                      style={{padding:"6px 12px",borderRadius:99,border:"1px solid rgba(255,255,255,"+(previewTbl.id===t.id?".9":".25")+")",background:previewTbl.id===t.id?"#F5EEE0":"transparent",color:previewTbl.id===t.id?"#211A16":"rgba(245,238,224,.75)",fontSize:11.5,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                      Masa {t.id}
+                    </button>
+                  ))}
+                </div>
+                <div style={{width:"100%",maxWidth:420,flex:1,minHeight:0,overflowY:"auto",borderRadius:22,boxShadow:"0 30px 60px rgba(0,0,0,.5)",transform:"translateZ(0)"}} onClick={e=>e.stopPropagation()}>
+                  <InviteStage key={previewTbl.id} themeIndex={myInviteShablon} title={evName} contained>
+                    <div className="qi-inv">
+                      <div className="qi-brand qi-reveal">QONAQ</div>
+                      <InviteHero themeIndex={myInviteShablon} boy={obD.boy||""} girl={obD.girl||""} evName={evName}
+                        greeting={<>Əziz <b>{pg?pg.name:"Qonaq"}</b>, sizi {obD.boy&&obD.girl?"toyumuza":"məclisimizə"} dəvət edirik.</>}
+                        date={obD.date||""} hall={hallTxt} mapsQuery={hallTxt+" Bakı"} issue={"Masa № "+previewTbl.id}/>
+                      <InviteMedia media={myInviteMedia}/>
+                      <InviteTable tableId={previewTbl.id} seats={previewTbl.seats} guests={previewTbl.guests||[]} guestName={pg?pg.name:""}/>
+                      <section className="qi-card qi-reveal qi-d3">
+                        <h2 className="qi-h">Bizimlə olacaqsınız?</h2>
+                        <div className="qi-row"><button type="button" className="qi-yes">✓ İştirak edəcəyəm</button><button type="button" className="qi-no">Gələ bilməyəcəyəm</button></div>
+                      </section>
+                    </div>
+                  </InviteStage>
+                </div>
+                <div style={{display:"flex",gap:10,marginTop:12,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+                  <button type="button" onClick={()=>setFinalPreview(false)} style={{padding:"12px 20px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>Bağla</button>
+                  <button type="button" onClick={()=>{ setFinalPreview(false); setStep("confirm"); }} style={{padding:"12px 20px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>Hamısı düzdür, göndər</button>
+                </div>
+              </div>
+            );
+          })()}
         </>
-      )}
+        );
+      })()}
 
       {/* BULK — STEP: confirm */}
       {panel==="bulk"&&step==="confirm"&&(
