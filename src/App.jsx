@@ -2598,7 +2598,42 @@ function Bar({val,tot,color}){
   );
 }
 
-function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
+// ── SMS / WhatsApp çatdırılma statusu ──────────────────────
+function applySmsResult(g, success, info){
+  const i = info||{};
+  if(success){
+    const n = {...g, invited:true, smsStatus:"sent", smsAt:Date.now(), rsvpCode:i.code||g.rsvpCode};
+    delete n.smsError; delete n.smsText;
+    if(i.resend) n.smsResentOk = Date.now();
+    return n;
+  }
+  return {...g,
+    invited: g.waStatus ? !!g.invited : false,
+    smsStatus:"failed", smsAt:Date.now(),
+    smsError: i.error||g.smsError||"",
+    smsText: i.text||g.smsText||"",
+    rsvpCode: i.code||g.rsvpCode};
+}
+async function resendSmsRaw(phone, text){
+  try{
+    const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text})});
+    const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
+    return {ok:!!j.ok, error:j.ok?"":(j.error||j.errtext||("status "+r.status))};
+  }catch(e){ return {ok:false,error:e.message}; }
+}
+const StIco = {
+  x:(c,s=16)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>,
+  check:(c,s=16)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>,
+  clock:(c,s=16)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+  retry:(c,s=14)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.1"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>,
+  msg:(c,s=14)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  wa:(c,s=14)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>,
+  heart:(c,s=14)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>,
+  chev:(c,open)=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" style={{transition:"transform .2s",transform:open?"rotate(180deg)":"none"}}><path d="m6 9 6 6 6-6"/></svg>,
+  alert:(c,s=14)=><svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.9"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>,
+};
+
+function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps, onPatchGuest }){
   const guests = tables.flatMap(t=>t.guests.map(g=>({...g,tableId:t.id})));
   const ushaqSayi = guests.reduce((s,g)=>s+(g.ushaqCount||0),0);
   const total = guests.reduce((s,g)=>s+(g.count||1)+(g.ushaqCount||0),0);
@@ -2617,13 +2652,59 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
   // Dəvətnamə çatdırılma statistikası (SMS/WhatsApp)
   const smsSent = guests.filter(g=>g.smsStatus==="sent").length;
   const smsFailed = guests.filter(g=>g.smsStatus==="failed").length;
-  const waSent = guests.filter(g=>g.waStatus==="sent").length;
+  const waSent = guests.filter(g=>g.waStatus==="sent"||g.waStatus==="confirmed").length;
   const deliveryPending = guests.filter(g=>g.phone&&!g.smsStatus&&!g.waStatus).length;
 
   const [expand, setExpand] = useState(null); // "attending"|"not_attending"|"pending"
   const [smsGuest, setSmsGuest] = useState(null);
   const [smsText, setSmsText] = useState("");
   const [listFilter, setListFilter] = useState(null); // "all"|"kishi"|"qadin"|null
+  const [failTab, setFailTab] = useState("sms"); // "sms"|"wa"
+  const [resendBusy, setResendBusy] = useState({}); // guestId -> true
+  const [resendOk, setResendOk] = useState({}); // guestId -> {name,tableId} — yaşıl "Çatdı" göstərmək üçün
+  const [resendErr, setResendErr] = useState({});
+  const [bulkResend, setBulkResend] = useState(null); // {done,total}
+
+  const smsFailedList = guests.filter(g=>g.smsStatus==="failed");
+  const waOpenList = guests.filter(g=>g.waStatus==="sent");
+  const okFlashList = Object.keys(resendOk).map(id=>resendOk[id]).filter(x=>!smsFailedList.some(g=>String(g.id)===String(x.id)));
+
+  async function resendOne(g){
+    const phone=(g.phone||"").replace(/\D/g,"");
+    if(!phone||!g.smsText){ setResendErr(e=>({...e,[g.id]:"Mətn tapılmadı — Dəvət göndər bölməsindən masanı yenidən seçin"})); return false; }
+    setResendBusy(b=>({...b,[g.id]:true}));
+    setResendErr(e=>{const n={...e}; delete n[g.id]; return n;});
+    const res = await resendSmsRaw(phone, g.smsText);
+    setResendBusy(b=>{const n={...b}; delete n[g.id]; return n;});
+    if(res.ok){
+      setResendOk(o=>({...o,[g.id]:{id:g.id,name:g.name,tableId:g.tableId,phone}}));
+      onPatchGuest&&onPatchGuest(g.id, x=>applySmsResult(x,true,{resend:true}));
+    } else {
+      setResendErr(e=>({...e,[g.id]:res.error||"xəta"}));
+      onPatchGuest&&onPatchGuest(g.id, x=>applySmsResult(x,false,{error:res.error}));
+    }
+    return res.ok;
+  }
+  async function resendAll(){
+    const list = smsFailedList.filter(g=>g.smsText&&(g.phone||"").replace(/\D/g,""));
+    if(list.length===0) return;
+    setBulkResend({done:0,total:list.length});
+    for(const g of list){
+      await resendOne(g);
+      setBulkResend(b=>b?{...b,done:b.done+1}:b);
+      await new Promise(r=>setTimeout(r,200));
+    }
+    setTimeout(()=>setBulkResend(null),1500);
+  }
+  function reopenWa(g){
+    const phone=(g.phone||"").replace(/\D/g,"");
+    if(!phone) return;
+    const link = g.rsvpCode ? (window.location.origin+"/rsvp/"+g.rsvpCode) : "";
+    const txt = "Hörmətli "+g.name+", sizi məclisimizə dəvət edirik."+(link?"\n\nDəvətnamə: "+link:"")+"\n\n— QONAQ";
+    window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(txt),"_blank");
+  }
+  function confirmWa(g){ onPatchGuest&&onPatchGuest(g.id, x=>({...x,waStatus:"confirmed",invited:true})); }
+  function confirmAllWa(){ waOpenList.forEach(g=>confirmWa(g)); }
 
   function openSms(g){
     setSmsGuest(g);
@@ -2650,10 +2731,11 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#211A16" strokeWidth="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20h-1"/></svg>
             Statistika
           </div>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"#6B6259",fontSize:18,cursor:"pointer"}}>✕</button>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",border:"1px solid rgba(150,120,80,.2)",background:"rgba(255,255,255,.5)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B6259" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
 
         <div style={{overflowY:"auto",flex:1,padding:"14px"}}>
+          <style>{"@keyframes spin{to{transform:rotate(360deg)}}"}</style>
           {/* Ümumi */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
             {statCard("Qonaq",total,gold,<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={gold} strokeWidth="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>, ()=>setListFilter("all"))}
@@ -2697,6 +2779,100 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
               </div>
             );
           })()}
+
+          {/* GÖNDƏRİLMƏYƏNLƏR */}
+          {(smsFailedList.length>0||waOpenList.length>0||okFlashList.length>0)&&(
+            <div style={{marginBottom:18,borderRadius:20,padding:14,background:"linear-gradient(155deg,rgba(255,255,255,.62),rgba(255,255,255,.28))",border:"1px solid "+(smsFailedList.length>0?"rgba(193,56,42,.28)":"rgba(255,255,255,.55)"),boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 8px 20px -12px rgba(60,40,20,.25)"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:30,height:30,borderRadius:9,background:"rgba(193,56,42,.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>{StIco.alert("#C1382A",16)}</div>
+                  <div>
+                    <div style={{fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:700,color:"#211A16"}}>Göndərilməyənlər</div>
+                    <div style={{fontSize:10.5,color:"rgba(33,26,22,.5)"}}>Kimə çatmayıb — yenidən göndərin</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:6,marginBottom:10,background:"rgba(33,26,22,.05)",padding:3,borderRadius:12}}>
+                {[["sms","SMS",smsFailedList.length,StIco.msg],["wa","WhatsApp",waOpenList.length,StIco.wa]].map(([k,l,n,ic])=>(
+                  <button key={k} onClick={()=>setFailTab(k)} style={{flex:1,padding:"8px 6px",borderRadius:10,border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:12,fontWeight:700,fontFamily:"'Manrope',sans-serif",
+                    background:failTab===k?"#FFFFFF":"transparent",color:failTab===k?"#211A16":"rgba(33,26,22,.5)",boxShadow:failTab===k?"0 2px 8px -3px rgba(60,40,20,.25)":"none"}}>
+                    {ic(failTab===k?(k==="sms"?"#C1382A":"#1F9D55"):"rgba(33,26,22,.45)")}{l}
+                    <span style={{minWidth:18,padding:"1px 6px",borderRadius:10,fontSize:10.5,background:n>0?(k==="sms"?"rgba(193,56,42,.14)":"rgba(31,157,85,.14)"):"rgba(33,26,22,.08)",color:n>0?(k==="sms"?"#C1382A":"#1F9D55"):"rgba(33,26,22,.4)"}}>{n}</span>
+                  </button>
+                ))}
+              </div>
+
+              {failTab==="sms"&&(
+                <>
+                  {smsFailedList.length>1&&(
+                    <button onClick={resendAll} disabled={!!bulkResend} style={{width:"100%",marginBottom:10,padding:"11px",borderRadius:12,border:"none",cursor:bulkResend?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                      background:"linear-gradient(155deg,#E14B36,#A02A1E)",color:"#FFFFFF",fontSize:12.5,fontWeight:700,fontFamily:"'Manrope',sans-serif",boxShadow:"0 6px 16px -8px rgba(160,42,30,.6)",opacity:bulkResend?.75:1}}>
+                      {StIco.retry("#FFFFFF")}
+                      {bulkResend?("Göndərilir… "+bulkResend.done+"/"+bulkResend.total):("Hamısını yenidən göndər ("+smsFailedList.length+")")}
+                    </button>
+                  )}
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {okFlashList.map(x=>(
+                      <div key={"ok"+x.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 11px",borderRadius:12,background:"rgba(76,154,110,.12)",border:"1px solid rgba(76,154,110,.35)"}}>
+                        <span style={{width:10,height:10,borderRadius:"50%",background:"#2EBD6B",boxShadow:"0 0 0 4px rgba(46,189,107,.2), 0 0 12px #2EBD6B",flexShrink:0}}/>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:700,color:"#2E7D52"}}>{x.name}</div>
+                          <div style={{fontSize:10,color:"rgba(46,125,82,.75)"}}>Masa {x.tableId} · +{x.phone}</div>
+                        </div>
+                        <span style={{fontSize:11.5,fontWeight:800,color:"#2E7D52"}}>Çatdı ✓</span>
+                      </div>
+                    ))}
+                    {smsFailedList.map(g=>{
+                      const busy=!!resendBusy[g.id];
+                      const err=resendErr[g.id]||g.smsError;
+                      return (
+                        <div key={g.id} style={{padding:"9px 11px",borderRadius:12,background:"rgba(193,56,42,.06)",border:"1px solid rgba(193,56,42,.22)"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                            <span style={{width:10,height:10,borderRadius:"50%",background:"#C1382A",boxShadow:"0 0 0 4px rgba(193,56,42,.15)",flexShrink:0}}/>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:13,fontWeight:700,color:"#C1382A"}}>{g.name}</div>
+                              <div style={{fontSize:10,color:"rgba(33,26,22,.55)"}}>Masa {g.tableId} · {g.phone?("+"+(g.phone||"").replace(/\D/g,"")):"nömrə yoxdur"} · SMS</div>
+                            </div>
+                            <button onClick={()=>resendOne(g)} disabled={busy||!!bulkResend} style={{display:"flex",alignItems:"center",gap:5,padding:"7px 10px",borderRadius:10,border:"1px solid rgba(193,56,42,.35)",background:"#FFFFFF",color:"#C1382A",fontSize:11,fontWeight:700,cursor:busy?"default":"pointer",flexShrink:0}}>
+                              {busy?<span style={{width:12,height:12,borderRadius:"50%",border:"2px solid rgba(193,56,42,.25)",borderTopColor:"#C1382A",animation:"spin .8s linear infinite",display:"inline-block"}}/>:StIco.retry("#C1382A",13)}
+                              {busy?"…":"Yenidən göndər"}
+                            </button>
+                          </div>
+                          {err&&<div style={{fontSize:10,color:"rgba(193,56,42,.8)",marginTop:5,paddingLeft:20,wordBreak:"break-word"}}>Səbəb: {err}</div>}
+                        </div>
+                      );
+                    })}
+                    {smsFailedList.length===0&&okFlashList.length===0&&<div style={{textAlign:"center",fontSize:12,color:"rgba(33,26,22,.45)",padding:"10px 0"}}>Çatmayan SMS yoxdur</div>}
+                  </div>
+                </>
+              )}
+
+              {failTab==="wa"&&(
+                <>
+                  <div style={{fontSize:10.5,color:"rgba(33,26,22,.55)",lineHeight:1.45,marginBottom:8}}>WhatsApp-ın çatdığını avtomatik bilmək olmur. Mesajı göndərdinizsə “Göndərdim” basın — siyahıdan çıxacaq.</div>
+                  {waOpenList.length>1&&(
+                    <button onClick={confirmAllWa} style={{width:"100%",marginBottom:10,padding:"10px",borderRadius:12,border:"1px solid rgba(31,157,85,.4)",background:"rgba(31,157,85,.1)",color:"#1F7A45",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+                      {StIco.check("#1F7A45",15)} Hamısı göndərilib ({waOpenList.length})
+                    </button>
+                  )}
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {waOpenList.map(g=>(
+                      <div key={g.id} style={{display:"flex",alignItems:"center",gap:9,padding:"9px 11px",borderRadius:12,background:"rgba(255,255,255,.55)",border:"1px solid rgba(150,120,80,.18)"}}>
+                        <span style={{width:9,height:9,borderRadius:"50%",background:"#D9A441",flexShrink:0}}/>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13,fontWeight:700,color:"#211A16"}}>{g.name}</div>
+                          <div style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>Masa {g.tableId} · {g.phone?("+"+(g.phone||"").replace(/\D/g,"")):"nömrə yoxdur"} · WhatsApp</div>
+                        </div>
+                        {g.phone&&<button onClick={()=>reopenWa(g)} title="Yenidən aç" style={{width:32,height:32,borderRadius:10,border:"1px solid rgba(31,157,85,.35)",background:"#FFFFFF",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{StIco.retry("#1F9D55",14)}</button>}
+                        <button onClick={()=>confirmWa(g)} style={{padding:"7px 10px",borderRadius:10,border:"none",background:"#1F9D55",color:"#FFFFFF",fontSize:11,fontWeight:700,cursor:"pointer",flexShrink:0}}>Göndərdim ✓</button>
+                      </div>
+                    ))}
+                    {waOpenList.length===0&&<div style={{textAlign:"center",fontSize:12,color:"rgba(33,26,22,.45)",padding:"10px 0"}}>Təsdiq gözləyən WhatsApp yoxdur</div>}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Dəvətnamə çatdırılma hesabatı */}
           {true&&(
@@ -2758,15 +2934,15 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(76,154,110,.22)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#4C9A6E"}}>{attending.length}</div>
-                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="attending"?"▲":"▼"}</span>
+                {StIco.chev("rgba(33,26,22,.35)",expand==="attending")}
               </div>
             </div>
             {expand==="attending"&&(
               <div style={{padding:"8px 12px",background:"rgba(80,200,120,.04)",borderRadius:8,marginBottom:8,border:"1px solid rgba(80,200,120,.12)"}}>
                 {attending.length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 attending.map((g,i)=>(
-                  <div key={i} style={{fontSize:12,color:"#211A16",padding:"4px 0",borderBottom:i<attending.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
-                    ✓ {g.name}{g.count>1?` (${g.count}n)`:""}
+                  <div key={i} style={{fontSize:12,color:"#211A16",padding:"5px 0",display:"flex",alignItems:"center",gap:7,borderBottom:i<attending.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
+                    {StIco.check("#4C9A6E",14)}<span>{g.name}{g.count>1?` (${g.count}n)`:""}</span>
                   </div>
                 ))}
               </div>
@@ -2776,12 +2952,12 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
             <div onClick={()=>setExpand(expand==="not_attending"?null:"not_attending")}
               style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(193,56,42,.25)",background:"linear-gradient(155deg,rgba(193,56,42,.1),rgba(193,56,42,.03))",backdropFilter:"blur(10px)",marginBottom:8,cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>❌</span>
+                {StIco.x("#C1382A",18)}
                 <span style={{fontSize:14,fontWeight:700,color:"#C1382A"}}>Gəlmirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(193,56,42,.18)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#C1382A"}}>{notAttending.length}</div>
-                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="not_attending"?"▲":"▼"}</span>
+                {StIco.chev("rgba(33,26,22,.35)",expand==="not_attending")}
               </div>
             </div>
             {expand==="not_attending"&&(
@@ -2789,11 +2965,11 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
                 {notAttending.length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 notAttending.map((g,i)=>(
                   <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 0",borderBottom:i<notAttending.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
-                    <span style={{fontSize:12,color:"#211A16"}}>✗ {g.name}{g.count>1?` (${g.count}n)`:""}</span>
+                    <span style={{fontSize:12,color:"#211A16",display:"flex",alignItems:"center",gap:7}}>{StIco.x("#C1382A",14)}{g.name}{g.count>1?` (${g.count}n)`:""}</span>
                     {g.phone&&(
                       <button onClick={e=>{e.stopPropagation();openSms(g);}}
-                        style={{padding:"3px 8px",borderRadius:8,border:"1px solid rgba(37,211,102,.3)",background:"rgba(37,211,102,.08)",color:"#25d366",fontSize:10,cursor:"pointer"}}>
-                        SMS
+                        style={{padding:"4px 9px",borderRadius:8,border:"1px solid rgba(31,157,85,.3)",background:"rgba(31,157,85,.08)",color:"#1F9D55",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                        {StIco.heart("#1F9D55",12)} Təbrik
                       </button>
                     )}
                   </div>
@@ -2805,20 +2981,20 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
             <div onClick={()=>setExpand(expand==="pending"?null:"pending")}
               style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px",borderRadius:16,border:"1px solid rgba(212,175,90,.3)",background:"linear-gradient(155deg,rgba(212,175,90,.14),rgba(212,175,90,.04))",backdropFilter:"blur(10px)",cursor:"pointer"}}>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <span style={{fontSize:20}}>⏳</span>
+                {StIco.clock("#B08A2E",18)}
                 <span style={{fontSize:14,fontWeight:700,color:gold}}>Gözləyirəm</span>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{background:"rgba(212,175,90,.22)",borderRadius:20,padding:"2px 10px",fontSize:13,fontWeight:800,color:"#8A6B1E"}}>{pending.length+noPhone.length}</div>
-                <span style={{color:"rgba(33,26,22,.3)",fontSize:12}}>{expand==="pending"?"▲":"▼"}</span>
+                {StIco.chev("rgba(33,26,22,.35)",expand==="pending")}
               </div>
             </div>
             {expand==="pending"&&(
               <div style={{padding:"8px 12px",background:"rgba(201,168,76,.03)",borderRadius:8,marginTop:4,border:"1px solid rgba(201,168,76,.1)"}}>
                 {[...pending,...noPhone].length===0?<div style={{fontSize:12,color:"rgba(33,26,22,.3)"}}>Hələ yoxdur</div>:
                 [...pending,...noPhone].map((g,i)=>(
-                  <div key={i} style={{fontSize:12,color:"rgba(33,26,22,.5)",padding:"4px 0",borderBottom:i<pending.length+noPhone.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
-                    ⏳ {g.name}{g.count>1?` (${g.count}n)`:""}
+                  <div key={i} style={{fontSize:12,color:"rgba(33,26,22,.6)",padding:"5px 0",display:"flex",alignItems:"center",gap:7,borderBottom:i<pending.length+noPhone.length-1?"1px solid rgba(33,26,22,.04)":"none"}}>
+                    {StIco.clock("#B08A2E",14)}<span>{g.name}{g.count>1?` (${g.count}n)`:""}</span>
                     {!g.phone&&<span style={{fontSize:9,color:"rgba(255,80,80,.5)",marginLeft:6}}>nömrəsiz</span>}
                   </div>
                 ))}
@@ -2833,7 +3009,7 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
       {smsGuest&&(
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,.7)",display:"flex",alignItems:"flex-end"}} onClick={()=>setSmsGuest(null)}>
           <div style={{width:"100%",background:"#FFFFFF",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:13,color:gold,fontWeight:700,marginBottom:4}}>💌 {smsGuest.name}-ə tebrik</div>
+            <div style={{fontSize:13,color:"#8A6B1E",fontWeight:700,marginBottom:4,display:"flex",alignItems:"center",gap:6}}>{StIco.heart("#8A6B1E",15)} {smsGuest.name} — təbrik mesajı</div>
             <div style={{fontSize:11,color:"rgba(33,26,22,.35)",marginBottom:12}}>Gəlmirəm dedi — tebrik mesajı göndər</div>
             <textarea value={smsText} onChange={e=>setSmsText(e.target.value)} rows={4}
               style={{width:"100%",background:"rgba(33,26,22,.06)",border:"1px solid rgba(201,168,76,.25)",borderRadius:10,padding:"10px 12px",color:"#211A16",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",resize:"none"}}/>
@@ -2841,8 +3017,8 @@ function StatsPanel({ tables, ev, rsvpStats, onClose, dashProps }){
               const phone=(smsGuest.phone||"").replace(/\D/g,"");
               if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(smsText),"_blank");
               setSmsGuest(null);
-            }} style={{width:"100%",marginTop:10,padding:"13px",borderRadius:10,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:13,fontWeight:800,cursor:"pointer"}}>
-              📱 WhatsApp-da göndər
+            }} style={{width:"100%",marginTop:10,padding:"13px",borderRadius:10,border:"none",background:"linear-gradient(155deg,#25B864,#1A8A4A)",color:"#FFFFFF",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+              <span style={{display:"inline-flex",alignItems:"center",gap:7}}>{StIco.wa("#FFFFFF",15)} WhatsApp-da göndər</span>
             </button>
           </div>
         </div>
@@ -5941,6 +6117,7 @@ ${savedEvsList||"Yoxdur"}`;
           ev={ev}
           rsvpStats={rsvpStats}
           onClose={closeTopPanel}
+          onPatchGuest={(guestId,fn)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>g.id===guestId?fn(g):g)})));}}
           dashProps={{
             active:"stats", tableCount:tables.length, eventCount:savedEvents.length,
             onGoSchema:()=>goToSchemaOrWarn(()=>setStatsOpen(false)),
@@ -6297,8 +6474,8 @@ ${savedEvsList||"Yoxdur"}`;
           notInvTables={tables.filter(t=>t.guests.length>0)}
           allTables={tables}
           onClose={closeTopPanel}
-          onMarkSent={(ids,channel)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true,...(channel==="whatsapp"?{waStatus:"sent"}:{})}:g)})));}}
-          onMarkSmsResult={(guestId,success)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>g.id===guestId?{...g,invited:true,smsStatus:success?"sent":"failed"}:g)})));}}
+          onMarkSent={(ids,channel,info)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>ids.includes(g.id)?{...g,invited:true,...(channel==="whatsapp"?{waStatus:g.waStatus==="confirmed"?"confirmed":"sent",waAt:Date.now(),...(info&&info.code?{rsvpCode:info.code}:{})}:{})}:g)})));}}
+          onMarkSmsResult={(guestId,success,info)=>{setTables(ts=>ts.map(t=>({...t,guests:t.guests.map(g=>g.id===guestId?applySmsResult(g,success,info):g)})));}}
           devetData={devetData}
           obData={obData}
           hall={hall}
@@ -6418,14 +6595,22 @@ ${savedEvsList||"Yoxdur"}`;
                     style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"none",marginBottom:10,
                       background:"linear-gradient(155deg,#FF6B52,#C1382A)",color:"#FFFFFF",
                       fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
-                      boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)"}}>
-                    ✅ Aktiv dəvətnamə ilə davam et
+                      boxShadow:"0 8px 20px -8px rgba(193,56,42,.45)",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
+                    <div style={{width:38,height:54,borderRadius:7,overflow:"hidden",flexShrink:0,boxShadow:"0 3px 10px -3px rgba(0,0,0,.4)"}}>
+                      <InviteThumb themeIndex={myInviteShablon} boy={(obData&&(obData.boy||obData.name))||""} girl={(obData&&obData.girl)||""}/>
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:14,fontWeight:700}}>Aktiv dəvətnamə ilə davam et</div>
+                      <div style={{fontSize:11,opacity:.85,marginTop:2}}>{themeAt(myInviteShablon).ad} · yadda saxlanılıb</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m9 18 6-6-6-6"/></svg>
                   </button>
                   <button onClick={()=>{ setInviteChoiceOpen(false); pushPanel("notinv"); setNotInvitedDrawerOpen(true); setMyInviteJumpAfter(true); setMyInviteOpen(true); }}
                     style={{width:"100%",maxWidth:340,padding:"16px",borderRadius:16,border:"1px solid rgba(150,120,80,.3)",marginBottom:12,
                       background:"rgba(255,255,255,.55)",color:"#211A16",
-                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer"}}>
-                    🔄 Dəvətnaməni dəyiş
+                      fontFamily:"'Manrope',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+                    Dəvətnaməni dəyiş
                   </button>
                 </>
               ):(
@@ -6874,10 +7059,11 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+" (SMS): "+errMsg)}));
-        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok);
-        onMarkSent&&onMarkSent([g.id],"whatsapp");
+        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok, {code, text:toSmsLatin(smsText), phone, error:errMsg});
+        onMarkSent&&onMarkSent([g.id],"whatsapp",{code});
       }catch(e){
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1,lastError:g.name+": "+e.message}));
+        onMarkSmsResult&&onMarkSmsResult(g.id, false, {phone, error:e.message});
       }
       await new Promise(r=>setTimeout(r,800));
     }
@@ -6900,19 +7086,21 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     if(!(await ensureSmsAllowed(targets.length, sendBulkSMS))){ setSmsSending(false); return; }
     for(let i=0;i<targets.length;i++){
       const {g,tbl,phone}=targets[i];
+      let code="", smsBody="";
       try{
-        const code=await createRsvp(g,tbl);
+        code=await createRsvp(g,tbl);
         const rsvpLink=baseUrl+"/rsvp/"+code;
         const mapsLine = hall&&hall._mapsUrl ? (" 📍"+hall._mapsUrl) : "";
         const text="Hörmətli "+g.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
-        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(text)})});
+        smsBody=toSmsLatin(text);
+        const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:smsBody})});
         const j=await r.json().catch(()=>({ok:false,error:"cavab oxuna bilmədi (JSON deyil)"}));
         const errMsg = j.ok?"":(j.error||j.errtext||("naməlum, status:"+r.status));
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+(j.ok?0:1),lastError:j.ok?p.lastError:(g.name+": "+errMsg)}));
-        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok);
+        onMarkSmsResult&&onMarkSmsResult(g.id, !!j.ok, {code, text:smsBody, phone, error:errMsg});
       }catch(e){
         setSmsProgress(p=>({...p,done:p.done+1,failed:p.failed+1,lastError:g.name+": "+e.message}));
-        onMarkSmsResult&&onMarkSmsResult(g.id, false);
+        onMarkSmsResult&&onMarkSmsResult(g.id, false, {code, text:smsBody, phone, error:e.message});
       }
       await new Promise(r=>setTimeout(r,150));
     }
@@ -6935,7 +7123,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
     const c=document.createElement("canvas");
     drawDevetnamePNG({canvas:c,shablon:singleShablon,tbl,obData:obD,hallName,guestName:guest.name});
     await shareMsg(phone,msg,c,waWin);
-    onMarkSent&&onMarkSent([guest.id],"whatsapp");
+    onMarkSent&&onMarkSent([guest.id],"whatsapp",{code});
     setSingleGuest(null);
     setSingleStep("list");
   }
@@ -6956,13 +7144,14 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const text="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(text)})});
       const j=await r.json().catch(()=>({ok:false,error:"Cavab oxuna bilmədi"}));
+      const sInfo={code, text:toSmsLatin(text), phone, error:j.ok?"":(j.error||j.errtext||"naməlum xəta")};
       if(j.ok){
-        onMarkSmsResult&&onMarkSmsResult(guest.id, true);
+        onMarkSmsResult&&onMarkSmsResult(guest.id, true, sInfo);
         setSingleGuest(null);
         setSingleStep("list");
       } else {
-        onMarkSmsResult&&onMarkSmsResult(guest.id, false);
-        alert("⚠️ SMS göndərilmədi: "+(j.error||j.errtext||"naməlum xəta"));
+        onMarkSmsResult&&onMarkSmsResult(guest.id, false, sInfo);
+        alert("SMS göndərilmədi: "+sInfo.error+"\nQonaq Statistika → Göndərilməyənlər siyahısına əlavə olundu.");
       }
     }catch(e){
       alert("⚠️ SMS göndərilmədi: "+e.message);
@@ -6994,8 +7183,8 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       const smsText="Hörmətli "+guest.name+", "+(senderName?senderName+(senderTitle?" "+senderTitle:"")+" sizi ":"")+evName+" "+evTypeWord+" məclisinə dəvət edir. Masa №"+tbl.id+"."+mapsLine+"\n\n"+rsvpLink+"\n- QONAQ";
       const r=await fetch("/api/send-sms",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,text:toSmsLatin(smsText)})});
       const j=await r.json().catch(()=>({ok:false}));
-      onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok);
-      onMarkSent&&onMarkSent([guest.id],"whatsapp");
+      onMarkSmsResult&&onMarkSmsResult(guest.id, !!j.ok, {code, text:toSmsLatin(smsText), phone, error:j.ok?"":(j.error||j.errtext||"naməlum xəta")});
+      onMarkSent&&onMarkSent([guest.id],"whatsapp",{code});
       setSingleGuest(null);
       setSingleStep("list");
     }catch(e){
@@ -7059,6 +7248,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {/* HOME */}
       {panel==="home"&&(()=>{
         const hasDesign = myInviteShablon!=null || myInviteMedia;
+        const failedCount = (allTables||[]).reduce((n,t)=>n+(t.guests||[]).filter(g=>g.smsStatus==="failed").length,0);
         function loadJsPDF(){
           return new Promise((resolve,reject)=>{
             if(window.jspdf&&window.jspdf.jsPDF){ resolve(window.jspdf.jsPDF); return; }
@@ -7128,24 +7318,53 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
         );
         return (
         <div style={{flex:1,overflowY:"auto",display:"flex",flexDirection:"column",padding:"18px 16px"}}>
-          <div onClick={()=>onOpenMyInvite&&onOpenMyInvite(true)} style={{display:"flex",alignItems:"center",gap:14,padding:16,
-            border:"1px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
-            background:"rgba(212,175,90,.16)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
-            boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
-            <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.28)",backdropFilter:"blur(8px)",
-              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+          {hasDesign?(
+            <>
+              <div onClick={()=>setPanel("sendChoice")} style={{display:"flex",alignItems:"center",gap:14,padding:14,
+                border:"1.5px solid rgba(76,154,110,.45)",borderRadius:20,marginBottom:10,cursor:"pointer",
+                background:"linear-gradient(155deg,rgba(255,255,255,.55),rgba(76,154,110,.12))",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+                boxShadow:"0 1px 0 rgba(255,255,255,.6) inset, 0 10px 24px -14px rgba(40,90,60,.45)"}}>
+                <div style={{width:54,height:76,borderRadius:10,overflow:"hidden",flexShrink:0,boxShadow:"0 4px 12px -4px rgba(0,0,0,.35)",position:"relative"}}>
+                  {myInviteShablon!=null
+                    ? <InviteThumb themeIndex={myInviteShablon} boy={obD.boy||obD.name||""} girl={obD.girl||""}/>
+                    : <div style={{width:"100%",height:"100%",background:"#211A16",display:"flex",alignItems:"center",justifyContent:"center",color:"#D4AF5A"}}><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:9.5,fontWeight:800,letterSpacing:.6,textTransform:"uppercase",color:"#4C9A6E",background:"rgba(76,154,110,.14)",padding:"3px 8px",borderRadius:20,marginBottom:6}}>
+                    <span style={{width:6,height:6,borderRadius:"50%",background:"#4C9A6E",boxShadow:"0 0 0 3px rgba(76,154,110,.2)"}}/>
+                    Aktiv dəvətnamə
+                  </div>
+                  <div style={{fontSize:15,fontWeight:700,color:"#211A16",marginBottom:2}}>Aktiv dəvətnamə ilə davam et</div>
+                  <div style={{fontSize:11,color:"#6B6259",lineHeight:1.35}}>{myInviteShablon!=null?themeAt(myInviteShablon).ad:"Öz videonuz"}{myInviteMedia?" · video ilə":""} — masalara SMS / WhatsApp göndərin</div>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4C9A6E" strokeWidth="2.2" style={{flexShrink:0}}><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+              <div onClick={()=>onOpenMyInvite&&onOpenMyInvite(true)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"11px 14px",
+                border:"1px dashed rgba(138,107,30,.45)",borderRadius:14,marginBottom:16,cursor:"pointer",background:"rgba(255,255,255,.18)",color:"#8A6B1E",fontSize:12.5,fontWeight:700}}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+                Dəvətnaməni dəyiş
+              </div>
+            </>
+          ):(
+            <div onClick={()=>onOpenMyInvite&&onOpenMyInvite(true)} style={{display:"flex",alignItems:"center",gap:14,padding:16,
+              border:"1px solid rgba(212,175,90,.4)",borderRadius:18,marginBottom:12,cursor:"pointer",
+              background:"rgba(212,175,90,.16)",backdropFilter:"blur(18px) saturate(150%)",WebkitBackdropFilter:"blur(18px) saturate(150%)",
+              boxShadow:"0 1px 0 rgba(255,255,255,.5) inset, 0 6px 16px -10px rgba(90,60,20,.2)"}}>
+              <div style={{width:46,height:46,borderRadius:13,background:"rgba(212,175,90,.28)",backdropFilter:"blur(8px)",
+                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:"#8A6B1E"}}>
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14.5,fontWeight:700,color:"#8A6B1E",marginBottom:2}}>Dəvətnaməni seç</div>
+                <div style={{fontSize:11,color:"#6B6259"}}>Bir dəfə seçin — sonrakı göndərişlərdə yadda qalır</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
             </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:14.5,fontWeight:700,color:"#8A6B1E",marginBottom:2}}>{hasDesign?"Dəvətnaməni dəyiş":"Dəvətnaməni seç"}</div>
-              <div style={{fontSize:11,color:"#6B6259"}}>{hasDesign?"İstənilən vaxt dəyişin və ya silin":"Öz video/şəklinizi yükləyin, ya da şablon seçin"}</div>
-            </div>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a89a80" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
-          </div>
-          {hasDesign&&(
-            <Card accent="#C1382A" onClick={()=>setPanel("sendChoice")}
-              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>}
-              title="SMS+WhatsApp dəvət göndər" desc="Qonaqlara birbaşa dəvətnamə göndərin."/>
+          )}
+          {failedCount>0&&dashProps&&dashProps.onGoStats&&(
+            <Card accent="#C1382A" onClick={()=>dashProps.onGoStats()}
+              icon={<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>}
+              title={"Göndərilməyənlər ("+failedCount+")"} desc="Çatmayan SMS-lərə baxın və yenidən göndərin."/>
           )}
           {onPrint&&(
             <Card accent="#6B6259" onClick={onPrint}
@@ -7227,9 +7446,10 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                 const partialSent = anySent && !allSent;
                 const S=68, total=S+S*0.5, cx=total/2, cy=total/2, r=S/2, seats=t.seats||8;
                 const filled=(t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
-                const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push({name:i===0?g.name:"",sent:!!g.invited}); });
+                const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push({name:i===0?g.name:"",sent:!!g.invited&&g.smsStatus!=="failed",failed:g.smsStatus==="failed"}); });
                 const sentCnt=(t.guests||[]).filter(g=>g.invited).length;
                 const leftCnt=(t.guests||[]).length-sentCnt;
+                const failCnt=(t.guests||[]).filter(g=>g.smsStatus==="failed").length;
                 return(
                   <div key={t.id} onClick={()=>{const s=new Set(selTbls);s.has(t.id)?s.delete(t.id):s.add(t.id);setSelTbls(s);}}
                     style={{position:"relative",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",opacity:allSent?.5:1}}>
@@ -7240,7 +7460,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                         const sx=cx+30+chairR*Math.cos(angle), sy=cy+20+chairR*Math.sin(angle);
                         const g=gSlots[i];
                         const f=i<filled;
-                        const cc=!f?"rgba(33,26,22,.3)":(g&&g.sent?"rgba(76,154,110,.45)":"#C9932E");
+                        const cc=!f?"rgba(33,26,22,.3)":(g&&g.failed?"#C1382A":g&&g.sent?"rgba(76,154,110,.45)":"#C9932E");
                         // Ad pozisiyası
                         const nameR=chairR+22;
                         const nx=cx+30+nameR*Math.cos(angle), ny=cy+20+nameR*Math.sin(angle);
@@ -7248,7 +7468,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                         return(
                           <g key={i}>
                             <rect x={sx-5} y={sy-3.5} width={10} height={7} rx={3} fill={cc} opacity={f?.95:.3} transform={`rotate(${angle*180/Math.PI+90} ${sx} ${sy})`}/>
-                            {g&&g.name&&<text x={nx} y={ny+3} textAnchor={anch} fill={g.sent?"rgba(76,154,110,.55)":"#8A5A12"} fontSize="7" fontWeight={g.sent?"500":"800"}>{g.sent?"✓ ":""}{g.name.length>12?g.name.slice(0,12)+"…":g.name}</text>}
+                            {g&&g.name&&<text x={nx} y={ny+3} textAnchor={anch} fill={g.failed?"#C1382A":g.sent?"rgba(76,154,110,.55)":"#8A5A12"} fontSize="7" fontWeight={g.sent?"500":"800"}>{g.failed?"! ":g.sent?"✓ ":""}{g.name.length>12?g.name.slice(0,12)+"…":g.name}</text>}
                           </g>
                         );
                       })}
@@ -7259,6 +7479,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                     {sel&&<div style={{position:"absolute",top:0,right:8,width:18,height:18,borderRadius:"50%",background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#FFFFFF"}}>✓</div>}
                     <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(33,26,22,.45)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
                     <div style={{textAlign:"center",color:allSent?"rgba(76,154,110,.8)":partialSent?"rgba(217,164,65,.9)":pulse?"rgba(212,175,90,.9)":"rgba(212,175,90,.4)",transition:"color .5s",fontWeight:partialSent?700:400,fontSize:partialSent?8.5:7}}>{allSent?"Göndərilib ✓":partialSent?(sentCnt+"/"+(t.guests||[]).length+" göndərilib · "+leftCnt+" qalıb"):"Göndərilməyib"}</div>
+                    {failCnt>0&&<div style={{textAlign:"center",color:"#C1382A",fontSize:8.5,fontWeight:700,marginTop:1}}>{failCnt} SMS çatmayıb</div>}
                   </div>
                 );
               })}
@@ -7519,14 +7740,15 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             <div key={t.id} style={{marginBottom:16}}>
               <div style={{fontSize:11,color:"rgba(212,175,90,.8)",fontWeight:700,marginBottom:8,letterSpacing:1}}>MASA № {t.id} {t.label&&"— "+t.label}</div>
               {(t.guests||[]).map((g,i)=>{
-                const sent=g.invited;
+                const failed=g.smsStatus==="failed";
+                const sent=g.invited&&!failed;
                 const phone=(g.phone||"").replace(/\D/g,"");
                 return(
                   <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,background:sent?"rgba(76,154,110,.14)":"rgba(255,255,255,.3)",border:"1px solid "+(sent?"rgba(76,154,110,.35)":"rgba(212,175,90,.25)"),marginBottom:6,opacity:sent?.6:1}}>
                     <div style={{width:32,height:32,borderRadius:"50%",background:"rgba(212,175,90,.35)",border:"1px solid rgba(201,168,76,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:gold,flexShrink:0}}>{g.name[0]||"?"}</div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,color:"#211A16",fontWeight:600}}>{g.name}</div>
-                      <div style={{fontSize:10,color:"rgba(33,26,22,.5)"}}>{g.count>1?g.count+" nəfər · ":""}{phone?"+"+phone:"nömrə yoxdur"}</div>
+                      <div style={{fontSize:13,color:failed?"#C1382A":"#211A16",fontWeight:600}}>{g.name}</div>
+                      <div style={{fontSize:10,color:failed?"rgba(193,56,42,.75)":"rgba(33,26,22,.5)"}}>{failed?"SMS çatmayıb · ":""}{g.count>1?g.count+" nəfər · ":""}{phone?"+"+phone:"nömrə yoxdur"}</div>
                     </div>
                     {sent?(
                       <div style={{fontSize:11,color:"rgba(76,154,110,.9)",fontWeight:600}}>✓ Göndərilib</div>
