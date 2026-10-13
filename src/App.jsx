@@ -7138,7 +7138,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
       {panel==="bulk"&&step==="select"&&(
         <>
           <div style={{padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.35)",display:"flex",gap:8,flexShrink:0,alignItems:"center",background:"rgba(255,255,255,.2)",backdropFilter:"blur(10px)"}}>
-            <button onClick={()=>setSelTbls(new Set(notInvTables.map(t=>t.id)))} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(212,175,90,.25)",color:gold,fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
+            <button onClick={()=>setSelTbls(new Set(notInvTables.filter(t=>(t.guests||[]).some(g=>!g.invited)).map(t=>t.id)))} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(212,175,90,.25)",color:gold,fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
             <button onClick={()=>setSelTbls(new Set())} style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(33,26,22,.1)",background:"transparent",color:"rgba(33,26,22,.5)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
             <span style={{marginLeft:"auto",fontSize:11,color:"rgba(212,175,90,.8)"}}>{selTbls.size}/{notInvTables.length}</span>
           </div>
@@ -7158,7 +7158,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
             </div>
           )}
           <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
-            <div style={{display:"flex",flexWrap:"wrap",gap:14,justifyContent:"center"}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:"18px 34px",justifyContent:"center"}}>
               {notInvTables.map(t=>{
                 const sel=selTbls.has(t.id);
                 const anySent=(t.guests||[]).some(g=>g.invited);
@@ -7166,7 +7166,9 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                 const partialSent = anySent && !allSent;
                 const S=68, total=S+S*0.5, cx=total/2, cy=total/2, r=S/2, seats=t.seats||8;
                 const filled=(t.guests||[]).reduce((s,g)=>s+(g.count||1),0);
-                const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push(g.name); });
+                const gSlots=[]; (t.guests||[]).forEach(g=>{ for(let i=0;i<(g.count||1);i++) gSlots.push({name:i===0?g.name:"",sent:!!g.invited}); });
+                const sentCnt=(t.guests||[]).filter(g=>g.invited).length;
+                const leftCnt=(t.guests||[]).length-sentCnt;
                 return(
                   <div key={t.id} onClick={()=>{const s=new Set(selTbls);s.has(t.id)?s.delete(t.id):s.add(t.id);setSelTbls(s);}}
                     style={{position:"relative",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",opacity:allSent?.5:1}}>
@@ -7177,7 +7179,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                         const sx=cx+30+chairR*Math.cos(angle), sy=cy+20+chairR*Math.sin(angle);
                         const g=gSlots[i];
                         const f=i<filled;
-                        const cc=f?"#4C9A6E":"rgba(33,26,22,.3)";
+                        const cc=!f?"rgba(33,26,22,.3)":(g&&g.sent?"rgba(76,154,110,.45)":"#C9932E");
                         // Ad pozisiyası
                         const nameR=chairR+22;
                         const nx=cx+30+nameR*Math.cos(angle), ny=cy+20+nameR*Math.sin(angle);
@@ -7185,7 +7187,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                         return(
                           <g key={i}>
                             <rect x={sx-5} y={sy-3.5} width={10} height={7} rx={3} fill={cc} opacity={f?.95:.3} transform={`rotate(${angle*180/Math.PI+90} ${sx} ${sy})`}/>
-                            {g&&<text x={nx} y={ny+3} textAnchor={anch} fill="#4C9A6E" fontSize="7.5" fontWeight="600">{g.length>7?g.slice(0,7)+"…":g}</text>}
+                            {g&&g.name&&<text x={nx} y={ny+3} textAnchor={anch} fill={g.sent?"rgba(76,154,110,.55)":"#8A5A12"} fontSize="7" fontWeight={g.sent?"500":"800"}>{g.sent?"✓ ":""}{g.name.length>12?g.name.slice(0,12)+"…":g.name}</text>}
                           </g>
                         );
                       })}
@@ -7195,7 +7197,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
                     </svg>
                     {sel&&<div style={{position:"absolute",top:0,right:8,width:18,height:18,borderRadius:"50%",background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#FFFFFF"}}>✓</div>}
                     <div style={{textAlign:"center",fontSize:9,color:sel?gold:"rgba(33,26,22,.45)",fontWeight:700,marginTop:2}}>Masa {t.id}</div>
-                    <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(76,154,110,.8)":partialSent?"rgba(217,164,65,.9)":pulse?"rgba(212,175,90,.9)":"rgba(212,175,90,.4)",transition:"color .5s",fontWeight:partialSent?700:400}}>{allSent?"Göndərilib ✓":partialSent?"Natamam göndərilib":"Göndərilməyib"}</div>
+                    <div style={{textAlign:"center",color:allSent?"rgba(76,154,110,.8)":partialSent?"rgba(217,164,65,.9)":pulse?"rgba(212,175,90,.9)":"rgba(212,175,90,.4)",transition:"color .5s",fontWeight:partialSent?700:400,fontSize:partialSent?8.5:7}}>{allSent?"Göndərilib ✓":partialSent?(sentCnt+"/"+(t.guests||[]).length+" göndərilib · "+leftCnt+" qalıb"):"Göndərilməyib"}</div>
                   </div>
                 );
               })}
