@@ -159,6 +159,13 @@ export default function RsvpPage(){
       const r = rows[0];
       setRsvp(r);
       if(r.status!=="pending"){ setAnswered(true); setAnswer(r.status); }
+      else if(r.guest_phone){
+        // Eyni nömrəyə həm SMS, həm WhatsApp linki gedə bilər — o biri linkdə artıq cavab verilibsə, yadda saxla
+        try{
+          const sib = await sbFetch("rsvp?session_id=eq."+encodeURIComponent(r.session_id)+"&guest_phone=eq."+encodeURIComponent(r.guest_phone)+"&status=neq.pending&order=updated_at.desc&limit=1&select=status");
+          if(sib&&sib.length){ setAnswered(true); setAnswer(sib[0].status); }
+        }catch(e){}
+      }
       const evs = await sbFetch("events?session_id=eq."+encodeURIComponent(r.session_id)+"&order=created_at.desc&limit=1");
       if(!evs||!evs.length){ setStatus("error"); return; }
       const ev = evs[0];
@@ -175,10 +182,18 @@ export default function RsvpPage(){
 
   async function respond(resp){
     if(answered) return;
+    const body = JSON.stringify({status:resp, updated_at:new Date().toISOString()});
     await sbFetch("rsvp?code=eq."+encodeURIComponent(code),{
-      method:"PATCH", headers:{Prefer:"return=representation"},
-      body:JSON.stringify({status:resp, updated_at:new Date().toISOString()})
+      method:"PATCH", headers:{Prefer:"return=representation"}, body
     });
+    // Eyni qonağın (eyni nömrə) digər linklərini də yenilə — SMS və WhatsApp linki bir cavab sayılsın
+    if(rsvp&&rsvp.guest_phone){
+      try{
+        await sbFetch("rsvp?session_id=eq."+encodeURIComponent(rsvp.session_id)+"&guest_phone=eq."+encodeURIComponent(rsvp.guest_phone)+"&status=eq.pending",{
+          method:"PATCH", headers:{Prefer:"return=minimal"}, body
+        });
+      }catch(e){}
+    }
     setAnswer(resp); setAnswered(true);
     if(resp==="not_attending") setTebrikOpen(true);
   }

@@ -4592,10 +4592,17 @@ function AppInner(){
     if(!sessionId) return;
     async function loadRsvp(){
       try{
-        const rows = await sbFetch("rsvp?session_id=eq."+encodeURIComponent(sessionId)+"&select=guest_phone,status");
+        const rows = await sbFetch("rsvp?session_id=eq."+encodeURIComponent(sessionId)+"&select=guest_phone,status,updated_at");
         if(rows&&rows.length>0){
-          const stats = {};
-          rows.forEach(r=>{ if(r.guest_phone) stats[r.guest_phone]=r.status; });
+          // Bir nömrəyə bir neçə link (SMS + WhatsApp) gedə bilər — bir qonaq bir dəfə sayılır.
+          // Cavab verilmiş (gəlirəm/gəlmirəm) status "pending"-dən üstündür; bir neçə cavab varsa ən sonuncu.
+          const stats = {}, at = {};
+          rows.forEach(r=>{
+            if(!r.guest_phone) return;
+            const k=r.guest_phone, cur=stats[k];
+            const t=r.updated_at?Date.parse(r.updated_at):0;
+            if(cur===undefined || (cur==="pending"&&r.status!=="pending") || (r.status!=="pending"&&t>(at[k]||0))){ stats[k]=r.status; at[k]=t; }
+          });
           setRsvpStats(stats);
         }
       }catch(e){}
@@ -5920,6 +5927,27 @@ ${savedEvsList||"Yoxdur"}`;
               {inviteMediaErr&&<div style={{fontSize:11.5,color:"#C1382A",marginBottom:10}}>{inviteMediaErr}</div>}
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
             </div>
+            {(()=>{
+              const ready = myInviteShablon!=null || (myInviteMedia&&myInviteMedia.url);
+              return (
+                <div style={{padding:"10px 16px 12px",flexShrink:0,borderTop:"1px solid rgba(150,120,80,.15)",background:"rgba(255,255,255,.6)"}}>
+                  <div style={{fontSize:11,color:ready?"#3d8259":"#6B6259",textAlign:"center",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                    {ready
+                      ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6 9 17l-5-5"/></svg>{myInviteShablon!=null?themeAt(myInviteShablon).ad:"Dizayn"} seçildi{myInviteMedia&&myInviteMedia.url?" · video əlavə olunub":" · istəsəniz yuxarıda video əlavə edin"}</>
+                      : "Əvvəlcə yuxarıdan bir dizayn seçin"}
+                  </div>
+                  <button type="button" disabled={!ready||inviteMediaBusy}
+                    onClick={()=>{ setMyInviteOpen(false); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
+                    style={{width:"100%",padding:"14px",borderRadius:16,border:"none",cursor:ready&&!inviteMediaBusy?"pointer":"default",
+                      background:ready&&!inviteMediaBusy?"linear-gradient(155deg,#5EB889,#3d8259)":"rgba(33,26,22,.1)",
+                      color:ready&&!inviteMediaBusy?"#fff":"rgba(33,26,22,.4)",fontSize:14,fontWeight:700,fontFamily:"'Manrope',sans-serif",
+                      boxShadow:ready?"0 8px 20px -10px rgba(61,130,89,.7)":"none",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                    {inviteMediaBusy?"Video yüklənir…":"Hazırdır, davam et"}
+                    {!inviteMediaBusy&&<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m9 18 6-6-6-6"/></svg>}
+                  </button>
+                </div>
+              );
+            })()}
             <DashNav dashProps={{
               active:"invite", tableCount:tables.length, eventCount:savedEvents.length,
               onGoSchema:()=>{ setMyInviteOpen(false); goToSchemaOrWarn(()=>{}); },
@@ -5948,7 +5976,7 @@ ${savedEvsList||"Yoxdur"}`;
               style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
               Bağla
             </button>
-            <button type="button" onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); saveCurrentEvent({myInviteShablon:fullPreviewShablon}); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
+            <button type="button" onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); saveCurrentEvent({myInviteShablon:fullPreviewShablon}); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
               ✓ Bəyəndim, seç
             </button>
