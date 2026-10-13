@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { InviteStage, InviteHero } from "./inviteThemes.jsx";
 
 const SB_URL = "https://dpvoluttxelwnqcfnsbh.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwdm9sdXR0eGVsd25xY2Zuc2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzODQ4MTMsImV4cCI6MjA4ODk2MDgxM30.qodOw68r3OgeQXrr-SnzTDiXI4eI_moD4IWG-Dzj368";
@@ -32,7 +33,7 @@ function TableSVG({ table, size=78 }){
       })}
       <circle cx={cx} cy={cy} r={r-2} fill={fillBg} stroke={sc} strokeWidth="2.5" style={{filter:`drop-shadow(0 0 4px ${sc}99)`}}/>
       <text x={cx} y={cy-4} textAnchor="middle" dominantBaseline="middle" fontSize={Math.max(10,S*0.24)} fontWeight="800" fill={sc}>{table.id}</text>
-      <text x={cx} y={cy+S*0.14} textAnchor="middle" fontSize={Math.max(7,S*0.13)} fill="rgba(255,255,255,.45)">{filled}/{seats}</text>
+      <text x={cx} y={cy+S*0.14} textAnchor="middle" fontSize={Math.max(7,S*0.13)} fill="var(--muted)">{filled}/{seats}</text>
     </svg>
   );
 }
@@ -44,28 +45,28 @@ function GuestEditPopup({ guest, tableId, allTables, onSave, onDelete, onMove, o
   const [ushaq,setUshaq]=useState(String(guest.ushaqCount||0));
   const [gender,setGender]=useState(guest.gender||"");
   const [moveTo,setMoveTo]=useState(""), [mode,setMode]=useState("edit");
-  const inp={background:"rgba(255,255,255,.07)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,padding:"10px 12px",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",width:"100%"};
+  const inp={background:"var(--soft)",border:"1px solid var(--line-strong)",borderRadius:8,padding:"10px 12px",color:"var(--ink)",fontSize:13,outline:"none",fontFamily:"inherit",width:"100%"};
   return (
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"flex-end"}} onClick={onClose}>
-      <div style={{width:"100%",background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.25)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
-        <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
+      <div style={{width:"100%",background:"var(--bg)",borderTop:"1px solid var(--line-strong)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
+        <div style={{width:36,height:4,borderRadius:2,background:"var(--soft)",margin:"0 auto 16px"}}/>
         {mode==="edit"?(
           <>
-            <div style={{fontSize:13,color:"#c9a84c",fontWeight:700,marginBottom:14}}>✏️ Qonağı redaktə et</div>
+            <div style={{fontSize:13,color:"var(--accent)",fontWeight:700,marginBottom:14}}>✏️ Qonağı redaktə et</div>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
               <input style={inp} placeholder="Ad Soyad" value={name} onChange={e=>setName(e.target.value)}/>
-              <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.07)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,overflow:"hidden"}}>
-                <span style={{padding:"0 10px",color:"rgba(201,168,76,.8)",fontSize:13,fontWeight:600,flexShrink:0}}>+994</span>
-                <input style={{flex:1,padding:"10px 4px",background:"transparent",border:"none",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit"}} placeholder="XX XXX XX XX" type="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,""))}/>
+              <div style={{display:"flex",alignItems:"center",background:"var(--soft)",border:"1px solid var(--line-strong)",borderRadius:8,overflow:"hidden"}}>
+                <span style={{padding:"0 10px",color:"var(--accent)",fontSize:13,fontWeight:600,flexShrink:0}}>+994</span>
+                <input style={{flex:1,padding:"10px 4px",background:"transparent",border:"none",color:"var(--ink)",fontSize:13,outline:"none",fontFamily:"inherit"}} placeholder="XX XXX XX XX" type="tel" value={phone} onChange={e=>setPhone(e.target.value.replace(/\D/g,""))}/>
               </div>
               <div style={{display:"flex",gap:6}}>
                 {[["👨 Kişi","kishi","#7aade8"],["👩 Qadın","qadin","#e87aad"],["👶 Uşaq","ushaq","#f5d060"]].map(([l,v,c])=>(
-                  <button key={v} onClick={()=>setGender(g=>g===v?"":v)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"1.5px solid "+(gender===v?c:"rgba(255,255,255,.08)"),background:gender===v?c+"22":"transparent",color:gender===v?c:"rgba(255,255,255,.3)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
+                  <button key={v} onClick={()=>setGender(g=>g===v?"":v)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"1.5px solid "+(gender===v?c:"var(--line)"),background:gender===v?c+"22":"transparent",color:gender===v?c:"var(--muted)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
                 ))}
               </div>
               <div style={{display:"flex",gap:8}}>
-                {[["Böyük","#c9a84c",count,setCount,1],["👧 Uşaq","#f5d060",ushaq,setUshaq,0]].map(([l,c,val,set,min])=>(
-                  <div key={l} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.04)",border:"1px solid "+c+"33",borderRadius:8,padding:"6px 10px"}}>
+                {[["Böyük","var(--accent)",count,setCount,1],["👧 Uşaq","#f5d060",ushaq,setUshaq,0]].map(([l,c,val,set,min])=>(
+                  <div key={l} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--soft)",border:"1px solid "+c+"33",borderRadius:8,padding:"6px 10px"}}>
                     <span style={{fontSize:10,color:c+"99"}}>{l}</span>
                     <button onClick={()=>set(v=>String(Math.max(min,parseInt(v)-1)))} style={{width:22,height:22,borderRadius:"50%",border:"none",background:c+"22",color:c,fontSize:14,cursor:"pointer",fontWeight:700}}>−</button>
                     <span style={{fontSize:14,fontWeight:800,color:c,minWidth:20,textAlign:"center"}}>{val}</span>
@@ -75,7 +76,7 @@ function GuestEditPopup({ guest, tableId, allTables, onSave, onDelete, onMove, o
               </div>
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>onSave({...guest,name:name.trim(),phone:phone.trim()?"+994"+phone.trim():"",count:parseInt(count)||1,ushaqCount:parseInt(ushaq)||0,gender})} style={{flex:2,padding:11,borderRadius:10,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>✓ Saxla</button>
+              <button onClick={()=>onSave({...guest,name:name.trim(),phone:phone.trim()?"+994"+phone.trim():"",count:parseInt(count)||1,ushaqCount:parseInt(ushaq)||0,gender})} style={{flex:2,padding:11,borderRadius:10,border:"none",background:"var(--soft)",color:"var(--accent)",fontSize:13,fontWeight:700,cursor:"pointer"}}>✓ Saxla</button>
               <button onClick={()=>setMode("move")} style={{flex:1,padding:11,borderRadius:10,border:"1px solid rgba(122,173,232,.3)",background:"rgba(122,173,232,.08)",color:"#7aade8",fontSize:12,cursor:"pointer"}}>↔ Köçür</button>
               <button onClick={()=>onDelete(guest.id)} style={{padding:"11px 14px",borderRadius:10,border:"1px solid rgba(255,80,80,.3)",background:"rgba(255,80,80,.08)",color:"#ff8888",fontSize:14,cursor:"pointer"}}>🗑</button>
             </div>
@@ -85,14 +86,14 @@ function GuestEditPopup({ guest, tableId, allTables, onSave, onDelete, onMove, o
             <div style={{fontSize:13,color:"#7aade8",fontWeight:700,marginBottom:12}}>↔ Hansı masaya köçürəsən?</div>
             <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14,maxHeight:200,overflowY:"auto"}}>
               {allTables.filter(t=>t.id!==tableId).map(t=>(
-                <button key={t.id} onClick={()=>setMoveTo(String(t.id))} style={{padding:"10px 14px",borderRadius:10,textAlign:"left",border:moveTo===String(t.id)?"1px solid #7aade8":"1px solid rgba(255,255,255,.1)",background:moveTo===String(t.id)?"rgba(122,173,232,.15)":"transparent",color:"#f2e8d0",fontSize:13,cursor:"pointer"}}>
+                <button key={t.id} onClick={()=>setMoveTo(String(t.id))} style={{padding:"10px 14px",borderRadius:10,textAlign:"left",border:moveTo===String(t.id)?"1px solid #7aade8":"1px solid var(--line)",background:moveTo===String(t.id)?"rgba(122,173,232,.15)":"transparent",color:"var(--ink)",fontSize:13,cursor:"pointer"}}>
                   Masa {t.id}{t.label&&t.label!=="__extra__"?` — ${t.label}`:""} ({occ(t)}/{t.seats||8})
                 </button>
               ))}
             </div>
             <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>{if(moveTo)onMove(guest.id,tableId,parseInt(moveTo));}} disabled={!moveTo} style={{flex:1,padding:11,borderRadius:10,border:"none",background:moveTo?"rgba(122,173,232,.2)":"rgba(255,255,255,.05)",color:moveTo?"#7aade8":"rgba(255,255,255,.2)",fontSize:13,fontWeight:700,cursor:moveTo?"pointer":"default"}}>↔ Köçür</button>
-              <button onClick={()=>setMode("edit")} style={{padding:"11px 18px",borderRadius:10,border:"none",background:"transparent",color:"rgba(255,255,255,.3)",fontSize:12,cursor:"pointer"}}>Geri</button>
+              <button onClick={()=>{if(moveTo)onMove(guest.id,tableId,parseInt(moveTo));}} disabled={!moveTo} style={{flex:1,padding:11,borderRadius:10,border:"none",background:moveTo?"rgba(122,173,232,.2)":"var(--line)",color:moveTo?"#7aade8":"var(--muted)",fontSize:13,fontWeight:700,cursor:moveTo?"pointer":"default"}}>↔ Köçür</button>
+              <button onClick={()=>setMode("edit")} style={{padding:"11px 18px",borderRadius:10,border:"none",background:"transparent",color:"var(--muted)",fontSize:12,cursor:"pointer"}}>Geri</button>
             </div>
           </>
         )}
@@ -139,7 +140,7 @@ export default function InvitePage(){
   const [selectedTables,setSelectedTables]=useState(new Set());
   const [selectedShablon,setSelectedShablon]=useState(null);
   const SHABLONLAR=[
-    {id:"klassik",ad:"Qızılı Klassik",bg:"#1a1200",accent:"#c9a84c"},
+    {id:"klassik",ad:"Qızılı Klassik",bg:"#1a1200",accent:"var(--accent)"},
     {id:"romantik",ad:"Romantik",bg:"#1a0a0a",accent:"#e87aad"},
     {id:"goy",ad:"Göy Zümrüd",bg:"#0a1220",accent:"#7aade8"},
     {id:"ag",ad:"Ağ Zərif",bg:"#f5f0e8",accent:"#8b7355"},
@@ -240,55 +241,60 @@ export default function InvitePage(){
   const totalGuests=tables.reduce((s,t)=>s+t.guests.length,0);
   const evName=(eventData?.couple)||"Məclis";
 
-  if(status==="loading") return <div style={{minHeight:"100vh",background:"#080604",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center"}}><div style={{fontSize:36,marginBottom:12}}>🎊</div><div style={{color:"#c9a84c",fontSize:14,fontWeight:600}}>Yüklənir...</div></div></div>;
-  if(status==="error") return <div style={{minHeight:"100vh",background:"#080604",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}><div style={{textAlign:"center"}}><div style={{fontSize:48,marginBottom:16}}>😕</div><div style={{color:"#ff9999",fontSize:16,fontWeight:700,marginBottom:8}}>Link tapılmadı</div><div style={{color:"rgba(255,255,255,.4)",fontSize:13}}>Dəvəti göndərən şəxslə əlaqə saxlayın.</div></div></div>;
+  if(status==="loading") return <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Manrope',sans-serif",color:"#80653C",fontSize:14,fontWeight:600}}>Yüklənir...</div>;
+  if(status==="error") return <div style={{minHeight:"100vh",background:"#FCFAF6",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"'Manrope',sans-serif",textAlign:"center"}}><div><div style={{color:"#A02A1E",fontSize:16,fontWeight:700,marginBottom:8}}>Link tapılmadı</div><div style={{color:"#8A8578",fontSize:13}}>Dəvəti göndərən şəxslə əlaqə saxlayın.</div></div></div>;
 
+  const iMeta=(eventData&&eventData.tables&&eventData.tables._meta)||{};
+  const iOb=iMeta.obData||{};
+  const iHall=iMeta.hall?(iMeta.hall._venueName||"")+(iMeta.hall.name?" — "+iMeta.hall.name:""):(eventData?.hall_name||"");
+  const iTheme=iMeta.myInviteShablon;
   return (
-    <div style={{minHeight:"100vh",background:"#080604",fontFamily:"'DM Sans',sans-serif",color:"#f2e8d0"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap');*{box-sizing:border-box;margin:0;padding:0}select option{background:#1a1208}`}</style>
-
-      <div style={{padding:"14px 18px",borderBottom:"1px solid rgba(201,168,76,.12)",background:"rgba(201,168,76,.04)"}}>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:18,color:"#c9a84c",letterSpacing:2}}>GONAG<span style={{color:"#f2e8d0",fontStyle:"italic"}}>.AZ</span></div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,.4)",marginTop:2}}>🎊 {evName} — {tables.length} masa dəvəti</div>
+    <InviteStage themeIndex={iTheme} title={iOb.boy&&iOb.girl?iOb.boy+" & "+iOb.girl:evName}>
+      <style>{`select option{background:var(--bg);color:var(--ink)}`}</style>
+      <div className="qi-inv" style={{paddingBottom:0}}>
+        <div className="qi-brand qi-reveal">QONAQ</div>
+        <InviteHero themeIndex={iTheme} kicker="Masa dəvəti" boy={iOb.boy||""} girl={iOb.girl||""} evName={evName}
+          greeting={<>Sizə <b>{tables.length} masa</b> etibar olunub. Aşağıda qonaqlarınızı əlavə edin.</>}
+          date={iOb.date||""} hall={iHall} mapsQuery={iHall+" Bakı"} issue={tables.length+" masa"}/>
       </div>
 
-      <div style={{maxWidth:500,margin:"0 auto",padding:"16px 14px 160px"}}>
+      <div style={{position:"relative",zIndex:1,maxWidth:500,margin:"0 auto",padding:"16px 14px 160px"}}>
         {tables.map(t=>{
           const filled=occ(t), seats=t.seats||8, isFull=filled>=seats;
           const isSaved=savedTables.has(t.id), isSaving=savingTable===t.id;
-          const sc=t.side==="Oğlan evi"?"#7aade8":t.side==="Qız evi"?"#e87aad":"#c9a84c";
+          const sc=t.side==="Oğlan evi"?"#7aade8":t.side==="Qız evi"?"#e87aad":"var(--accent)";
           return (
-            <div key={t.id} style={{background:"rgba(255,255,255,.02)",border:`1px solid ${isFull?"rgba(80,200,120,.4)":"rgba(201,168,76,.15)"}`,borderRadius:16,marginBottom:20,transition:"border-color .4s"}}>
-              <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:14,borderBottom:"1px solid rgba(255,255,255,.05)"}}>
+            <div key={t.id} style={{background:"var(--soft)",border:`1px solid ${isFull?"rgba(80,200,120,.4)":"var(--line-strong)"}`,borderRadius:16,marginBottom:20,transition:"border-color .4s"}}>
+              <div style={{padding:"14px 16px 10px",display:"flex",alignItems:"center",gap:14,borderBottom:"1px solid var(--line)"}}>
                 <TableSVG table={t} size={78}/>
                 <div style={{flex:1}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}}>
                     <span style={{fontSize:16,fontWeight:800,color:isFull?"#50c878":sc}}>Masa {t.id}</span>
-                    {t.label&&t.label!=="__extra__"&&<span style={{fontSize:12,color:"rgba(255,255,255,.45)"}}>{t.label}</span>}
+                    {t.label&&t.label!=="__extra__"&&<span style={{fontSize:12,color:"var(--muted)"}}>{t.label}</span>}
                     {isFull&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:8,background:"rgba(80,200,120,.18)",color:"#50c878",fontWeight:700}}>✓ Dolu</span>}
                   </div>
                   {t.side&&<div style={{fontSize:10,padding:"2px 8px",borderRadius:8,background:sc+"22",color:sc,display:"inline-block",marginBottom:4}}>{t.side}</div>}
-                  <div style={{fontSize:11,color:"rgba(255,255,255,.3)"}}>{filled}/{seats} nəfər</div>
+                  <div style={{fontSize:11,color:"var(--muted)"}}>{filled}/{seats} nəfər</div>
                 </div>
               </div>
 
               <div style={{padding:"8px 14px"}}>
-                {t.guests.length===0&&<div style={{fontSize:12,color:"rgba(255,255,255,.22)",padding:"10px 0",textAlign:"center"}}>Hələ qonaq əlavə edilməyib</div>}
+                {t.guests.length===0&&<div style={{fontSize:12,color:"var(--muted)",padding:"10px 0",textAlign:"center"}}>Hələ qonaq əlavə edilməyib</div>}
                 {t.guests.map((g,gi)=>{
-                  const gSc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"rgba(201,168,76,.7)";
+                  const gSc=g.gender==="kishi"?"#7aade8":g.gender==="qadin"?"#e87aad":"var(--line-strong)";
                   return (
-                    <div key={g.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:gi<t.guests.length-1?"1px solid rgba(255,255,255,.05)":"none"}}>
+                    <div key={g.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:gi<t.guests.length-1?"1px solid var(--line)":"none"}}>
                       <div style={{width:32,height:32,borderRadius:"50%",flexShrink:0,background:gSc+"22",border:"1px solid "+gSc+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:gSc}}>{g.name[0]||"?"}</div>
                       <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:13,fontWeight:600,color:"#f2e8d0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
-                        <div style={{fontSize:10,color:"rgba(255,255,255,.3)"}}>{g.count||1} böyük{g.ushaqCount>0?` + ${g.ushaqCount} uşaq`:""}{g.phone&&` · ${g.phone}`}</div>
+                        <div style={{fontSize:13,fontWeight:600,color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{g.name}</div>
+                        <div style={{fontSize:10,color:"var(--muted)"}}>{g.count||1} böyük{g.ushaqCount>0?` + ${g.ushaqCount} uşaq`:""}{g.phone&&` · ${g.phone}`}</div>
                       </div>
-                      <button onClick={()=>setEditPopup({guest:g,tableId:t.id})} style={{width:30,height:30,borderRadius:8,flexShrink:0,border:"1px solid rgba(201,168,76,.18)",background:"rgba(201,168,76,.06)",color:"rgba(201,168,76,.7)",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
+                      <button onClick={()=>setEditPopup({guest:g,tableId:t.id})} style={{width:30,height:30,borderRadius:8,flexShrink:0,border:"1px solid var(--line-strong)",background:"var(--soft)",color:"var(--accent)",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✏️</button>
                     </div>
                   );
                 })}
                 {filled<seats&&(
-                  <button onClick={()=>setAddForm({tableId:t.id})} style={{width:"100%",marginTop:10,padding:"9px",borderRadius:9,border:"1px dashed rgba(201,168,76,.3)",background:"transparent",color:"rgba(201,168,76,.6)",fontSize:12,fontWeight:600,cursor:"pointer"}}>+ Qonaq əlavə et</button>
+                  <button onClick={()=>setAddForm({tableId:t.id})} style={{width:"100%",marginTop:10,padding:"9px",borderRadius:9,border:"1px dashed var(--line-strong)",background:"transparent",color:"var(--accent)",fontSize:12,fontWeight:600,cursor:"pointer"}}>+ Qonaq əlavə et</button>
                 )}
               </div>
             </div>
@@ -297,7 +303,7 @@ export default function InvitePage(){
       </div>
 
       {totalGuests>0&&(
-        <div style={{position:"fixed",bottom:0,left:0,right:0,padding:"12px 16px 28px",background:"rgba(8,6,4,.97)",borderTop:"1px solid rgba(201,168,76,.15)"}}>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,padding:"12px 16px 28px",background:"var(--bg)",borderTop:"1px solid var(--line-strong)"}}>
           <button onClick={()=>{setSendPanel(true);setSendStep("tables");}} style={{width:"100%",padding:"13px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.4),rgba(37,211,102,.2))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
             📱 Dəvət göndər
           </button>
@@ -306,24 +312,24 @@ export default function InvitePage(){
 
       {/* Göndərmə paneli — tam ekran, addım-addım */}
       {sendPanel&&(
-        <div style={{position:"fixed",inset:0,zIndex:300,background:"#080604",display:"flex",flexDirection:"column"}}>
+        <div style={{position:"fixed",inset:0,zIndex:300,background:"var(--bg)",display:"flex",flexDirection:"column"}}>
           {/* Header */}
-          <div style={{padding:"14px 16px",borderBottom:"1px solid rgba(201,168,76,.15)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-            <div style={{fontFamily:"'Playfair Display',serif",color:"#c9a84c",fontSize:15}}>
+          <div style={{padding:"14px 16px",borderBottom:"1px solid var(--line-strong)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+            <div style={{fontFamily:"'Playfair Display',serif",color:"var(--accent)",fontSize:15}}>
               {sendStep==="tables"?"📨 Masa seç":sendStep==="shablon"?"✨ Şablon seç":"✅ Təsdiq et"}
             </div>
-            <button onClick={()=>{setSendPanel(false);setSendStep("tables");}} style={{background:"none",border:"none",color:"#9a8060",fontSize:20,cursor:"pointer"}}>✕</button>
+            <button onClick={()=>{setSendPanel(false);setSendStep("tables");}} style={{background:"none",border:"none",color:"var(--muted)",fontSize:20,cursor:"pointer"}}>✕</button>
           </div>
 
           {/* STEP 1: Masalar SVG */}
           {sendStep==="tables"&&(
             <>
-              <div style={{padding:"8px 14px",borderBottom:"1px solid rgba(201,168,76,.06)",display:"flex",gap:8,flexShrink:0}}>
+              <div style={{padding:"8px 14px",borderBottom:"1px solid var(--line-strong)",display:"flex",gap:8,flexShrink:0}}>
                 <button onClick={()=>setSelectedTables(new Set(tables.map(t=>t.id)))}
-                  style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(201,168,76,.35)",background:"rgba(201,168,76,.08)",color:"#c9a84c",fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
+                  style={{padding:"5px 12px",borderRadius:16,border:"1px solid var(--line-strong)",background:"var(--soft)",color:"var(--accent)",fontSize:11,cursor:"pointer"}}>✓ Hamısı</button>
                 <button onClick={()=>setSelectedTables(new Set())}
-                  style={{padding:"5px 12px",borderRadius:16,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.35)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
-                <span style={{marginLeft:"auto",fontSize:11,color:"rgba(201,168,76,.5)",alignSelf:"center"}}>{selectedTables.size}/{tables.length} seçildi</span>
+                  style={{padding:"5px 12px",borderRadius:16,border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",fontSize:11,cursor:"pointer"}}>Ləğv</button>
+                <span style={{marginLeft:"auto",fontSize:11,color:"var(--accent)",alignSelf:"center"}}>{selectedTables.size}/{tables.length} seçildi</span>
               </div>
               <div style={{flex:1,overflowY:"auto",padding:"14px 12px"}}>
                 <div style={{display:"flex",flexWrap:"wrap",gap:14,justifyContent:"center"}}>
@@ -335,16 +341,16 @@ export default function InvitePage(){
                         style={{position:"relative",cursor:"pointer",width:"calc(25% - 10px)",minWidth:70,display:"flex",flexDirection:"column",alignItems:"center",opacity:allSent?.5:1}}>
                         <TableSVG table={t} size={66}/>
                         {sel&&<div style={{position:"absolute",top:-4,right:-4,width:18,height:18,borderRadius:"50%",background:"#50c878",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff"}}>✓</div>}
-                        <div style={{textAlign:"center",marginTop:3,fontSize:9,color:sel?"#c9a84c":"rgba(255,255,255,.3)",fontWeight:700}}>Masa {t.id}</div>
+                        <div style={{textAlign:"center",marginTop:3,fontSize:9,color:sel?"var(--accent)":"var(--muted)",fontWeight:700}}>Masa {t.id}</div>
                         <div style={{textAlign:"center",fontSize:7,color:allSent?"rgba(80,200,120,.5)":"rgba(255,180,50,.5)",marginTop:1}}>{allSent?"Göndərilib ✓":"Göndərilməyib"}</div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-              <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid rgba(201,168,76,.06)"}}>
+              <div style={{padding:"10px 14px 28px",flexShrink:0,borderTop:"1px solid var(--line-strong)"}}>
                 <button onClick={()=>selectedTables.size>0&&setSendStep("shablon")} disabled={selectedTables.size===0}
-                  style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:selectedTables.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"rgba(255,255,255,.05)",color:selectedTables.size>0?"#0a0700":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:selectedTables.size>0?"pointer":"default"}}>
+                  style={{width:"100%",padding:"13px",borderRadius:11,border:"none",background:selectedTables.size>0?"linear-gradient(90deg,rgba(201,168,76,.5),rgba(201,168,76,.3))":"var(--line)",color:selectedTables.size>0?"#0a0700":"var(--muted)",fontSize:13,fontWeight:800,cursor:selectedTables.size>0?"pointer":"default"}}>
                   Şablon seç → ({selectedTables.size} masa)
                 </button>
               </div>
@@ -355,11 +361,11 @@ export default function InvitePage(){
           {sendStep==="shablon"&&(
             <>
               <div style={{flex:1,overflowY:"auto",padding:"14px 16px"}}>
-                <div style={{fontSize:11,color:"rgba(255,255,255,.35)",marginBottom:12}}>Dəvətnamə şablonu:</div>
+                <div style={{fontSize:11,color:"var(--muted)",marginBottom:12}}>Dəvətnamə şablonu:</div>
                 <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:20}}>
                   {SHABLONLAR.map(s=>(
                     <div key={s.id} onClick={()=>setSelectedShablon(s)}
-                      style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(selectedShablon?.id===s.id?s.accent:"rgba(255,255,255,.1)"),background:selectedShablon?.id===s.id?"rgba(201,168,76,.06)":"rgba(255,255,255,.02)",cursor:"pointer"}}>
+                      style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(selectedShablon?.id===s.id?s.accent:"var(--line)"),background:selectedShablon?.id===s.id?"var(--line-strong)":"var(--line)",cursor:"pointer"}}>
                       <div style={{width:36,height:50,borderRadius:6,background:s.bg,border:"1px solid "+s.accent+"44",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🎊</div>
                       <div style={{flex:1}}>
                         <div style={{fontSize:13,fontWeight:700,color:s.accent}}>{s.ad}</div>
@@ -369,26 +375,26 @@ export default function InvitePage(){
                   ))}
                 </div>
 
-                <div style={{fontSize:11,color:"rgba(201,168,76,.6)",fontWeight:700,marginBottom:8}}>✍️ Kimdən göndərilsin?</div>
+                <div style={{fontSize:11,color:"var(--accent)",fontWeight:700,marginBottom:8}}>✍️ Kimdən göndərilsin?</div>
                 <input value={senderName} onChange={e=>setSenderName(e.target.value)}
                   placeholder="Adınızı yazın (məs: Aytən, Oğlan evi...)"
-                  style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.06)",border:"1px solid rgba(201,168,76,.2)",borderRadius:9,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
+                  style={{width:"100%",padding:"10px 12px",background:"var(--soft)",border:"1px solid var(--line-strong)",borderRadius:9,color:"var(--ink)",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}/>
                 <div style={{display:"flex",gap:8,marginBottom:16}}>
                   {[["xanım","👩"],["müəllim","👨"],["bəy","🤵"]].map(([t,e])=>(
                     <button key={t} onClick={()=>setSenderTitle(t)}
-                      style={{flex:1,padding:"7px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"rgba(201,168,76,.6)":"rgba(255,255,255,.1)"),background:senderTitle===t?"rgba(201,168,76,.12)":"transparent",color:senderTitle===t?"#c9a84c":"rgba(255,255,255,.35)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
+                      style={{flex:1,padding:"7px 4px",borderRadius:8,border:"1.5px solid "+(senderTitle===t?"var(--line-strong)":"var(--line)"),background:senderTitle===t?"var(--line-strong)":"transparent",color:senderTitle===t?"var(--accent)":"var(--muted)",fontSize:11,fontWeight:600,cursor:"pointer"}}>
                       {e} {t}
                     </button>
                   ))}
                 </div>
-                {senderName&&<div style={{padding:"8px 12px",background:"rgba(255,255,255,.04)",borderRadius:8,fontSize:12,color:"rgba(255,255,255,.5)",fontStyle:"italic",marginBottom:8}}>
+                {senderName&&<div style={{padding:"8px 12px",background:"var(--soft)",borderRadius:8,fontSize:12,color:"var(--muted)",fontStyle:"italic",marginBottom:8}}>
                   "Hörmətlə, {senderName} {senderTitle}"
                 </div>}
               </div>
               <div style={{padding:"10px 14px 28px",flexShrink:0,display:"flex",gap:8}}>
-                <button onClick={()=>setSendStep("tables")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:12,cursor:"pointer"}}>← Geri</button>
+                <button onClick={()=>setSendStep("tables")} style={{flex:1,padding:"12px",borderRadius:10,border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",fontSize:12,cursor:"pointer"}}>← Geri</button>
                 <button onClick={()=>setSendStep("confirm")}
-                  style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"rgba(201,168,76,.2)",color:"#c9a84c",fontSize:13,fontWeight:700,cursor:"pointer"}}>Təsdiq →</button>
+                  style={{flex:2,padding:"12px",borderRadius:10,border:"none",background:"var(--soft)",color:"var(--accent)",fontSize:13,fontWeight:700,cursor:"pointer"}}>Təsdiq →</button>
               </div>
             </>
           )}
@@ -398,19 +404,19 @@ export default function InvitePage(){
             <>
               <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 20px"}}>
                 <div style={{fontSize:48,marginBottom:16}}>📨</div>
-                <div style={{fontSize:16,fontWeight:700,color:"#f2e8d0",marginBottom:8,textAlign:"center"}}>{selectedTables.size} masa üçün dəvətnamə göndərilsin?</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,.35)",textAlign:"center",lineHeight:1.7,marginBottom:16}}>
+                <div style={{fontSize:16,fontWeight:700,color:"var(--ink)",marginBottom:8,textAlign:"center"}}>{selectedTables.size} masa üçün dəvətnamə göndərilsin?</div>
+                <div style={{fontSize:12,color:"var(--muted)",textAlign:"center",lineHeight:1.7,marginBottom:16}}>
                   {tables.filter(t=>selectedTables.has(t.id)).flatMap(t=>t.guests).filter(g=>(g.phone||"").replace(/\D/g,"").length>=7).length} nömrəli qonağa
                   {senderName&&" · "+senderName+" "+senderTitle}
                 </div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>
                   {tables.filter(t=>selectedTables.has(t.id)).map(t=>(
-                    <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"rgba(201,168,76,.1)",border:"1px solid rgba(201,168,76,.25)",color:"#c9a84c",fontSize:11}}>Masa {t.id}</div>
+                    <div key={t.id} style={{padding:"4px 12px",borderRadius:20,background:"var(--soft)",border:"1px solid var(--line-strong)",color:"var(--accent)",fontSize:11}}>Masa {t.id}</div>
                   ))}
                 </div>
               </div>
               <div style={{padding:"10px 14px 36px",flexShrink:0,display:"flex",gap:10}}>
-                <button onClick={()=>setSendStep("shablon")} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,.1)",background:"transparent",color:"rgba(255,255,255,.4)",fontSize:13,cursor:"pointer"}}>← Geri</button>
+                <button onClick={()=>setSendStep("shablon")} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",fontSize:13,cursor:"pointer"}}>← Geri</button>
                 <button onClick={sendInvites}
                   style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(90deg,rgba(37,211,102,.5),rgba(37,211,102,.3))",color:"#25d366",fontSize:14,fontWeight:800,cursor:"pointer"}}>
                   ✅ Bəli, göndər!
@@ -424,27 +430,27 @@ export default function InvitePage(){
       {/* Qonaq əlavə etmə formu */}
       {addForm&&(
         <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,.6)"}} onClick={()=>setAddForm(null)}>
-          <div style={{position:"absolute",bottom:0,left:0,right:0,background:"#0e0a04",borderTop:"1px solid rgba(201,168,76,.3)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
-            <div style={{width:36,height:4,borderRadius:2,background:"rgba(201,168,76,.25)",margin:"0 auto 16px"}}/>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,background:"var(--bg)",borderTop:"1px solid var(--line-strong)",borderRadius:"20px 20px 0 0",padding:"20px 16px 36px"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:36,height:4,borderRadius:2,background:"var(--soft)",margin:"0 auto 16px"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <span style={{fontSize:13,fontWeight:700,color:"#c9a84c"}}>Masa {addForm.tableId} — Qonaq əlavə et</span>
-              <button onClick={()=>setAddForm(null)} style={{background:"none",border:"none",color:"#9a8060",fontSize:18,cursor:"pointer"}}>✕</button>
+              <span style={{fontSize:13,fontWeight:700,color:"var(--accent)"}}>Masa {addForm.tableId} — Qonaq əlavə et</span>
+              <button onClick={()=>setAddForm(null)} style={{background:"none",border:"none",color:"var(--muted)",fontSize:18,cursor:"pointer"}}>✕</button>
             </div>
             <input value={fName} onChange={e=>setFName(e.target.value)} placeholder="Ad Soyad"
-              style={{display:"block",width:"100%",marginBottom:8,padding:"10px 12px",background:"rgba(255,255,255,.07)",border:"1px solid rgba(201,168,76,.3)",borderRadius:8,color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit"}}/>
-            <div style={{display:"flex",alignItems:"center",background:"rgba(255,255,255,.07)",border:"1px solid rgba(201,168,76,.25)",borderRadius:8,marginBottom:8,overflow:"hidden"}}>
-              <span style={{padding:"0 10px",color:"rgba(201,168,76,.8)",fontSize:13,fontWeight:600,flexShrink:0}}>+994</span>
+              style={{display:"block",width:"100%",marginBottom:8,padding:"10px 12px",background:"var(--soft)",border:"1px solid var(--line-strong)",borderRadius:8,color:"var(--ink)",fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+            <div style={{display:"flex",alignItems:"center",background:"var(--soft)",border:"1px solid var(--line-strong)",borderRadius:8,marginBottom:8,overflow:"hidden"}}>
+              <span style={{padding:"0 10px",color:"var(--accent)",fontSize:13,fontWeight:600,flexShrink:0}}>+994</span>
               <input type="tel" value={fPhone} onChange={e=>setFPhone(e.target.value.replace(/\D/g,""))} placeholder="XX XXX XX XX"
-                style={{flex:1,padding:"10px 4px",background:"transparent",border:"none",color:"#f2e8d0",fontSize:13,outline:"none",fontFamily:"inherit"}}/>
+                style={{flex:1,padding:"10px 4px",background:"transparent",border:"none",color:"var(--ink)",fontSize:13,outline:"none",fontFamily:"inherit"}}/>
             </div>
             <div style={{display:"flex",gap:6,marginBottom:8}}>
               {[["👨 Kişi","kishi","#7aade8"],["👩 Qadın","qadin","#e87aad"],["👶 Uşaq","ushaq","#f5d060"]].map(([l,v,c])=>(
-                <button key={v} onClick={()=>setFGender(g=>g===v?"":v)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"1.5px solid "+(fGender===v?c:"rgba(255,255,255,.08)"),background:fGender===v?c+"22":"transparent",color:fGender===v?c:"rgba(255,255,255,.3)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
+                <button key={v} onClick={()=>setFGender(g=>g===v?"":v)} style={{flex:1,padding:"8px 4px",borderRadius:8,border:"1.5px solid "+(fGender===v?c:"var(--line)"),background:fGender===v?c+"22":"transparent",color:fGender===v?c:"var(--muted)",fontSize:11,fontWeight:700,cursor:"pointer"}}>{l}</button>
               ))}
             </div>
             <div style={{display:"flex",gap:8,marginBottom:14}}>
-              {[["Böyük","#c9a84c",fCount,setFCount,1],["👧 Uşaq","#f5d060",fUshaq,setFUshaq,0]].map(([l,c,val,set,min])=>(
-                <div key={l} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,.04)",border:"1px solid "+c+"33",borderRadius:8,padding:"6px 10px"}}>
+              {[["Böyük","var(--accent)",fCount,setFCount,1],["👧 Uşaq","#f5d060",fUshaq,setFUshaq,0]].map(([l,c,val,set,min])=>(
+                <div key={l} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between",background:"var(--soft)",border:"1px solid "+c+"33",borderRadius:8,padding:"6px 10px"}}>
                   <span style={{fontSize:10,color:c+"99"}}>{l}</span>
                   <button onClick={()=>set(v=>String(Math.max(min,parseInt(v)-1)))} style={{width:22,height:22,borderRadius:"50%",border:"none",background:c+"22",color:c,fontSize:14,cursor:"pointer",fontWeight:700}}>−</button>
                   <span style={{fontSize:14,fontWeight:800,color:c,minWidth:20,textAlign:"center"}}>{val}</span>
@@ -452,7 +458,7 @@ export default function InvitePage(){
                 </div>
               ))}
             </div>
-            <button onClick={addGuest} disabled={!fName.trim()} style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:fName.trim()?"linear-gradient(90deg,rgba(80,200,120,.5),rgba(80,200,120,.3))":"rgba(255,255,255,.05)",color:fName.trim()?"#50c878":"rgba(255,255,255,.2)",fontSize:13,fontWeight:800,cursor:fName.trim()?"pointer":"default"}}>✅ Əlavə et</button>
+            <button onClick={addGuest} disabled={!fName.trim()} style={{width:"100%",padding:"13px",borderRadius:10,border:"none",background:fName.trim()?"linear-gradient(90deg,rgba(80,200,120,.5),rgba(80,200,120,.3))":"var(--line)",color:fName.trim()?"#50c878":"var(--muted)",fontSize:13,fontWeight:800,cursor:fName.trim()?"pointer":"default"}}>✅ Əlavə et</button>
           </div>
         </div>
       )}
@@ -461,6 +467,6 @@ export default function InvitePage(){
         <GuestEditPopup guest={editPopup.guest} tableId={editPopup.tableId} allTables={tables}
           onSave={saveGuestEdit} onDelete={deleteGuest} onMove={moveGuest} onClose={()=>setEditPopup(null)}/>
       )}
-    </div>
+    </InviteStage>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, Component } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { jsPDF } from "jspdf";
 import AuthScreen from "./AuthScreen.jsx";
+import { INVITE_THEMES, themeAt, InviteDemo, InviteThumb } from "./inviteThemes.jsx";
 
 const supabase = createClient(
   "https://dpvoluttxelwnqcfnsbh.supabase.co",
@@ -2999,18 +3000,16 @@ function MeclislerimPanel({ events, onSelect, onDelete, onClose, onNewEvent, onL
 }
 
 // ═══ DƏVƏTNAMƏ PNG SİSTEMİ — 4 şablon ═══
+// Premium animasiyalı dizaynlar (inviteThemes.jsx). Köhnə 10 rəngli şablon silindi;
+// köhnə indekslər (5–9) avtomatik "Zərf" dizaynına düşür. Kanvas şəkli üçün rənglər burada.
 const DEVETNAME_SHABLONLAR = [
-  { id:"qizili", ad:"Qızılı Klassik", bg:"#0a0700", accent:"#c9a84c", text:"#f2e8d0", sub:"rgba(242,232,208,.6)", tableBg:"#0e0a04" },
-  { id:"romantik", ad:"Romantik", bg:"#1a0a12", accent:"#e87aad", text:"#f9c7d8", sub:"rgba(249,199,216,.65)", tableBg:"#0e0a04" },
-  { id:"goy", ad:"Göy Zümrüd", bg:"#020d1a", accent:"#7aade8", text:"#b5d4f4", sub:"rgba(181,212,244,.65)", tableBg:"#0e0a04" },
-  { id:"ag", ad:"Ağ Zərif", bg:"#faf8f2", accent:"#c9a84c", text:"#2a1f06", sub:"rgba(42,31,6,.65)", tableBg:"#fff8e8" },
-  { id:"salvi", ad:"Salvi Minimal", bg:"#f4f1eb", accent:"#6b7d5c", text:"#2b2f26", sub:"rgba(43,47,38,.6)", tableBg:"#ffffff" },
-  { id:"terrakota", ad:"Terrakota", bg:"#faf4ef", accent:"#c0603f", text:"#3a2117", sub:"rgba(58,33,23,.6)", tableBg:"#fff9f5" },
-  { id:"charcoal", ad:"Charcoal Qızıl", bg:"#111214", accent:"#d4af5a", text:"#f0efec", sub:"rgba(240,239,236,.55)", tableBg:"#17181b" },
-  { id:"dusty", ad:"Toz Göy", bg:"#eef1f4", accent:"#4d6a86", text:"#1e2a35", sub:"rgba(30,42,53,.6)", tableBg:"#ffffff" },
-  { id:"blush", ad:"Blush Neytral", bg:"#f7efec", accent:"#b98a7a", text:"#3a2c26", sub:"rgba(58,44,38,.6)", tableBg:"#fffaf8" },
-  { id:"meshe", ad:"Dərin Meşə", bg:"#0c1410", accent:"#7fa88a", text:"#e7efe9", sub:"rgba(231,239,233,.55)", tableBg:"#101a15" }
+  { id:"zerf",  ad:"Zərf",          bg:"#F7F2E8", accent:"#9A7432", text:"#2B241B", sub:"rgba(43,36,27,.62)",   tableBg:"#FFFDF8" },
+  { id:"perde", ad:"Saray pərdəsi", bg:"#1A1013", accent:"#D4AF6A", text:"#F3E6D3", sub:"rgba(243,230,211,.6)", tableBg:"#24171B" },
+  { id:"bot",   ad:"Botanika",      bg:"#F4F1E9", accent:"#5E7A5A", text:"#26302A", sub:"rgba(38,48,42,.6)",    tableBg:"#FFFFFC" },
+  { id:"edit",  ad:"Editorial",     bg:"#F3F1EC", accent:"#151515", text:"#151515", sub:"rgba(21,21,21,.6)",    tableBg:"#FBFAF7" },
+  { id:"gece",  ad:"Ulduzlu gecə",  bg:"#0B1226", accent:"#E3C27A", text:"#EEF0F8", sub:"rgba(238,240,248,.6)", tableBg:"#141E3A" }
 ];
+const getShablon = i => DEVETNAME_SHABLONLAR[INVITE_THEMES.indexOf(themeAt(i))];
 
 function drawDevetnamePNG({canvas, shablon, tbl, obData, hallName, guestName}){
   const W=800, H=1200;
@@ -3104,7 +3103,7 @@ function DevetnamePNGPanel({ tbl, allTables, obData, hallName, onClose, cardNumb
   const [activeTblIdx, setActiveTblIdx] = useState(0);
   const activeTbl = tables2use[activeTblIdx] || tbl;
   const guests = (activeTbl&&activeTbl.guests)||[];
-  const [shablon, setShablon] = useState(DEVETNAME_SHABLONLAR[0]);
+  const [shablon, setShablon] = useState(getShablon(0));
   const [selIdx, setSelIdx] = useState(0);
   const [sending, setSending] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -3980,6 +3979,40 @@ function AppInner(){
   const [myInviteMedia, setMyInviteMedia] = useState(null); // {type:"photo"|"video", url}
   const [myInviteShablon, setMyInviteShablon] = useState(null); // seçilmiş hazır şablon indeksi
   const [myInviteIncludeMedia, setMyInviteIncludeMedia] = useState(true);
+  const [inviteMediaBusy, setInviteMediaBusy] = useState(false);
+  const [inviteMediaErr, setInviteMediaErr] = useState("");
+  const [previewReplay, setPreviewReplay] = useState(0);
+
+  // Öz video/şəklini Supabase Storage-a yükləyir (bazaya base64 yazmırıq — SMS linki yavaşlamasın)
+  async function uploadInviteMedia(file){
+    if(!file) return;
+    setInviteMediaErr("");
+    if(file.size>50*1024*1024){ setInviteMediaErr("Fayl 50 MB-dan böyükdür. Videonu qısaldın və ya sıxın."); return; }
+    const isVideo = file.type.startsWith("video/");
+    if(!isVideo && !file.type.startsWith("image/")){ setInviteMediaErr("Yalnız video (MP4, MOV) və ya şəkil yükləyin."); return; }
+    setInviteMediaBusy(true);
+    try{
+      const { data:{ user } } = await supabase.auth.getUser();
+      if(!user) throw new Error("Yükləmək üçün hesaba daxil olun.");
+      const ext = (file.name.split(".").pop()||(isVideo?"mp4":"jpg")).toLowerCase().replace(/[^a-z0-9]/g,"");
+      const path = user.id+"/"+Date.now()+"."+ext;
+      const { error } = await supabase.storage.from("invite-media").upload(path, file, { contentType:file.type, upsert:false });
+      if(error) throw error;
+      const { data:pub } = supabase.storage.from("invite-media").getPublicUrl(path);
+      const media = { type:isVideo?"video":"photo", url:pub.publicUrl, path };
+      setMyInviteMedia(media); setMyInviteIncludeMedia(true);
+      saveCurrentEvent({ myInviteMedia:media });
+    }catch(e){
+      setInviteMediaErr("Yüklənmədi: "+(e.message||"naməlum xəta"));
+    }
+    setInviteMediaBusy(false);
+  }
+  function removeInviteMedia(){
+    const old = myInviteMedia;
+    setMyInviteMedia(null);
+    saveCurrentEvent({ myInviteMedia:null });
+    if(old&&old.path) supabase.storage.from("invite-media").remove([old.path]).catch(()=>{});
+  }
   const [fullPreviewShablon, setFullPreviewShablon] = useState(null); // index üçün tam ekran önizləmə
   const [fillMode, setFillMode] = useState(null);
   const [activeTable, setActiveTable] = useState(null);
@@ -5660,28 +5693,55 @@ ${savedEvsList||"Yoxdur"}`;
               <div style={{width:28}}/>
             </div>
             <div className="rsb">
-              <div style={{fontSize:11,fontWeight:700,color:"#211A16",marginBottom:8}}>Hazır şablonlarımız</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginBottom:16}}>
-                {DEVETNAME_SHABLONLAR.map((s,i)=>(
-                  <div key={i} style={{borderRadius:15,overflow:"hidden",cursor:"pointer",
-                      border:"2px solid "+(myInviteShablon===i?"#C1382A":"rgba(255,255,255,.5)"),
-                      background:"rgba(255,255,255,.4)"}}
-                    onClick={()=>setFullPreviewShablon(i)}>
-                    <div style={{position:"relative"}}>
-                      <MiniShablonPreview shablon={s} obData={obData}/>
-                      {myInviteShablon===i&&(
-                        <div style={{position:"absolute",top:6,right:6,width:22,height:22,borderRadius:"50%",
-                          background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
-                        </div>
-                      )}
-                    </div>
-                    <div style={{padding:"8px 6px",textAlign:"center"}}>
-                      <div style={{fontSize:10.5,fontWeight:700,color:myInviteShablon===i?"#C1382A":"#211A16"}}>{s.ad}</div>
-                    </div>
-                  </div>
-                ))}
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:600,color:"#211A16",marginBottom:4}}>Premium dəvətnamələr</div>
+              <div style={{fontSize:11.5,color:"#6B6259",marginBottom:12,lineHeight:1.5}}>Birinə toxunun — animasiyası ilə tam önizləmə açılacaq. Qonaq linki açanda səhifə bu dizaynda görünəcək.</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10,marginBottom:18}}>
+                {INVITE_THEMES.map((t,i)=>{
+                  const on = myInviteShablon===i;
+                  return (
+                    <button key={t.id} type="button" onClick={()=>{ setPreviewReplay(r=>r+1); setFullPreviewShablon(i); }}
+                      style={{padding:0,borderRadius:16,overflow:"hidden",cursor:"pointer",textAlign:"left",
+                        border:"2px solid "+(on?"#C1382A":"rgba(255,255,255,.6)"),background:"rgba(255,255,255,.5)"}}>
+                      <div style={{position:"relative"}}>
+                        <InviteThumb themeIndex={i} boy={obData&&obData.boy||"Orxan"} girl={obData&&obData.girl||"Ceyhun"}/>
+                        {on&&(
+                          <div style={{position:"absolute",top:8,right:8,width:22,height:22,borderRadius:"50%",background:"#4C9A6E",display:"flex",alignItems:"center",justifyContent:"center",zIndex:3}}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><path d="M20 6 9 17l-5-5"/></svg>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{padding:"8px 10px"}}>
+                        <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:600,color:on?"#C1382A":"#211A16"}}>{t.ad}</div>
+                        <div style={{fontSize:10,color:"#6B6259",marginTop:2,lineHeight:1.35}}>{t.desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
+
+              <div style={{fontFamily:"'Manrope',sans-serif",fontSize:12,fontWeight:600,color:"#211A16",marginBottom:4}}>Öz videonuz (istəyə bağlı)</div>
+              <div style={{fontSize:11.5,color:"#6B6259",marginBottom:10,lineHeight:1.5}}>Yükləsəniz, qonaq dəvətnaməni açanda həm sizin videonuz, həm də seçdiyiniz dizayn görünəcək. Maksimum 50 MB.</div>
+              {myInviteMedia&&myInviteMedia.url?(
+                <div style={{borderRadius:16,overflow:"hidden",border:"1px solid rgba(150,120,80,.25)",background:"#fff",marginBottom:10}}>
+                  {myInviteMedia.type==="video"
+                    ? <video src={myInviteMedia.url} controls playsInline preload="metadata" style={{width:"100%",display:"block",maxHeight:260,background:"#000"}}/>
+                    : <img src={myInviteMedia.url} alt="" style={{width:"100%",display:"block",maxHeight:260,objectFit:"cover"}}/>}
+                  <div style={{display:"flex",gap:8,padding:10}}>
+                    <label style={{flex:1,padding:"10px",borderRadius:12,border:"1px solid rgba(150,120,80,.25)",textAlign:"center",fontSize:12,fontWeight:600,color:"#211A16",cursor:"pointer"}}>
+                      Dəyiş
+                      <input type="file" accept="video/*,image/*" style={{display:"none"}} onChange={e=>{ uploadInviteMedia(e.target.files&&e.target.files[0]); e.target.value=""; }}/>
+                    </label>
+                    <button type="button" onClick={removeInviteMedia} style={{flex:1,padding:"10px",borderRadius:12,border:"none",background:"rgba(193,56,42,.1)",color:"#C1382A",fontSize:12,fontWeight:600,cursor:"pointer"}}>Sil</button>
+                  </div>
+                </div>
+              ):(
+                <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"18px 14px",borderRadius:16,border:"1.5px dashed rgba(150,120,80,.4)",background:"rgba(255,255,255,.45)",cursor:inviteMediaBusy?"default":"pointer",marginBottom:10}}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A6B1E" strokeWidth="1.6"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="m17 10 4-2.5v9L17 14"/></svg>
+                  <span style={{fontSize:13,fontWeight:600,color:"#8A6B1E"}}>{inviteMediaBusy?"Yüklənir...":"+ Video və ya şəkil əlavə et"}</span>
+                  <input type="file" accept="video/*,image/*" disabled={inviteMediaBusy} style={{display:"none"}} onChange={e=>{ uploadInviteMedia(e.target.files&&e.target.files[0]); e.target.value=""; }}/>
+                </label>
+              )}
+              {inviteMediaErr&&<div style={{fontSize:11.5,color:"#C1382A",marginBottom:10}}>{inviteMediaErr}</div>}
               <canvas ref={shareCanvasRef} style={{display:"none"}}/>
             </div>
             <DashNav dashProps={{
@@ -5696,23 +5756,23 @@ ${savedEvsList||"Yoxdur"}`;
         </div>
       )}
 
-      {/* Şablonun tam ekran önizləməsi */}
+      {/* Dizaynın tam ekran, animasiyalı önizləməsi */}
       {fullPreviewShablon!=null&&(
-        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(15,10,6,.94)",
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}
+        <div style={{position:"fixed",inset:0,zIndex:400,background:"rgba(15,10,6,.94)",display:"flex",flexDirection:"column",alignItems:"center",padding:"16px 16px 20px"}}
           onClick={()=>setFullPreviewShablon(null)}>
-          <div style={{position:"absolute",top:20,left:0,right:0,textAlign:"center",color:"rgba(245,238,224,.7)",fontSize:13,fontWeight:600}}>
-            {DEVETNAME_SHABLONLAR[fullPreviewShablon].ad}
+          <div style={{width:"100%",maxWidth:400,display:"flex",justifyContent:"space-between",alignItems:"center",color:"rgba(245,238,224,.85)",fontSize:13,fontWeight:600,marginBottom:10,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+            <span>{themeAt(fullPreviewShablon).ad}</span>
+            <button type="button" onClick={()=>setPreviewReplay(r=>r+1)} style={{padding:"7px 12px",borderRadius:10,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:12,cursor:"pointer"}}>↻ Yenidən oynat</button>
           </div>
-          <div style={{width:"100%",maxWidth:340,borderRadius:16,overflow:"hidden",boxShadow:"0 30px 60px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
-            <MiniShablonPreview shablon={DEVETNAME_SHABLONLAR[fullPreviewShablon]} obData={obData}/>
+          <div style={{width:"100%",maxWidth:400,flex:1,minHeight:0,overflowY:"auto",borderRadius:22,boxShadow:"0 30px 60px rgba(0,0,0,.5)"}} onClick={e=>e.stopPropagation()}>
+            <InviteDemo themeIndex={fullPreviewShablon} obData={obData||{}} hallName={hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):""} replayKey={previewReplay}/>
           </div>
-          <div style={{display:"flex",gap:10,marginTop:20}}>
-            <button onClick={()=>setFullPreviewShablon(null)}
+          <div style={{display:"flex",gap:10,marginTop:14,flexShrink:0}} onClick={e=>e.stopPropagation()}>
+            <button type="button" onClick={()=>setFullPreviewShablon(null)}
               style={{padding:"12px 22px",borderRadius:14,border:"1px solid rgba(255,255,255,.25)",background:"rgba(255,255,255,.08)",color:"#F5EEE0",fontSize:13,cursor:"pointer"}}>
               Bağla
             </button>
-            <button onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); saveCurrentEvent({myInviteShablon:fullPreviewShablon}); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
+            <button type="button" onClick={()=>{ setMyInviteShablon(fullPreviewShablon); setFullPreviewShablon(null); setMyInviteOpen(false); saveCurrentEvent({myInviteShablon:fullPreviewShablon}); if(myInviteJumpAfter) setNotinvAutoJump(true); }}
               style={{padding:"12px 22px",borderRadius:14,border:"none",background:"linear-gradient(155deg,#5EB889,#3d8259)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer"}}>
               ✓ Bəyəndim, seç
             </button>
@@ -6315,7 +6375,7 @@ ${savedEvsList||"Yoxdur"}`;
                 else {
                   const c = shareCanvasRef.current;
                   const evName = (obData&&obData.boy&&obData.girl)?obData.boy+" & "+obData.girl:(obData&&(obData.name||obData.company))||"Məclis";
-                  drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                  drawDevetnamePNG({canvas:c, shablon:getShablon(myInviteShablon), tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
                   printInvitationImage(c.toDataURL("image/png"), evName);
                 }
               }}
@@ -6329,7 +6389,7 @@ ${savedEvsList||"Yoxdur"}`;
                 if(printShareTarget==="schema"){ shareFileOrDownload(buildFloorPlanPDF(tabRef.current,obDataRef.current,hallRef.current), setMsgs); }
                 else {
                   const c = shareCanvasRef.current;
-                  drawDevetnamePNG({canvas:c, shablon:DEVETNAME_SHABLONLAR[myInviteShablon], tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
+                  drawDevetnamePNG({canvas:c, shablon:getShablon(myInviteShablon), tbl:{id:"",seats:0,guests:[]}, obData:obData||{}, hallName:hall?(hall._venueName||"")+(hall.name?" — "+hall.name:""):"", guestName:""});
                   shareFileOrDownload(buildImagePDF(c.toDataURL("image/png"), "Devetname.pdf"), setMsgs);
                 }
               }}
@@ -6674,8 +6734,8 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   // Toplu göndər
   const [selTbls, setSelTbls] = useState(new Set());
   const [tapHintDismissed, setTapHintDismissed] = useState(false);
-  const [shablon, setShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
-  useEffect(()=>{ if(myInviteShablon!=null) setShablon(DEVETNAME_SHABLONLAR[myInviteShablon]); }, [myInviteShablon]);
+  const [shablon, setShablon] = useState(myInviteShablon!=null?getShablon(myInviteShablon):getShablon(0));
+  useEffect(()=>{ if(myInviteShablon!=null) setShablon(getShablon(myInviteShablon)); }, [myInviteShablon]);
   const [step, setStep] = useState("select"); // "select"|"shablon"|"preview"|"confirm"
   const [previewTbl, setPreviewTbl] = useState(null);
   const [senderName, setSenderName] = useState("");
@@ -6689,7 +6749,7 @@ function NotInvDrawerBody({ notInvTables, allTables, onClose, onMarkSent, onMark
   const shabRefs = [useRef(null),useRef(null),useRef(null),useRef(null)];
   // Tək-tək göndər
   const [singleGuest, setSingleGuest] = useState(null); // {guest, tbl}
-  const [singleShablon, setSingleShablon] = useState(myInviteShablon!=null?DEVETNAME_SHABLONLAR[myInviteShablon]:DEVETNAME_SHABLONLAR[0]);
+  const [singleShablon, setSingleShablon] = useState(myInviteShablon!=null?getShablon(myInviteShablon):getShablon(0));
   const [singleStep, setSingleStep] = useState("list"); // "list"|"shablon"|"preview"|"sending"
   const singleCanvasRef = useRef(null);
 
